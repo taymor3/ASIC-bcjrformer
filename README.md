@@ -6,6 +6,8 @@ Five processing stages, shared arithmetic services, and an explicit memory-backe
 
 [Architecture](docs/architecture.md) · [Microarchitecture](docs/microarchitecture.md) · [Project library](docs/project-library.md) · [Quick start](#quick-start) · [Verification](docs/verification.md) · [Numerics](docs/numerics.md)
 
+For shared development, follow the [Git collaboration workflow](docs/collaboration.md): update before editing, commit and push reviewed changes, and use separate branches for concurrent work.
+
 ## Microarchitecture
 
 ![BCJRFormer microarchitecture: five stages, shared services, and memory connections](docs/images/bcjrformer-microarchitecture.svg)

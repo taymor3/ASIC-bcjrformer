@@ -1,5 +1,8 @@
 # Contributing
 
+See the [collaboration workflow](docs/collaboration.md) for pulling before work,
+committing and pushing changes, using separate branches, and adding collaborators.
+
 Open an issue with the relevant RTL path, configuration, expected behavior, and a minimal reproducer. For numerical findings, identify the represented input, binary scale, rounding rule, and whether the comparison concerns the function output or later tensor storage.
 
 Changes should preserve ready/valid stability, memory-write completion barriers, and the canonical parameter layout. Run `python scripts/check.py smoke` for structural/documentation changes; run `numerics` and the relevant cycle/proof checks for arithmetic changes. The `full` suite is the implementation regression.

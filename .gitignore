@@ -27,3 +27,17 @@ rtl/tests/*.v
 rtl/tests/*.ys
 manifest.json
 parameters.hex
+
+# Local upstream checkout, private references, and the original publication copy.
+/BCJRFormer/
+/references/
+/publish/
+/.vscode/
+
+# Local rendering evidence and superseded function-value tables.
+/.architecture-assets/pdf-review/
+/.architecture-assets/review-checks.json
+/.pptx-build/*.json
+/output/architecture/icepanel-sync.json
+/rtl/arithmetic/tables/
+/rtl/arithmetic/generate_tables.py
