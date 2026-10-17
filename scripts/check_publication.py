@@ -7,12 +7,14 @@ import subprocess
 from urllib.parse import unquote
 
 ROOT = Path(__file__).resolve().parents[1]
-record = json.loads((ROOT / 'docs/evidence/implementation-2026-10-16.json').read_text())
+record = json.loads((ROOT / 'docs/evidence/rtl-source-current.json').read_text())
 errors = []
+if set(record['source_sha256']) != set((ROOT/'rtl/protocol/files.f').read_text().splitlines()):
+    errors.append('Current source index must exactly match the production file list')
 for name, expected in record['source_sha256'].items():
     path = ROOT / name
     if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != expected:
-        errors.append('Production source differs from recorded baseline: ' + name)
+        errors.append('Production source differs from the current revision index: ' + name)
 try:
     # Check project files, including new untracked documents, without walking
     # ignored model checkouts, dependency packages, or preserved local backups.

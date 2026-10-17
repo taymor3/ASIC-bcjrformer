@@ -1,5 +1,5 @@
 // Integer reciprocal square root, rounded against the exact midpoint inequality.
-module rsqrt_unit #(parameter bcjrformer_contract_pkg::variance_t MINIMUM=48'd42950)(
+module rsqrt_unit #(parameter bcjrformer_contract_pkg::variance_t MINIMUM=bcjrformer_contract_pkg::NORMALIZATION_MINIMUM)(
   input logic clk,rst,bcjr_arith_if.responder operation);
   import bcjrformer_contract_pkg::*;import fixed_math_pkg::*;
   variance_t variance;logic [95:0] quotient;logic [47:0] root,candidate;
@@ -19,6 +19,7 @@ module rsqrt_unit #(parameter bcjrformer_contract_pkg::variance_t MINIMUM=48'd42
       if(root>48'hffffffff) status.numeric_error=1;else value=rsqrt_t'(root);
     end
   end
-  initial if(MINIMUM==0) $fatal(1,"RSQRT minimum must be positive");
+  initial if(MINIMUM!=NORMALIZATION_MINIMUM)
+    $fatal(1,"RSQRT minimum must match the shared normalization domain");
   arithmetic_register #(.RSP_T(rsqrt_t)) response(clk,rst,operation,value,status);
 endmodule

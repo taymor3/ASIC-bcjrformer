@@ -50,9 +50,9 @@ class Reference:
             self.write(dst,target+o,act(result,10))
     def norm(self,src,base,dst,target,length,g,b):
         x=self.banks[src][base:base+length]
-        mean=rne(sum(x)*inv(length),22)
+        mean=rne_div(sum(x)<<10,length)
         squares=sum(((v<<10)-mean)**2 for v in x)
-        variance=rne(squares*inv(length),40)+42950
+        variance=rne_div(squares,length<<8)+42950
         scale=inverse_root(variance)
         for i,v in enumerate(x):
             normalized=rne(((v<<10)-mean)*scale,20)

@@ -14,6 +14,7 @@ package bcjrformer_contract_pkg;
   typedef logic [63:0] denominator_t;      // unsigned 64, 22 fractional bits
   typedef logic [39:0] reciprocal_t;       // unsigned 40, 32 fractional bits
   typedef logic [47:0] variance_t;         // unsigned 48, 32 fractional bits
+  localparam variance_t NORMALIZATION_MINIMUM = 48'd42950;
   typedef logic [31:0] rsqrt_t;            // unsigned 32, 20 fractional bits
   typedef logic [95:0] mem_data_t;
   typedef logic empty_t;                  // reserved payload, always zero

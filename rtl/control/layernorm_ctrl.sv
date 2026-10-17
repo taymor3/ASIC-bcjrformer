@@ -1,4 +1,4 @@
-module layernorm_ctrl #(parameter bcjrformer_contract_pkg::variance_t EPSILON=48'd42950)(
+module layernorm_ctrl #(parameter bcjrformer_contract_pkg::variance_t EPSILON=bcjrformer_contract_pkg::NORMALIZATION_MINIMUM)(
   input logic clk,rst,bcjr_cmd_if.callee command,bcjr_mem_if.requester mem,bcjr_arith_if.requester rsqrt);
   import bcjrformer_contract_pkg::*;import fixed_math_pkg::*;
   typedef enum logic [3:0] {IDLE,SUM_ISSUE,SUM_WAIT,MEAN,SQUARE_ISSUE,SQUARE_WAIT,VARIANCE,
@@ -8,18 +8,35 @@ module layernorm_ctrl #(parameter bcjrformer_contract_pkg::variance_t EPSILON=48
   state_t state;finish_t finish_state;
   layernorm_cmd_t descriptor_q,incoming;count_t index_q;
   logic signed [47:0] sum_q;logic signed [31:0] mean_q,normalized_q;
-  logic [95:0] squares_q;logic [39:0] inverse_length_q;variance_t variance_q;rsqrt_t scale_q;
+  logic [95:0] squares_q;variance_t variance_q;rsqrt_t scale_q;
   act_t gamma_q,value_q;status_t status_q;
   wide_t centered,square_sum,affine;
   conversion_t mean_value,var_value,norm_value,act_value,sum_value;
-  initial if(EPSILON==0 || EPSILON>(48'd4096<<32)) $fatal(1,"invalid LayerNorm epsilon");
+  // Divide the full numerator once. A rounded reciprocal of length biases the
+  // mean even for constant rows; RSQRT amplifies that error near epsilon.
+  function automatic conversion_t divide_rne(wide_t numerator,logic [63:0] denominator,
+    int width,bit signed_output);
+    wide_t magnitude,divisor,quotient,remainder;
+    conversion_t result;
+    result='0; magnitude=numerator<0 ? -numerator:numerator;
+    divisor=wide_t'({1'b0,denominator});quotient=0;remainder=0;
+    if(denominator==0) result.status.protocol_error=1;
+    else begin
+      quotient=magnitude/divisor;remainder=magnitude%divisor;
+      if(2*remainder>divisor || (2*remainder==divisor && quotient[0])) quotient=quotient+1;
+      result=convert(numerator<0 ? -quotient:quotient,0,width,signed_output,0);
+      result.status.rounded=remainder!=0;
+    end
+    return result;
+  endfunction
+  initial if(EPSILON<NORMALIZATION_MINIMUM || EPSILON>(48'd4096<<32)) $fatal(1,"invalid LayerNorm epsilon");
   always_comb begin
     incoming=layernorm_cmd_t'(command.cmd);
     centered=(wide_t'(act_t'(mem.rsp_rdata[15:0]))<<<10)-wide_t'(mean_q);
     square_sum=wide_t'({1'b0,squares_q})+centered*centered;
     sum_value=convert(wide_t'(sum_q)+wide_t'(act_t'(mem.rsp_rdata[15:0])),0,48,1,0);
-    mean_value=convert(wide_t'(sum_q)*wide_t'({1'b0,inverse_length_q}),22,32,1,0);
-    var_value=convert(wide_t'({1'b0,squares_q})*wide_t'({1'b0,inverse_length_q}),40,48,0,0);
+    mean_value=divide_rne(wide_t'(sum_q)<<<10,64'(descriptor_q.length),32,1);
+    var_value=divide_rne(wide_t'({1'b0,squares_q}),64'(descriptor_q.length)<<8,48,0);
     norm_value=convert(centered*wide_t'({1'b0,scale_q}),20,32,1,0);
     affine=wide_t'(normalized_q)*wide_t'(gamma_q)+(wide_t'(act_t'(mem.rsp_rdata[15:0]))<<<20);
     act_value=convert(affine,20,16,1,1);
@@ -46,7 +63,7 @@ module layernorm_ctrl #(parameter bcjrformer_contract_pkg::variance_t EPSILON=48
   end endtask
   always_ff @(posedge clk) begin
     if(rst) begin state<=IDLE;finish_state<=CALCULATE;descriptor_q<='0;index_q<=0;sum_q<=0;mean_q<=0;
-      normalized_q<=0;squares_q<=0;inverse_length_q<=0;variance_q<=0;scale_q<=0;gamma_q<=0;value_q<=0;status_q<='0;end
+      normalized_q<=0;squares_q<=0;variance_q<=0;scale_q<=0;gamma_q<=0;value_q<=0;status_q<='0;end
     else if(finish_state==RESPONSE) begin if(command.rsp_ready) begin finish_state<=CALCULATE;state<=IDLE;end end
     else if(finish_state==WRITE_ISSUE) begin if(mem.req_ready) finish_state<=WRITE_WAIT;end
     else if(finish_state==WRITE_WAIT) begin if(mem.rsp_valid) begin
@@ -57,7 +74,6 @@ module layernorm_ctrl #(parameter bcjrformer_contract_pkg::variance_t EPSILON=48
     else case(state)
       IDLE:if(command.cmd_valid && command.cmd_ready) begin
         descriptor_q<=incoming;index_q<=0;sum_q<=0;squares_q<=0;status_q<='0;
-        inverse_length_q<=inverse_count(64'(incoming.length));
         if(!act_bank(incoming.src.bank) || !act_destination(incoming.dst.bank) ||
           !extent(incoming.src.addr,64'(incoming.length)) || !extent(incoming.dst.addr,64'(incoming.length)) ||
           !extent(incoming.gamma_base,64'(incoming.length)) || !extent(incoming.beta_base,64'(incoming.length)) ||
