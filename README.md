@@ -28,6 +28,8 @@ The complete assembly is [bcjrformer_core.sv](rtl/bcjrformer_core.sv). Start wit
 
 **Implemented research baseline; numerical formats remain provisional.** All 29 public module kinds have implementations. EXP and GELU use Taylor arithmetic with documented Lagrange remainder bounds, rather than function-value lookup tables.
 
+The [17 October critical RTL review](docs/reviews/RTL-CRITICAL-REVIEW-2026-10-17.md) found a reproducible LayerNorm numerical deviation, a stored-GELU precision conflict, and verification/configuration gaps. Review is complete; numerical validation is not approved.
+
 Recorded implementation checks from 16 October 2026:
 
 | Check | Recorded result |

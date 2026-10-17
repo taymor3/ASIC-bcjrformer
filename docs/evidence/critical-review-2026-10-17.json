@@ -1,0 +1,325 @@
+{
+  "review_date": "2026-10-17",
+  "reviewed_commit": "731bcb2febe67312100a00d572bd663b544685ba",
+  "scope": "All production SystemVerilog listed in files.f; plus declaration-only ports header, filelist, integration contracts and relevant tests",
+  "production_file_count": 39,
+  "production_sources": [
+    {
+      "path": "rtl/interfaces/bcjrformer_contract_pkg.sv",
+      "sha256": "0ec7a9c430b09745c80c7b34f32d93ba38c05440d5c62de505764181c06cfe99"
+    },
+    {
+      "path": "rtl/interfaces/bcjrformer_channels.sv",
+      "sha256": "276ec5c939bac2d5e8cfdffe765525ab3442dceaa0c3c0252765f07aa5149ef0"
+    },
+    {
+      "path": "rtl/arithmetic/fixed_math_pkg.sv",
+      "sha256": "a32f0b238e9c3a738ac5e15c52752f74bc69fb071d1088b0011b895eec466d01"
+    },
+    {
+      "path": "rtl/protocol/arithmetic_switch.sv",
+      "sha256": "c21d25e4856da12800197ac3451b2fd2b648dac5bb23ff7a059b4623ceb2a2ca"
+    },
+    {
+      "path": "rtl/protocol/command_switch.sv",
+      "sha256": "03e8a68d66ea8a65ebd3958a8240b0ef5aed03de6e1762610dfcad41865437ec"
+    },
+    {
+      "path": "rtl/protocol/memory_fabric.sv",
+      "sha256": "e1d147f5007fe3c6c071033f0ecd0230e1685e1be12088b66d838f82fcae104b"
+    },
+    {
+      "path": "rtl/protocol/transaction_router.sv",
+      "sha256": "e351f29e428d05ea7a1ae815127e4e3ddfc8a101e76c726a11cdf9777d862e4c"
+    },
+    {
+      "path": "rtl/memory/memory_adapter.sv",
+      "sha256": "2b8cc58555acc586bdc531eefe62a7ac64a6ba5eb72b36bcccf51f068f575136"
+    },
+    {
+      "path": "rtl/memory/parameter_mem.sv",
+      "sha256": "66eef7eecbc955f9844610cf77fd133269ea5a095748a2468b967b52a2d2c310"
+    },
+    {
+      "path": "rtl/memory/scratch_mem.sv",
+      "sha256": "dd4564e993bd14ba29f15f08db3a6f780d4eabc1cf8caf9b7884038581360a14"
+    },
+    {
+      "path": "rtl/arithmetic/arithmetic_register.sv",
+      "sha256": "e6113a5896c88d3ec6b00bd81c06d2cc48edac3b1955e4a4b91ded9e57dbc462"
+    },
+    {
+      "path": "rtl/arithmetic/exp_unit.sv",
+      "sha256": "5009fabe90298040e2aac777f89558be6d0afff710f407361ca1563302f5b4fe"
+    },
+    {
+      "path": "rtl/arithmetic/gelu_unit.sv",
+      "sha256": "062faa98ae9ce06551e5a9c57e53d5332d3e5ae444c644d447600897db6a59f5"
+    },
+    {
+      "path": "rtl/arithmetic/mac_unit.sv",
+      "sha256": "93668b7f496b3e568596102a304dc46672fe68b1a3a981b562dd0540b8437764"
+    },
+    {
+      "path": "rtl/arithmetic/position_add_unit.sv",
+      "sha256": "d24b143965b0c63301c54781fb887750238a7074041cfa8997502be53c66977e"
+    },
+    {
+      "path": "rtl/arithmetic/reciprocal_unit.sv",
+      "sha256": "5aa05c5fd4b851f86840eb0858808ee61cd5be4b042adafa46e813a84f27a68a"
+    },
+    {
+      "path": "rtl/arithmetic/rsqrt_unit.sv",
+      "sha256": "492ced64bc8940b9dfa1e5dc2d08bcfd5d894c1e67be122ae79cd39f3a026ad6"
+    },
+    {
+      "path": "rtl/control/aggregation_ctrl.sv",
+      "sha256": "70570dc69c3ce908692e835b5c06e34fdb2b0575f753f1d74a4a6f5f6f7fd368"
+    },
+    {
+      "path": "rtl/control/attention_ctrl.sv",
+      "sha256": "ce68af14e0499826f4e37bdbaf400ff824516e4f5c453179e020099fab9f72b7"
+    },
+    {
+      "path": "rtl/control/core_ctrl.sv",
+      "sha256": "9a4697a3acd4b5790e9065e7c238ae32c4b411a0cb425a43c5a6531ae7ed1125"
+    },
+    {
+      "path": "rtl/control/dot_engine.sv",
+      "sha256": "6c38a8dbb2f15d47369e31556cf914881ea236070db666c38681c1dfb7aaf752"
+    },
+    {
+      "path": "rtl/control/embedding_ctrl.sv",
+      "sha256": "2cd514e2c731e18d823455f68eff7f22497eef66284abdc719ca863a3acb9f27"
+    },
+    {
+      "path": "rtl/control/encoder_ctrl.sv",
+      "sha256": "14d1b3fdf04bd0c1133de5ab2903cf592d20fd9ae6d70848bc4bc003cd310481"
+    },
+    {
+      "path": "rtl/control/ffn_ctrl.sv",
+      "sha256": "158851a220c80d94c028c8ddd348a6715b8d3d2d5a37c9b24c13ab884153b223"
+    },
+    {
+      "path": "rtl/control/final_ctrl.sv",
+      "sha256": "041d66456fcf98c7d75135518625b647c1ce920e97ad9503b5fd46c5c2fd2a0f"
+    },
+    {
+      "path": "rtl/control/layer_ctrl.sv",
+      "sha256": "429ac2d99f19183d91759d8a073ddd6a96c25fe069ae6f948362ef2d591273ee"
+    },
+    {
+      "path": "rtl/control/layernorm_ctrl.sv",
+      "sha256": "7c449268fda6ddb5a971535c83c47a6a71326501a50d1e17b4b3a8dc541b72c5"
+    },
+    {
+      "path": "rtl/control/linear_ctrl.sv",
+      "sha256": "122794e050490aa05a31df97d5ce81a19f75745909ba4aedb1709f2f153d68d1"
+    },
+    {
+      "path": "rtl/control/output_projection_ctrl.sv",
+      "sha256": "150ad2ff9f15d46e69c1f07af49883578daf30fbd1ba5b1f4832756766e53232"
+    },
+    {
+      "path": "rtl/control/position_ctrl.sv",
+      "sha256": "759d3e2bbd3cac2379c9831158845123cbb6f23e593b604d6b6ccdb9068e8dc1"
+    },
+    {
+      "path": "rtl/control/position_sequencer.sv",
+      "sha256": "30b522abb2782421201da47d0ba14543463bb4b6eb46c9b0645a9ff38222444f"
+    },
+    {
+      "path": "rtl/control/projection_loop.sv",
+      "sha256": "6d7eaf5bb1a83d7a3896f2264fa87be3ba2427f304575981ee602210d536f5fc"
+    },
+    {
+      "path": "rtl/control/qkv_ctrl.sv",
+      "sha256": "ba3fb1467476fdc8d63df51c657a246f97f2faf81d03c08de457e821d1fd717a"
+    },
+    {
+      "path": "rtl/control/residual_ctrl.sv",
+      "sha256": "c028e8134e24d8a6c4fa29f5ee92e3f5473b3d55d13b76278dfa0df11afb3d44"
+    },
+    {
+      "path": "rtl/control/row_dot_ctrl.sv",
+      "sha256": "082c47fe55c7ac7a8aa40438697254f279a23d381dd1dd7eb026874766560b5d"
+    },
+    {
+      "path": "rtl/control/score_row_ctrl.sv",
+      "sha256": "30a6586877d23d4b6e61d86d8f8883305e0f9788882a72cbc3e229321536f004"
+    },
+    {
+      "path": "rtl/control/softmax_ctrl.sv",
+      "sha256": "bccac195fd7b20108c1fe00367f3c1fca2be7ab820b0fc3fce9097ee3ef02dbc"
+    },
+    {
+      "path": "rtl/control/weighted_value_ctrl.sv",
+      "sha256": "3213ae89361d37d62483d588bcd23a7f6fa47fa945d5fefbfacbb0a682ffb4ef"
+    },
+    {
+      "path": "rtl/bcjrformer_core.sv",
+      "sha256": "24c633557c9e63b716fe0a05a7ce9c8d5d25c4e4b79ccbc4b0b4c4915879820f"
+    }
+  ],
+  "extra_source_files": [
+    "rtl/interfaces/bcjrformer_ports.svh",
+    "rtl/protocol/files.f"
+  ],
+  "production_rtl_modified": false,
+  "validation_approved": false,
+  "layernorm_actual_rtl_counterexample": {
+    "method": "freshly lowered actual layernorm_ctrl and rsqrt_unit; constant-value test memory responder",
+    "length": 768,
+    "input_raw_Q10": 32767,
+    "gamma_raw_Q10": 1024,
+    "beta_raw_Q10": 0,
+    "first_stored_raw_Q10": 1,
+    "first_stored_real": 0.0009765625,
+    "exact_mathematical_output": 0,
+    "cycles": 3085,
+    "fatal_status": false
+  },
+  "layernorm_exact_integer_large_length_counterexample": {
+    "scope": "exact source-level integer arithmetic counterexample; not an actual RTL run at this length",
+    "input_length": 65355,
+    "input_raw_Q10": 32767,
+    "gamma_raw_Q10": 1024,
+    "beta_raw_Q10": 0,
+    "inverse_length_raw_Q32": 65718,
+    "mean_raw_F20": 33553663,
+    "true_mean_raw_F20": 33553408,
+    "centered_raw_F20": -255,
+    "variance_with_epsilon_raw_F32": 43204,
+    "stored_raw_Q10": -79,
+    "stored_real": -0.0771484375,
+    "exact_LayerNorm_real": 0,
+    "selective_projection_then_second_norm_raw_Q10": [
+      -1021,
+      1021
+    ]
+  },
+  "asymmetric_complete_core": {
+    "shape": "embedding-F3-D2",
+    "method": "cycle simulation of lowered actual RTL, independent Python integer write-stream reference",
+    "cycles": 28569,
+    "checkedWrites": 711,
+    "seconds": 119.279,
+    "results": [
+      {
+        "frame": 0,
+        "code": 0,
+        "position": 0,
+        "writes": 183,
+        "outputs": 3,
+        "cycle": 7898,
+        "passed": true
+      },
+      {
+        "frame": 1,
+        "code": 1,
+        "position": 1,
+        "writes": 178,
+        "outputs": 0,
+        "cycle": 14861,
+        "passed": true
+      },
+      {
+        "frame": 2,
+        "code": 1,
+        "position": 2,
+        "writes": 179,
+        "outputs": 0,
+        "cycle": 21843,
+        "passed": true
+      },
+      {
+        "frame": 3,
+        "code": 1,
+        "position": 0,
+        "writes": 171,
+        "outputs": 0,
+        "cycle": 28569,
+        "passed": true
+      }
+    ]
+  },
+  "fresh_arithmetic": {
+    "vectors": 847,
+    "cycles": 7706,
+    "netlist_rebuilt": true,
+    "passed": true
+  },
+  "taylor_model_and_budget": {
+    "passed": true,
+    "gelu_python_inputs": 65536,
+    "exp_python_samples": 12289,
+    "scope": "Rational bounds and Python integer implementation; not exhaustive actual RTL equivalence"
+  },
+  "conversion_proof": {
+    "passed": true,
+    "scope": "Combinational exhaustive signed48/F20 to signed16/F10 conversion"
+  },
+  "router_proof": {
+    "passed": true,
+    "clients": 13,
+    "steps": 24
+  },
+  "memory_proofs": [
+    {
+      "case": "control",
+      "passed": true,
+      "clients": 3,
+      "param_delay": 2,
+      "scratch_delay": 3,
+      "steps": 16,
+      "data_comparison": false
+    },
+    {
+      "case": "fast",
+      "passed": true,
+      "clients": 1,
+      "param_delay": 1,
+      "scratch_delay": 1,
+      "steps": 16,
+      "depth": 2,
+      "bank": 3
+    },
+    {
+      "case": "bank-13",
+      "passed": true,
+      "clients": 1,
+      "param_delay": 2,
+      "scratch_delay": 3,
+      "steps": 16,
+      "depth": 2,
+      "bank": 13
+    },
+    {
+      "case": "bank-14",
+      "passed": true,
+      "clients": 1,
+      "param_delay": 2,
+      "scratch_delay": 3,
+      "steps": 16,
+      "depth": 2,
+      "bank": 14
+    },
+    {
+      "case": "bank-2",
+      "passed": true,
+      "clients": 1,
+      "param_delay": 2,
+      "scratch_delay": 3,
+      "steps": 16,
+      "depth": 2,
+      "bank": 2
+    }
+  ],
+  "limits": [
+    "Not exhaustive full-core bug freedom",
+    "No four-state simulation",
+    "No unbounded full-core liveness proof",
+    "No trained-model numerical acceptance",
+    "No physical SRAM/timing/area sign-off"
+  ]
+}
