@@ -2,6 +2,8 @@
 
 The archived baseline is [implementation-2026-10-16.json](evidence/implementation-2026-10-16.json). Its hashes and numbers identify that historical implementation. The [post-review evidence](evidence/review-fixes-2026-10-17.json) and [current source index](evidence/rtl-source-current.json) describe the corrected implementation. See the [correction checkpoint](rtl/RTL-REVIEW-FIXES-2026-10-17.md) for results and remaining limits.
 
+The [independent review of the corrected RTL](reviews/RTL-POST-FIX-CRITICAL-REVIEW-2026-10-17.md) covers all 39 production sources. It records fresh adversarial checks, the aggregation rounding caveat and the remaining validation gates; it does not grant numerical or physical sign-off.
+
 ## Environment
 
 Install [requirements-dev.txt](../requirements-dev.txt) in a Python 3.12 virtual environment and use Node.js 22 or newer. Publication smoke/numerical checks were run with Python 3.12.14 and Node.js 24.19.0. The Python runners import normally installed packages; their legacy optional `rtl/.tools` search path need not exist. Do not vendor tool installations into the repository.

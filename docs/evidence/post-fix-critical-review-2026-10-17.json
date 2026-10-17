@@ -1,0 +1,144 @@
+{
+  "date": "2026-10-17",
+  "reviewed_commit": "29ec5a4df7331fb288665f82582899b28a6e3b3c",
+  "status": "Source review complete: no new confirmed production functional defect established; validation/sign-off remain open",
+  "reviewers": {
+    "critical_control": "21 control modules, full assembly and public declarations",
+    "critical_numerics": "8 arithmetic modules, numerical contracts and consuming controllers",
+    "critical_memory": "4 protocol,3 memory,2 interface modules, assembly and proof assumptions",
+    "primary": "cross-review,verification runners/interpreter,documentation,nonlinear RTL sweep,reproducer execution"
+  },
+  "production_sources": 39,
+  "production_rtl_changed": false,
+  "source_sha256": {
+    "rtl/interfaces/bcjrformer_contract_pkg.sv": "e3053717f31058f2d74c9ce74d20635b7d8aa3752628bac12cde5511511f118b",
+    "rtl/interfaces/bcjrformer_channels.sv": "276ec5c939bac2d5e8cfdffe765525ab3442dceaa0c3c0252765f07aa5149ef0",
+    "rtl/arithmetic/fixed_math_pkg.sv": "5b978204e67b4c88aa2b6da72753e58ee9f5f0b4e40f5238b74a9646bf292ea1",
+    "rtl/protocol/arithmetic_switch.sv": "c21d25e4856da12800197ac3451b2fd2b648dac5bb23ff7a059b4623ceb2a2ca",
+    "rtl/protocol/command_switch.sv": "03e8a68d66ea8a65ebd3958a8240b0ef5aed03de6e1762610dfcad41865437ec",
+    "rtl/protocol/memory_fabric.sv": "ecd6870a37603836127426522b2e5bdf728ede302a4659356513c48b4308cde4",
+    "rtl/protocol/transaction_router.sv": "e351f29e428d05ea7a1ae815127e4e3ddfc8a101e76c726a11cdf9777d862e4c",
+    "rtl/memory/memory_adapter.sv": "165dfe5256f957964e67ba53c3bb1b5d9a2a6674ba78631b7fb1e350fd89def8",
+    "rtl/memory/parameter_mem.sv": "66eef7eecbc955f9844610cf77fd133269ea5a095748a2468b967b52a2d2c310",
+    "rtl/memory/scratch_mem.sv": "dd4564e993bd14ba29f15f08db3a6f780d4eabc1cf8caf9b7884038581360a14",
+    "rtl/arithmetic/arithmetic_register.sv": "e6113a5896c88d3ec6b00bd81c06d2cc48edac3b1955e4a4b91ded9e57dbc462",
+    "rtl/arithmetic/exp_unit.sv": "5009fabe90298040e2aac777f89558be6d0afff710f407361ca1563302f5b4fe",
+    "rtl/arithmetic/gelu_unit.sv": "062faa98ae9ce06551e5a9c57e53d5332d3e5ae444c644d447600897db6a59f5",
+    "rtl/arithmetic/mac_unit.sv": "f2d62735a93f008c830aa41d42c17fa1f10641fd3e05f45701f0292eb06ce58d",
+    "rtl/arithmetic/position_add_unit.sv": "d24b143965b0c63301c54781fb887750238a7074041cfa8997502be53c66977e",
+    "rtl/arithmetic/reciprocal_unit.sv": "5aa05c5fd4b851f86840eb0858808ee61cd5be4b042adafa46e813a84f27a68a",
+    "rtl/arithmetic/rsqrt_unit.sv": "f88efc001a86b09965d4d1e506d691a2e0809e36ebd1e6504b9304ff94785d20",
+    "rtl/control/aggregation_ctrl.sv": "70570dc69c3ce908692e835b5c06e34fdb2b0575f753f1d74a4a6f5f6f7fd368",
+    "rtl/control/attention_ctrl.sv": "ce68af14e0499826f4e37bdbaf400ff824516e4f5c453179e020099fab9f72b7",
+    "rtl/control/core_ctrl.sv": "6a77482f9f85a18567480eab61883a7b64ca3c862be25468341e93066af1e5fa",
+    "rtl/control/dot_engine.sv": "8d0478ef7f4a5e9fbb63d1ad18e32d9aedf41c74bfa53941c8ebcc2953326268",
+    "rtl/control/embedding_ctrl.sv": "2cd514e2c731e18d823455f68eff7f22497eef66284abdc719ca863a3acb9f27",
+    "rtl/control/encoder_ctrl.sv": "14d1b3fdf04bd0c1133de5ab2903cf592d20fd9ae6d70848bc4bc003cd310481",
+    "rtl/control/ffn_ctrl.sv": "429fbc9f5b01e2fbb7017a6523eaa0ef1b58770e1ca32ebd925289b7f7b867a5",
+    "rtl/control/final_ctrl.sv": "041d66456fcf98c7d75135518625b647c1ce920e97ad9503b5fd46c5c2fd2a0f",
+    "rtl/control/layer_ctrl.sv": "429ac2d99f19183d91759d8a073ddd6a96c25fe069ae6f948362ef2d591273ee",
+    "rtl/control/layernorm_ctrl.sv": "0c534b8f8a9fdb3ab828f140fb0de2c24ccdccd62c2a525590f38fe01de20b9a",
+    "rtl/control/linear_ctrl.sv": "b2ad32aa0d022d081f0c4c8276738cc619209e7b403df331abc88f830a56995d",
+    "rtl/control/output_projection_ctrl.sv": "150ad2ff9f15d46e69c1f07af49883578daf30fbd1ba5b1f4832756766e53232",
+    "rtl/control/position_ctrl.sv": "759d3e2bbd3cac2379c9831158845123cbb6f23e593b604d6b6ccdb9068e8dc1",
+    "rtl/control/position_sequencer.sv": "30b522abb2782421201da47d0ba14543463bb4b6eb46c9b0645a9ff38222444f",
+    "rtl/control/projection_loop.sv": "6d7eaf5bb1a83d7a3896f2264fa87be3ba2427f304575981ee602210d536f5fc",
+    "rtl/control/qkv_ctrl.sv": "ba3fb1467476fdc8d63df51c657a246f97f2faf81d03c08de457e821d1fd717a",
+    "rtl/control/residual_ctrl.sv": "c028e8134e24d8a6c4fa29f5ee92e3f5473b3d55d13b76278dfa0df11afb3d44",
+    "rtl/control/row_dot_ctrl.sv": "082c47fe55c7ac7a8aa40438697254f279a23d381dd1dd7eb026874766560b5d",
+    "rtl/control/score_row_ctrl.sv": "30a6586877d23d4b6e61d86d8f8883305e0f9788882a72cbc3e229321536f004",
+    "rtl/control/softmax_ctrl.sv": "bccac195fd7b20108c1fe00367f3c1fca2be7ab820b0fc3fce9097ee3ef02dbc",
+    "rtl/control/weighted_value_ctrl.sv": "3213ae89361d37d62483d588bcd23a7f6fa47fa945d5fefbfacbb0a682ffb4ef",
+    "rtl/bcjrformer_core.sv": "24c633557c9e63b716fe0a05a7ce9c8d5d25c4e4b79ccbc4b0b4c4915879820f"
+  },
+  "fresh_actual_rtl_checks": {
+    "core_host_fault_scenarios": [
+      {
+        "case": 20,
+        "steps": 128,
+        "passed": true,
+        "method": "bounded assertions with required scenario completion"
+      },
+      {
+        "case": 11,
+        "steps": 128,
+        "passed": true,
+        "method": "bounded assertions with required scenario completion"
+      }
+    ],
+    "router": {
+      "clients": 13,
+      "steps": 24,
+      "passed": true,
+      "method": "bounded safety proof"
+    },
+    "nonlinear_functions": {
+      "passed": true,
+      "counts": {
+        "1": 12289,
+        "4": 65536
+      },
+      "maximum": {
+        "1": {
+          "error": 1.1920111257838471e-07,
+          "raw": -15564800,
+          "observed": 4.76837158203125e-07,
+          "exact": 3.576360456247403e-07
+        },
+        "4": {
+          "error": 2.3249905323208253e-07,
+          "raw": -6144,
+          "observed": -2.384185791015625e-07,
+          "exact": -5.919525869479969e-09
+        }
+      },
+      "cycles": 1040446,
+      "seconds": 1098.824,
+      "method": "freshly lowered actual arithmetic RTL; independent math.erf/math.exp function comparison for every represented GELU input and sampled EXP inputs"
+    },
+    "aggregation_rounding_observation": {
+      "actual_raw": 1,
+      "exact_rne_mean_raw": 0,
+      "inputs_raw": [
+        1,
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      "cycles": 37,
+      "classification": "declared reciprocal/product rounding approximation"
+    }
+  },
+  "fresh_independent_reference_checks": {
+    "gelu": {
+      "inputs": 65536,
+      "maximum_absolute_error": 2.3249905323e-07,
+      "maximum_recurrence_magnitude_bits": 86,
+      "maximum_numerator_magnitude_bits": 116
+    },
+    "exp": {
+      "samples": 25005,
+      "maximum_sampled_absolute_error": 1.1921112e-07
+    },
+    "rsqrt": {
+      "samples": 10004,
+      "exact_midpoint_inequalities_passed": true
+    },
+    "taylor_budget_review": "Remainder,tail,coefficient/internal rounding and output rounding independently assessed; documented budgets remain below1e-5"
+  },
+  "proof_log_sha256": {
+    "rtl/tests/tmp/critical-control/host-output-commit.log": "9c88fa29333468c046784086c1a5b10bb3bf49ec4a854f2a861e820b2e321345",
+    "rtl/tests/tmp/critical-control/host-completion-commit.log": "3dd3fa82f1a5e621d2e0f4bab2c6ace8b43ea3189f1909a978e59a3258b50906",
+    "rtl/tests/critical-memory-router.log": "4eaf8008bf565f1eed6df9946513c0c281be0fde325fbdd82c76cb6969d188d2"
+  },
+  "limitations": [
+    "Two-state execution; no four-state simulation performed",
+    "Bounded safety and deterministic scenarios do not establish unbounded liveness or fairness",
+    "No exhaustive reset/fault insertion across every controller state or full-size configuration",
+    "No selected trained model,approved whole-network tolerance,or decoding-quality comparison",
+    "No target technology,SRAM macro mapping,area,timing or power sign-off",
+    "Earlier full implementation suite and GitHub run were not entirely rerun for this review"
+  ]
+}
