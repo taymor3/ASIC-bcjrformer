@@ -116,4 +116,3 @@ Project authors: **Taimor Sabek and Haiel Bader**. The hardware follows the BCJR
 The presentation is inspired by the clear microarchitecture-first structure of [ama-riscv](https://github.com/AleksandarLilic/ama-riscv). Its code and artwork are not included.
 
 The project is publicly viewable under the [Viewing and Prior Written Permission License](LICENSE.md). **Consult Taimor Sabek and Haiel Bader and obtain their written permission before using, simulating, synthesizing, modifying, or redistributing the original project materials**, including for research or non-commercial work. Request permission through a GitHub issue titled **Permission request**. Third-party materials retain their own licenses; see [NOTICE.md](NOTICE.md). This is a public, source-available project under a custom restrictive license.
-

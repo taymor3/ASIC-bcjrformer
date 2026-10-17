@@ -1,0 +1,1258 @@
+{
+  "status": "PROVISIONAL; not checkpoint-validated; candidate widths only",
+  "derivedFeatureEvidence": {
+    "F": 27,
+    "window": 27,
+    "states": 1,
+    "driftRange": 13.626599374984053
+  },
+  "cases": [
+    {
+      "config": {
+        "name": "local-example",
+        "F": 27,
+        "N": 144,
+        "M": 1,
+        "D": 16,
+        "H": 2,
+        "K": 1,
+        "L": 144,
+        "d": 8
+      },
+      "manifest": {
+        "words": 6151,
+        "tensors": [
+          {
+            "name": "to_patch_embedding.0.weight",
+            "shape": [
+              27
+            ],
+            "base": 0,
+            "words": 27
+          },
+          {
+            "name": "to_patch_embedding.0.bias",
+            "shape": [
+              27
+            ],
+            "base": 27,
+            "words": 27
+          },
+          {
+            "name": "to_patch_embedding.1.weight",
+            "shape": [
+              16,
+              27
+            ],
+            "base": 54,
+            "words": 432
+          },
+          {
+            "name": "to_patch_embedding.1.bias",
+            "shape": [
+              16
+            ],
+            "base": 486,
+            "words": 16
+          },
+          {
+            "name": "to_patch_embedding.2.weight",
+            "shape": [
+              16
+            ],
+            "base": 502,
+            "words": 16
+          },
+          {
+            "name": "to_patch_embedding.2.bias",
+            "shape": [
+              16
+            ],
+            "base": 518,
+            "words": 16
+          },
+          {
+            "name": "pos_embed",
+            "shape": [
+              144,
+              16
+            ],
+            "base": 534,
+            "words": 2304
+          },
+          {
+            "name": "seq_embed.weight",
+            "shape": [
+              1,
+              16
+            ],
+            "base": 2838,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.0.pre_norm_attn.norm.weight",
+            "shape": [
+              16
+            ],
+            "base": 2854,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.0.pre_norm_attn.norm.bias",
+            "shape": [
+              16
+            ],
+            "base": 2870,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.0.pre_norm_ff.norm.weight",
+            "shape": [
+              16
+            ],
+            "base": 2886,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.0.pre_norm_ff.norm.bias",
+            "shape": [
+              16
+            ],
+            "base": 2902,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.0.attn.to_q.weight",
+            "shape": [
+              16,
+              16
+            ],
+            "base": 2918,
+            "words": 256
+          },
+          {
+            "name": "decoder.layers.0.attn.to_q.bias",
+            "shape": [
+              16
+            ],
+            "base": 3174,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.0.attn.to_k.weight",
+            "shape": [
+              16,
+              16
+            ],
+            "base": 3190,
+            "words": 256
+          },
+          {
+            "name": "decoder.layers.0.attn.to_k.bias",
+            "shape": [
+              16
+            ],
+            "base": 3446,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.0.attn.to_v.weight",
+            "shape": [
+              16,
+              16
+            ],
+            "base": 3462,
+            "words": 256
+          },
+          {
+            "name": "decoder.layers.0.attn.to_v.bias",
+            "shape": [
+              16
+            ],
+            "base": 3718,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.0.attn.to_out.0.weight",
+            "shape": [
+              16,
+              16
+            ],
+            "base": 3734,
+            "words": 256
+          },
+          {
+            "name": "decoder.layers.0.attn.to_out.0.bias",
+            "shape": [
+              16
+            ],
+            "base": 3990,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.0.ff.net.0.weight",
+            "shape": [
+              64,
+              16
+            ],
+            "base": 4006,
+            "words": 1024
+          },
+          {
+            "name": "decoder.layers.0.ff.net.0.bias",
+            "shape": [
+              64
+            ],
+            "base": 5030,
+            "words": 64
+          },
+          {
+            "name": "decoder.layers.0.ff.net.3.weight",
+            "shape": [
+              16,
+              64
+            ],
+            "base": 5094,
+            "words": 1024
+          },
+          {
+            "name": "decoder.layers.0.ff.net.3.bias",
+            "shape": [
+              16
+            ],
+            "base": 6118,
+            "words": 16
+          },
+          {
+            "name": "oned_final_embed.0.weight",
+            "shape": [
+              1,
+              16
+            ],
+            "base": 6134,
+            "words": 16
+          },
+          {
+            "name": "oned_final_embed.0.bias",
+            "shape": [
+              1
+            ],
+            "base": 6150,
+            "words": 1
+          }
+        ],
+        "order": "proposed contiguous output-row-first layout; validate against real checkpoint; no values/checksums exported"
+      },
+      "banks": [
+        {
+          "name": "PARAM",
+          "elements": 6151,
+          "width": 16,
+          "bits": 98416
+        },
+        {
+          "name": "FEATURE",
+          "elements": 3888,
+          "width": 16,
+          "bits": 62208
+        },
+        {
+          "name": "MASK",
+          "elements": 144,
+          "width": 1,
+          "bits": 144
+        },
+        {
+          "name": "X",
+          "elements": 2304,
+          "width": 16,
+          "bits": 36864
+        },
+        {
+          "name": "U",
+          "elements": 2304,
+          "width": 16,
+          "bits": 36864
+        },
+        {
+          "name": "Q",
+          "elements": 2304,
+          "width": 16,
+          "bits": 36864
+        },
+        {
+          "name": "KEY",
+          "elements": 2304,
+          "width": 16,
+          "bits": 36864
+        },
+        {
+          "name": "VALUE",
+          "elements": 2304,
+          "width": 16,
+          "bits": 36864
+        },
+        {
+          "name": "Z",
+          "elements": 2304,
+          "width": 16,
+          "bits": 36864
+        },
+        {
+          "name": "ATTN_OUT",
+          "elements": 2304,
+          "width": 16,
+          "bits": 36864
+        },
+        {
+          "name": "TOKEN",
+          "elements": 27,
+          "width": 16,
+          "bits": 432
+        },
+        {
+          "name": "FFN_HIDDEN",
+          "elements": 64,
+          "width": 16,
+          "bits": 1024
+        },
+        {
+          "name": "VECTOR",
+          "elements": 64,
+          "width": 16,
+          "bits": 1024
+        },
+        {
+          "name": "SCORE",
+          "elements": 144,
+          "width": 48,
+          "bits": 6912
+        },
+        {
+          "name": "EXP",
+          "elements": 144,
+          "width": 24,
+          "bits": 3456
+        },
+        {
+          "name": "PROB",
+          "elements": 144,
+          "width": 24,
+          "bits": 3456
+        },
+        {
+          "name": "LOGIT",
+          "elements": 144,
+          "width": 16,
+          "bits": 2304
+        },
+        {
+          "name": "OUTPUT",
+          "elements": 144,
+          "width": 16,
+          "bits": 2304
+        }
+      ],
+      "totalBits": 439728,
+      "totalKiB": 53.677734375,
+      "macs": {
+        "embedding": 62208,
+        "encoderLinear": 442368,
+        "score": 331776,
+        "weighted": 331776,
+        "final": 2304
+      },
+      "totalDotTerms": 1170432,
+      "operandReads": 2340864,
+      "minimumHostTransfers": 4176,
+      "primitives": {
+        "layernormCalls": 576,
+        "gelu": 9216,
+        "expWorstCase": 41472,
+        "reciprocalWorstCase": 432
+      },
+      "dotServiceIllustration": {
+        "readTransactionCycles": 2,
+        "macTransactionCycles": 2,
+        "cycles": 7022592,
+        "at100MHzMs": 70.22592
+      }
+    },
+    {
+      "config": {
+        "name": "four-read-sensitivity",
+        "F": 27,
+        "N": 144,
+        "M": 4,
+        "D": 16,
+        "H": 2,
+        "K": 1,
+        "L": 576,
+        "d": 8
+      },
+      "manifest": {
+        "words": 6199,
+        "tensors": [
+          {
+            "name": "to_patch_embedding.0.weight",
+            "shape": [
+              27
+            ],
+            "base": 0,
+            "words": 27
+          },
+          {
+            "name": "to_patch_embedding.0.bias",
+            "shape": [
+              27
+            ],
+            "base": 27,
+            "words": 27
+          },
+          {
+            "name": "to_patch_embedding.1.weight",
+            "shape": [
+              16,
+              27
+            ],
+            "base": 54,
+            "words": 432
+          },
+          {
+            "name": "to_patch_embedding.1.bias",
+            "shape": [
+              16
+            ],
+            "base": 486,
+            "words": 16
+          },
+          {
+            "name": "to_patch_embedding.2.weight",
+            "shape": [
+              16
+            ],
+            "base": 502,
+            "words": 16
+          },
+          {
+            "name": "to_patch_embedding.2.bias",
+            "shape": [
+              16
+            ],
+            "base": 518,
+            "words": 16
+          },
+          {
+            "name": "pos_embed",
+            "shape": [
+              144,
+              16
+            ],
+            "base": 534,
+            "words": 2304
+          },
+          {
+            "name": "seq_embed.weight",
+            "shape": [
+              4,
+              16
+            ],
+            "base": 2838,
+            "words": 64
+          },
+          {
+            "name": "decoder.layers.0.pre_norm_attn.norm.weight",
+            "shape": [
+              16
+            ],
+            "base": 2902,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.0.pre_norm_attn.norm.bias",
+            "shape": [
+              16
+            ],
+            "base": 2918,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.0.pre_norm_ff.norm.weight",
+            "shape": [
+              16
+            ],
+            "base": 2934,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.0.pre_norm_ff.norm.bias",
+            "shape": [
+              16
+            ],
+            "base": 2950,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.0.attn.to_q.weight",
+            "shape": [
+              16,
+              16
+            ],
+            "base": 2966,
+            "words": 256
+          },
+          {
+            "name": "decoder.layers.0.attn.to_q.bias",
+            "shape": [
+              16
+            ],
+            "base": 3222,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.0.attn.to_k.weight",
+            "shape": [
+              16,
+              16
+            ],
+            "base": 3238,
+            "words": 256
+          },
+          {
+            "name": "decoder.layers.0.attn.to_k.bias",
+            "shape": [
+              16
+            ],
+            "base": 3494,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.0.attn.to_v.weight",
+            "shape": [
+              16,
+              16
+            ],
+            "base": 3510,
+            "words": 256
+          },
+          {
+            "name": "decoder.layers.0.attn.to_v.bias",
+            "shape": [
+              16
+            ],
+            "base": 3766,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.0.attn.to_out.0.weight",
+            "shape": [
+              16,
+              16
+            ],
+            "base": 3782,
+            "words": 256
+          },
+          {
+            "name": "decoder.layers.0.attn.to_out.0.bias",
+            "shape": [
+              16
+            ],
+            "base": 4038,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.0.ff.net.0.weight",
+            "shape": [
+              64,
+              16
+            ],
+            "base": 4054,
+            "words": 1024
+          },
+          {
+            "name": "decoder.layers.0.ff.net.0.bias",
+            "shape": [
+              64
+            ],
+            "base": 5078,
+            "words": 64
+          },
+          {
+            "name": "decoder.layers.0.ff.net.3.weight",
+            "shape": [
+              16,
+              64
+            ],
+            "base": 5142,
+            "words": 1024
+          },
+          {
+            "name": "decoder.layers.0.ff.net.3.bias",
+            "shape": [
+              16
+            ],
+            "base": 6166,
+            "words": 16
+          },
+          {
+            "name": "oned_final_embed.0.weight",
+            "shape": [
+              1,
+              16
+            ],
+            "base": 6182,
+            "words": 16
+          },
+          {
+            "name": "oned_final_embed.0.bias",
+            "shape": [
+              1
+            ],
+            "base": 6198,
+            "words": 1
+          }
+        ],
+        "order": "proposed contiguous output-row-first layout; validate against real checkpoint; no values/checksums exported"
+      },
+      "banks": [
+        {
+          "name": "PARAM",
+          "elements": 6199,
+          "width": 16,
+          "bits": 99184
+        },
+        {
+          "name": "FEATURE",
+          "elements": 15552,
+          "width": 16,
+          "bits": 248832
+        },
+        {
+          "name": "MASK",
+          "elements": 576,
+          "width": 1,
+          "bits": 576
+        },
+        {
+          "name": "X",
+          "elements": 9216,
+          "width": 16,
+          "bits": 147456
+        },
+        {
+          "name": "U",
+          "elements": 9216,
+          "width": 16,
+          "bits": 147456
+        },
+        {
+          "name": "Q",
+          "elements": 9216,
+          "width": 16,
+          "bits": 147456
+        },
+        {
+          "name": "KEY",
+          "elements": 9216,
+          "width": 16,
+          "bits": 147456
+        },
+        {
+          "name": "VALUE",
+          "elements": 9216,
+          "width": 16,
+          "bits": 147456
+        },
+        {
+          "name": "Z",
+          "elements": 9216,
+          "width": 16,
+          "bits": 147456
+        },
+        {
+          "name": "ATTN_OUT",
+          "elements": 9216,
+          "width": 16,
+          "bits": 147456
+        },
+        {
+          "name": "TOKEN",
+          "elements": 27,
+          "width": 16,
+          "bits": 432
+        },
+        {
+          "name": "FFN_HIDDEN",
+          "elements": 64,
+          "width": 16,
+          "bits": 1024
+        },
+        {
+          "name": "VECTOR",
+          "elements": 64,
+          "width": 16,
+          "bits": 1024
+        },
+        {
+          "name": "SCORE",
+          "elements": 576,
+          "width": 48,
+          "bits": 27648
+        },
+        {
+          "name": "EXP",
+          "elements": 576,
+          "width": 24,
+          "bits": 13824
+        },
+        {
+          "name": "PROB",
+          "elements": 576,
+          "width": 24,
+          "bits": 13824
+        },
+        {
+          "name": "LOGIT",
+          "elements": 576,
+          "width": 16,
+          "bits": 9216
+        },
+        {
+          "name": "OUTPUT",
+          "elements": 144,
+          "width": 16,
+          "bits": 2304
+        }
+      ],
+      "totalBits": 1450080,
+      "totalKiB": 177.01171875,
+      "macs": {
+        "embedding": 248832,
+        "encoderLinear": 1769472,
+        "score": 5308416,
+        "weighted": 5308416,
+        "final": 9216
+      },
+      "totalDotTerms": 12644352,
+      "operandReads": 25288704,
+      "minimumHostTransfers": 16272,
+      "primitives": {
+        "layernormCalls": 2304,
+        "gelu": 36864,
+        "expWorstCase": 663552,
+        "reciprocalWorstCase": 1296
+      },
+      "dotServiceIllustration": {
+        "readTransactionCycles": 2,
+        "macTransactionCycles": 2,
+        "cycles": 75866112,
+        "at100MHzMs": 758.66112
+      }
+    },
+    {
+      "config": {
+        "name": "two-layer-sensitivity",
+        "F": 27,
+        "N": 144,
+        "M": 1,
+        "D": 16,
+        "H": 2,
+        "K": 2,
+        "L": 144,
+        "d": 8
+      },
+      "manifest": {
+        "words": 9431,
+        "tensors": [
+          {
+            "name": "to_patch_embedding.0.weight",
+            "shape": [
+              27
+            ],
+            "base": 0,
+            "words": 27
+          },
+          {
+            "name": "to_patch_embedding.0.bias",
+            "shape": [
+              27
+            ],
+            "base": 27,
+            "words": 27
+          },
+          {
+            "name": "to_patch_embedding.1.weight",
+            "shape": [
+              16,
+              27
+            ],
+            "base": 54,
+            "words": 432
+          },
+          {
+            "name": "to_patch_embedding.1.bias",
+            "shape": [
+              16
+            ],
+            "base": 486,
+            "words": 16
+          },
+          {
+            "name": "to_patch_embedding.2.weight",
+            "shape": [
+              16
+            ],
+            "base": 502,
+            "words": 16
+          },
+          {
+            "name": "to_patch_embedding.2.bias",
+            "shape": [
+              16
+            ],
+            "base": 518,
+            "words": 16
+          },
+          {
+            "name": "pos_embed",
+            "shape": [
+              144,
+              16
+            ],
+            "base": 534,
+            "words": 2304
+          },
+          {
+            "name": "seq_embed.weight",
+            "shape": [
+              1,
+              16
+            ],
+            "base": 2838,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.0.pre_norm_attn.norm.weight",
+            "shape": [
+              16
+            ],
+            "base": 2854,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.0.pre_norm_attn.norm.bias",
+            "shape": [
+              16
+            ],
+            "base": 2870,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.0.pre_norm_ff.norm.weight",
+            "shape": [
+              16
+            ],
+            "base": 2886,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.0.pre_norm_ff.norm.bias",
+            "shape": [
+              16
+            ],
+            "base": 2902,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.0.attn.to_q.weight",
+            "shape": [
+              16,
+              16
+            ],
+            "base": 2918,
+            "words": 256
+          },
+          {
+            "name": "decoder.layers.0.attn.to_q.bias",
+            "shape": [
+              16
+            ],
+            "base": 3174,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.0.attn.to_k.weight",
+            "shape": [
+              16,
+              16
+            ],
+            "base": 3190,
+            "words": 256
+          },
+          {
+            "name": "decoder.layers.0.attn.to_k.bias",
+            "shape": [
+              16
+            ],
+            "base": 3446,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.0.attn.to_v.weight",
+            "shape": [
+              16,
+              16
+            ],
+            "base": 3462,
+            "words": 256
+          },
+          {
+            "name": "decoder.layers.0.attn.to_v.bias",
+            "shape": [
+              16
+            ],
+            "base": 3718,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.0.attn.to_out.0.weight",
+            "shape": [
+              16,
+              16
+            ],
+            "base": 3734,
+            "words": 256
+          },
+          {
+            "name": "decoder.layers.0.attn.to_out.0.bias",
+            "shape": [
+              16
+            ],
+            "base": 3990,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.0.ff.net.0.weight",
+            "shape": [
+              64,
+              16
+            ],
+            "base": 4006,
+            "words": 1024
+          },
+          {
+            "name": "decoder.layers.0.ff.net.0.bias",
+            "shape": [
+              64
+            ],
+            "base": 5030,
+            "words": 64
+          },
+          {
+            "name": "decoder.layers.0.ff.net.3.weight",
+            "shape": [
+              16,
+              64
+            ],
+            "base": 5094,
+            "words": 1024
+          },
+          {
+            "name": "decoder.layers.0.ff.net.3.bias",
+            "shape": [
+              16
+            ],
+            "base": 6118,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.1.pre_norm_attn.norm.weight",
+            "shape": [
+              16
+            ],
+            "base": 6134,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.1.pre_norm_attn.norm.bias",
+            "shape": [
+              16
+            ],
+            "base": 6150,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.1.pre_norm_ff.norm.weight",
+            "shape": [
+              16
+            ],
+            "base": 6166,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.1.pre_norm_ff.norm.bias",
+            "shape": [
+              16
+            ],
+            "base": 6182,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.1.attn.to_q.weight",
+            "shape": [
+              16,
+              16
+            ],
+            "base": 6198,
+            "words": 256
+          },
+          {
+            "name": "decoder.layers.1.attn.to_q.bias",
+            "shape": [
+              16
+            ],
+            "base": 6454,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.1.attn.to_k.weight",
+            "shape": [
+              16,
+              16
+            ],
+            "base": 6470,
+            "words": 256
+          },
+          {
+            "name": "decoder.layers.1.attn.to_k.bias",
+            "shape": [
+              16
+            ],
+            "base": 6726,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.1.attn.to_v.weight",
+            "shape": [
+              16,
+              16
+            ],
+            "base": 6742,
+            "words": 256
+          },
+          {
+            "name": "decoder.layers.1.attn.to_v.bias",
+            "shape": [
+              16
+            ],
+            "base": 6998,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.1.attn.to_out.0.weight",
+            "shape": [
+              16,
+              16
+            ],
+            "base": 7014,
+            "words": 256
+          },
+          {
+            "name": "decoder.layers.1.attn.to_out.0.bias",
+            "shape": [
+              16
+            ],
+            "base": 7270,
+            "words": 16
+          },
+          {
+            "name": "decoder.layers.1.ff.net.0.weight",
+            "shape": [
+              64,
+              16
+            ],
+            "base": 7286,
+            "words": 1024
+          },
+          {
+            "name": "decoder.layers.1.ff.net.0.bias",
+            "shape": [
+              64
+            ],
+            "base": 8310,
+            "words": 64
+          },
+          {
+            "name": "decoder.layers.1.ff.net.3.weight",
+            "shape": [
+              16,
+              64
+            ],
+            "base": 8374,
+            "words": 1024
+          },
+          {
+            "name": "decoder.layers.1.ff.net.3.bias",
+            "shape": [
+              16
+            ],
+            "base": 9398,
+            "words": 16
+          },
+          {
+            "name": "oned_final_embed.0.weight",
+            "shape": [
+              1,
+              16
+            ],
+            "base": 9414,
+            "words": 16
+          },
+          {
+            "name": "oned_final_embed.0.bias",
+            "shape": [
+              1
+            ],
+            "base": 9430,
+            "words": 1
+          }
+        ],
+        "order": "proposed contiguous output-row-first layout; validate against real checkpoint; no values/checksums exported"
+      },
+      "banks": [
+        {
+          "name": "PARAM",
+          "elements": 9431,
+          "width": 16,
+          "bits": 150896
+        },
+        {
+          "name": "FEATURE",
+          "elements": 3888,
+          "width": 16,
+          "bits": 62208
+        },
+        {
+          "name": "MASK",
+          "elements": 144,
+          "width": 1,
+          "bits": 144
+        },
+        {
+          "name": "X",
+          "elements": 2304,
+          "width": 16,
+          "bits": 36864
+        },
+        {
+          "name": "U",
+          "elements": 2304,
+          "width": 16,
+          "bits": 36864
+        },
+        {
+          "name": "Q",
+          "elements": 2304,
+          "width": 16,
+          "bits": 36864
+        },
+        {
+          "name": "KEY",
+          "elements": 2304,
+          "width": 16,
+          "bits": 36864
+        },
+        {
+          "name": "VALUE",
+          "elements": 2304,
+          "width": 16,
+          "bits": 36864
+        },
+        {
+          "name": "Z",
+          "elements": 2304,
+          "width": 16,
+          "bits": 36864
+        },
+        {
+          "name": "ATTN_OUT",
+          "elements": 2304,
+          "width": 16,
+          "bits": 36864
+        },
+        {
+          "name": "TOKEN",
+          "elements": 27,
+          "width": 16,
+          "bits": 432
+        },
+        {
+          "name": "FFN_HIDDEN",
+          "elements": 64,
+          "width": 16,
+          "bits": 1024
+        },
+        {
+          "name": "VECTOR",
+          "elements": 64,
+          "width": 16,
+          "bits": 1024
+        },
+        {
+          "name": "SCORE",
+          "elements": 144,
+          "width": 48,
+          "bits": 6912
+        },
+        {
+          "name": "EXP",
+          "elements": 144,
+          "width": 24,
+          "bits": 3456
+        },
+        {
+          "name": "PROB",
+          "elements": 144,
+          "width": 24,
+          "bits": 3456
+        },
+        {
+          "name": "LOGIT",
+          "elements": 144,
+          "width": 16,
+          "bits": 2304
+        },
+        {
+          "name": "OUTPUT",
+          "elements": 144,
+          "width": 16,
+          "bits": 2304
+        }
+      ],
+      "totalBits": 492208,
+      "totalKiB": 60.083984375,
+      "macs": {
+        "embedding": 62208,
+        "encoderLinear": 884736,
+        "score": 663552,
+        "weighted": 663552,
+        "final": 2304
+      },
+      "totalDotTerms": 2276352,
+      "operandReads": 4552704,
+      "minimumHostTransfers": 4176,
+      "primitives": {
+        "layernormCalls": 864,
+        "gelu": 18432,
+        "expWorstCase": 82944,
+        "reciprocalWorstCase": 720
+      },
+      "dotServiceIllustration": {
+        "readTransactionCycles": 2,
+        "macTransactionCycles": 2,
+        "cycles": 13658112,
+        "at100MHzMs": 136.58112
+      }
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+\section{Abstract}
+This paper specifies a sequential inference architecture for the BCJRFormer neural decoder. The core transforms prepared received-read window features and a padding mask into one logit per decoded position. Five stages implement input embedding, position/read embedding, transformer encoding, final projection and read aggregation. A shared dot-product datapath and a reusable encoder-layer engine reduce arithmetic replication. Each stage is defined by its mathematics, storage dependencies, control sequence and completion condition. Explicit transaction protocols accommodate variable-latency memories and nonlinear arithmetic. The design preserves reference masking and aggregation semantics while identifying numerical precision and physical feasibility as validation requirements. The final research section describes candidate implementations and experiments for unresolved nonlinear operations.
+
+\section{Scope and Architectural Overview}
+The implementation boundary is BCJRFormer.forward(y, padding\_mask) in evaluation mode. Trellis/window preprocessing and outer decoding are outside the neural core. The host supplies prepared features, the original padding mask and a parameter image matching the selected configuration. Training does not execute in the ASIC.
+\[
+y\in\mathbb{R}^{1\times M\times N\times W\times S},\qquad
+F=WS,\qquad L=MN,\qquad
+p^{mask}\in\{0,1\}^{1\times M\times N}.
+\]
+W and S denote the two window-feature dimensions; flattening preserves software order. The hardware consumes L vectors of length F and emits N signed logits. A mask bit of one denotes padding. The baseline supports the binary-output model.
+\begin{enumerate}
+\item Stage 1: LayerNorm, a biased F-to-D projection and LayerNorm produce token embeddings.
+\item Stage 2: learned position and read-identity embeddings are added.
+\item Stage 3: pre-normalization transformer layers encode the tokens.
+\item Stage 4: each encoded token is projected to one scalar logit.
+\item Stage 5: read logits are combined according to the source aggregation rule.
+\end{enumerate}
+Real-arithmetic equations define algorithmic intent. Hardware storage conversions, widths and nonlinear approximations are specified separately; mathematical equivalence must not be confused with bit-level equality. Candidate precision values require calibration before RTL freeze.

@@ -1,0 +1,126 @@
+\section{Reviewed Architecture: Mathematics and Execution Schedule}
+This section consolidates the joint review of 25 September 2026. The sequential schedule is the working baseline; numerical formats, nonlinear implementations, memory macros and timing remain provisional. It is not a claim of completed RTL or supervisor approval. Equations below describe real arithmetic; every stored hardware value follows the explicitly selected quantization contract.
+
+\subsection{Dimensions, parameters and frame ownership}
+One frame is active: $B=1$. Host batches are submitted sequentially. There are $M$ read slots, $N$ positions per read, $L=MN$ tokens, flattened input width $F$, feature width $D$, $H$ heads, head width $d=D/H$, and $K=N_{dec}$ layers. Require $D$ divisible by $H$. These dimensions come from the configuration matching the checkpoint; they are not learned. Weights, biases, position/read embeddings and normalization affine parameters are learned and persist between frames.
+\[
+t=mN+n,\qquad 0\leq m<M,\quad 0\leq n<N,\quad 0\leq j<D.
+\]
+Addresses and loop counters are exact unsigned integers, not quantized activations. Use terminal comparisons and explicit resets, not accidental binary overflow. A counter advances only after the corresponding accepted transaction or committed result.
+The frame controller loads features and mask, runs embedding, position additions, encoder, final projection and aggregation, then transfers $N$ output logits. Stored outputs are ready before transfer; successful frame completion requires all $N$ output handshakes. Requests remain stable while stalled, and completion remains asserted until accepted. Invalid descriptors or arithmetic faults follow the error path rather than normal completion.
+
+\subsection{Shared dot and linear engines}
+For input length $I$ and output length $O$, the mathematical linear operation is
+\[
+y_j=b_j+\sum_{r=0}^{I-1}W_{j,r}x_r,\qquad 0\leq j<O.
+\]
+\begin{itemize}
+\item Dot INIT\_ACC: initialize a widened accumulator to aligned bias or zero; set $r=0$.
+\item READ\_INPUT\_REQ/WAIT and READ\_WEIGHT\_REQ/WAIT: capture both operands. Operand B can be a learned weight, key or value; it is not always a weight.
+\item ISSUE\_MAC/WAIT\_MAC: compute $A\leftarrow A+a_rb_r$ once, capture completion, then NEXT\_TERM increments $r$ or enters DONE. DONE returns the widened result without destination narrowing.
+\item Linear READ\_BIAS, DOT\_COMMAND/WAIT: select the output row and run its dot product. ROUND\_SATURATE converts once to the destination format. WRITE\_REQ/WAIT commits the result; NEXT\_OUTPUT advances $j$ or completes.
+\end{itemize}
+The source vector must survive all $O$ dot products. Logical projections reuse this engine sequentially; diagram branches do not imply parallel multipliers. Memory adapters and scalar engines have request/wait substates, so a named arithmetic state is not necessarily one clock cycle.
+
+\subsection{Layer normalization: common engine for F or D features}
+For a vector $x$ of length $J$, with separately loaded affine parameters,
+\[
+\mu=\frac{1}{J}\sum_{j=0}^{J-1}x_j,\qquad
+v=\frac{1}{J}\sum_{j=0}^{J-1}(x_j-\mu)^2,\qquad
+g=(v+\epsilon)^{-1/2},\qquad
+y_j=\gamma_j(x_j-\mu)g+\beta_j.
+\]
+Use the population variance (denominator $J$, not $J-1$). The reference default epsilon is $10^{-5}$. Gamma and beta are learned; mean and variance are computed for every current token.
+\begin{itemize}
+\item LOAD\_AND\_SUM: retain the input vector and accumulate its sum in widened storage.
+\item MEAN: multiply by the configured reciprocal $1/J$; preserve the selected precision.
+\item VARIANCE: reset the feature counter and sum centered squared differences in widened storage, then scale by $1/J$.
+\item INV\_SQRT: add epsilon in a format that represents it, issue the scalar operation and wait for its result.
+\item NORMALIZE\_WRITE: reset the counter; subtract mean, multiply by $g$ and gamma, add beta, convert and commit each output. DONE follows the final write.
+\end{itemize}
+The centered two-pass calculation is the proposed baseline. Its operation order can differ from a floating-point library kernel. Epsilon must not disappear through quantization. Variance, inverse square root and affine scaling are high-risk numerical areas.
+
+\subsection{Stage 1: input embedding}
+For each flattened token $x_t\in\mathbb{R}^{F}$,
+\[
+u_t=\operatorname{LN}_{F}(x_t),\qquad
+v_{t,j}=b^{emb}_j+\sum_{r=0}^{F-1}W^{emb}_{j,r}u_{t,r},\qquad
+e_t=\operatorname{LN}_{D}(v_t).
+\]
+LOAD\_TOKEN captures $F$ values; LN\_F runs the common normalization engine; LINEAR\_F\_TO\_D runs $D$ dots of length $F$; LN\_D uses its own affine parameters; WRITE\_TOKEN commits $D$ outputs. NEXT\_TOKEN repeats until $L$ tokens are stored. Do not skip padded tokens or overwrite the linear input scratch before all output features complete.
+
+\subsection{Stage 2: trained position and read embeddings}
+\[
+a_{m,n,j}=e_{mN+n,j}+P_{n,j},\qquad
+X^{(0)}_{mN+n,j}=a_{m,n,j}+E_{m,j}.
+\]
+P and E are loaded trained tables, not values regenerated during inference. INIT sets $(m,n,j)=(0,0,0)$; READ\_X, READ\_P, ADD\_P, READ\_E, ADD\_E and WRITE perform the two additions with separate destination conversions. With equal fractional scales, conversion need not discard fractional bits but can still saturate.
+After each committed write, increment $j$ unless $j=D-1$; then reset $j$ and advance $n$. At $n=N-1$, reset $n$ and advance $m$. Finish at the last feature of read $M-1$. No runtime modulo or division is required. The padding mask bypasses this arithmetic unchanged.
+
+\subsection{Stage 3: one physical layer repeated K times}
+For layer $k$, with its own learned parameters,
+\[
+U=\operatorname{LN}_{1,k}(X^{(k)}),\qquad O=\operatorname{Attn}_{k}(U),\qquad R=X^{(k)}+O,
+\]
+\[
+T=\operatorname{LN}_{2,k}(R),\qquad G=\operatorname{FFN}_{k}(T),\qquad X^{(k+1)}=R+G.
+\]
+Schedule LN1\_ALL\_TOKENS, ATTENTION, RESIDUAL1\_ALL, then LN2\_TOKEN, FFN\_TOKEN and RESIDUAL2\_TOKEN for each token. Preserve original X through attention and preserve R through its FFN. In-place residual writes are safe only after both operands are captured. Layer completion follows the last residual-2 write. The encoder then selects the next layer's parameter bases, or releases $X^{(K)}$ to Stage 4. Dropout is disabled in inference.
+
+\subsection{Attention projections, head slices and score rows}
+\[
+Q_{t,j}=b^Q_j+\sum_{r=0}^{D-1}W^Q_{j,r}U_{t,r},\quad
+K_{t,j}=b^K_j+\sum_{r=0}^{D-1}W^K_{j,r}U_{t,r},\quad
+V_{t,j}=b^V_j+\sum_{r=0}^{D-1}W^V_{j,r}U_{t,r}.
+\]
+Here K as a tensor means keys; the layer count is identified by context as $N_{dec}$. The outer QKV controller selects projection and token; linear selects output feature; dot selects input term. Finish all Q tokens, then all K tokens, then all V tokens. Each projection uses all $D$ input features, not just one head slice.
+\[
+s_{a,i,j}=\frac{1}{\sqrt d}\sum_{r=0}^{d-1}Q_{i,ad+r}K_{j,ad+r}.
+\]
+For fixed head $a$ and query $i$, INIT\_KEY sets $j=0$. ISSUE\_DOT/WAIT\_DOT uses length $d$, zero initial sum, bases $Q_{base}+iD+ad$ and $K_{base}+jD+ad$, and stride one. ISSUE\_SCALE/WAIT\_SCALE multiplies by a precomputed $1/\sqrt d$; WRITE\_SCORE converts and commits. NEXT\_KEY repeats for $L$ keys. Only one score row is stored, not an $L$ by $L$ matrix.
+
+\subsection{Mask and softmax}
+For a non-padded query row,
+\[
+m_s=\max_j s_j,\qquad e_j=\exp(s_j-m_s),\qquad
+S_{exp}=\sum_{j=0}^{L-1}e_j,\qquad p_j=e_j/S_{exp}.
+\]
+CHECK\_MASK chooses the normal path or the uniform bypass. FIND\_MAX initializes from the first score, not zero. EXP\_AND\_SUM resets the counter, stores each exponential and accumulates $S_{exp}$. RECIPROCAL requests $1/S_{exp}$ once. PREPARE\_VALUE and WRITE\_PROBABILITY multiply each saved exponential by that reciprocal, convert and commit; NEXT\_ENTRY repeats until the row is ready.
+The source padding shape is $[B,1,L,1]$: it masks query rows, not key columns. A padded query has all scores replaced by the same finite sentinel, yielding $p_j=1/L$ in real arithmetic. The hardware bypass uses a stored quantized $1/L$ and the same probability writer. Valid queries still attend to padded keys. This behavior must not be silently corrected. Optional static masking is outside the baseline until agreed. Quantized probabilities need not sum exactly to one; test the discrepancy. A nonpositive exponential sum raises an error.
+
+\subsection{Weighted values and output projection}
+\[
+Z_{i,ad+r}=\sum_{j=0}^{L-1}p_j V_{j,ad+r},\qquad
+O_{i,j}=b^O_j+\sum_{r=0}^{D-1}W^O_{j,r}Z_{i,r}.
+\]
+Weighted INIT\_FEATURE sets $r=0$. ISSUE\_DOT/WAIT\_DOT uses length $L$, probability stride one, V stride $D$, zero initial sum and unsigned-probability times signed-value arithmetic. ROUND\_SATURATE and WRITE\_RESULT commit directly to $Z_{base}+iD+ad+r$. NEXT\_FEATURE repeats for $d$ features while preserving the probability row. Only then advance query, and after the last query advance head. Joined heads need no separate copy operation.
+Once every head/query result is stored, output projection issues one shared linear(D,D) command per token, waits for its writes, then advances the token. This mixes all heads. Its completion releases O to the first residual addition with original X, not normalized U.
+
+\subsection{FFN and residual additions}
+For the LN2 output token $T_t$,
+\[
+h_j=b^1_j+\sum_{r=0}^{D-1}W^1_{j,r}T_{t,r},\quad 0\leq j<4D,
+\]
+\[
+g_j=\operatorname{GELU}(h_j)=\frac{h_j}{2}\left(1+\operatorname{erf}\left(\frac{h_j}{\sqrt 2}\right)\right),\qquad
+G_{t,j}=b^2_j+\sum_{r=0}^{4D-1}W^2_{j,r}g_r.
+\]
+LINEAR1 runs D-to-4D with bias. GELU requests and writes every hidden feature; retain all $4D$ activated values before LINEAR2 runs 4D-to-D with bias. There is no second GELU. The exact-erf formula is the reference target, not a promise of a hardware erf implementation.
+Both residual controllers capture left and right values, align their scales, add in a widened format, convert and commit. Their equations are $R_{t,j}=X_{t,j}+O_{t,j}$ and $X^{next}_{t,j}=R_{t,j}+G_{t,j}$. Feature counters advance after write completion. Residual 2 completes the current token before the layer advances.
+
+\subsection{Stage 4: final projection and aggregation}
+\[
+z_t=b^{final}+\sum_{j=0}^{D-1}w^{final}_j X^{(K)}_{t,j}.
+\]
+INIT\_TOKEN, ISSUE\_LINEAR, WAIT\_LINEAR and NEXT\_TOKEN run D-to-1 for all $L$ tokens. The linear controller owns the logit write: there is no second STORE\_LOGIT state. The binary target uses one unrestricted logit, not a probability or a percentage.
+Let $p^{mask}_{m,n}=1$ denote padding. For $M>1$ the source aggregation is
+\[
+c_m=\begin{cases}1&\text{if every }p^{mask}_{m,n}=0,\\0&\text{otherwise},\end{cases}
+\quad C=\sum_m c_m,\quad S_n=\sum_m(1-p^{mask}_{m,n})z_{mN+n},\quad y_n=S_n/C.
+\]
+COUNT\_VALID\_SLOTS and CHECK\_COUNT precede one RECIPROCAL request for $1/C$ per frame. For each position, SUM\_READS accumulates the masked numerator; SCALE multiplies by the saved reciprocal; WRITE commits $y_n$; NEXT\_POSITION repeats. Partially padded reads can contribute to the numerator without contributing to C: preserve this nonstandard source rule and confirm permitted inputs. For $C=0$, hardware reports an error, an explicit guard beyond the source's nonfinite arithmetic.
+For $M=1$, copy $y_n=z_n$ directly, without masking or averaging, matching the source branch. Optional hard decisions are $\hat b_n=1$ when $y_n>0$ and zero otherwise. If a probability is needed externally, $\sigma(y_n)=1/(1+\exp(-y_n))$; sigmoid is unnecessary for the zero-threshold decision and is not added to the core.
+
+\subsection{Numerical observations and remaining implementation boundaries}
+Record the floating-point reference, widened fixed-point intermediate and stored fixed-point value separately. The widened value may already include upstream quantization error. Capture indices, formats, rounding-change, saturation and overflow flags once per accepted conversion event, not repeatedly during stalls. Simulation observation needs no additional compute FSM state. Optional on-chip snapshots require a separately bounded buffer and readout design; no compute stall or wide-result bypass is assumed.
+The remaining arithmetic black boxes are GELU, exponential, reciprocal and inverse square root, including their reduction/scaling precision. Their request/response boundaries and schedule are specified; their arithmetic implementation is not frozen. Accumulator widths, memory mapping, clock target and resource feasibility require measurement and synthesis. Earlier numeric contracts are experimental candidates, not demonstrated accuracy or latency guarantees.

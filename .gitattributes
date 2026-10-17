@@ -1,0 +1,9 @@
+* text=auto
+# Preserve exact production bytes so archived source SHA256 evidence survives checkout.
+*.sv -text
+*.svh -text
+*.py text eol=lf
+*.cjs text eol=lf
+*.md text eol=lf
+*.svg text eol=lf
+*.png binary

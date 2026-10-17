@@ -1,0 +1,10 @@
+const fs=require('fs'),crypto=require('crypto'),cp=require('child_process');
+const sharp=require('sharp');
+const file='web/bcjrformer-architecture.html',before=fs.readFileSync(file);
+cp.execFileSync(process.execPath,['.architecture-assets/add-stage-pictures.cjs']);
+const after=fs.readFileSync(file,'utf8');
+const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
+if(hash(before)!==hash(after))throw Error('Not idempotent');
+const gallery=after.match(/<!-- BEGIN STAGE PICTURES -->([\s\S]*?)<!-- END STAGE PICTURES -->/)[1];
+const images=[...gallery.matchAll(/src="data:image\/png;base64,([^"]+)"/g)];
+Promise.all(images.map(async m=>{const info=await sharp(Buffer.from(m[1],'base64')).metadata();if(info.width!==1500||info.height!==720)throw Error('Invalid picture size');})).then(()=>console.log(images.length+' embedded images verified; script syntax and repeat-update checks passed.'));

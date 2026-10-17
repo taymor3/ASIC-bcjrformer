@@ -1,0 +1,66 @@
+\subsection{Connections, storage and control ownership}
+The five stages execute sequentially on one active frame. Feature data flows through the stage chain; the padding mask and model parameters follow separate paths. An arrow between stages denotes a completed tensor in shared memory, not a combinational connection or concurrent streaming pipeline.
+\begin{itemize}
+\item Host to Stage 1: prepared window features, flattened to $[L,F]$. Stage 1 to Stage 2: embedded tokens $e[L,D]$ in the X bank.
+\item Stage 2 to Stage 3: position/read-enriched tokens $X^{(0)}[L,D]$ in the same X bank. Stage 3 to Stage 4: final encoded tokens $X^{(K)}[L,D]$.
+\item Stage 4 to Stage 5: per-read logits $z[L]$, interpreted as $[M,N]$. Stage 5 to the host: aggregated logits $y[N]$.
+\item Mask path: load $[M,N]$ once and retain it throughout the frame. Stage 3 interprets it as a query-row attention mask; Stage 5 uses the original read/position mask. Stages 1, 2 and 4 do not consume it for arithmetic or skip padded tokens.
+\item Parameter path: the host loads and commits a matching parameter image before inference. Each active stage selects its own parameter bases; Stage 3 also selects the current layer's parameters. Parameters persist across frames.
+\item Control path: the core controller commands one stage at a time. A stage returns completion only after its output writes commit; the next stage may then read those outputs. The active controller owns shared arithmetic and scratch until its command completes.
+\end{itemize}
+
+\subsection{Stage 1 overview: input embedding}
+\textbf{Inputs:} feature vectors $[L,F]$; first normalization parameters $\gamma_F,\beta_F$; projection $W^{emb}[D,F],b^{emb}[D]$; second normalization parameters $\gamma_D,\beta_D$.
+
+\textbf{Internal blocks:} token loader, LayerNorm(F), linear(F,D), LayerNorm(D), and output writer. The normalization blocks share one length-configurable engine; the linear block uses the shared dot engine.
+
+\textbf{Architectural FSM:} IDLE/INIT, LOAD\_TOKEN, LN\_F, LINEAR\_F\_TO\_D, LN\_D, WRITE\_TOKEN, NEXT\_TOKEN, DONE. NEXT\_TOKEN loops to LOAD\_TOKEN until all L tokens are processed. Each arithmetic state commands its child controller and waits.
+
+\textbf{Output and handoff:} $e[L,D]$. Stage 2 starts after the final embedded token is stored. Normalized input scratch is preserved until every projection output using it has been calculated.
+
+\subsection{Stage 2 overview: position and read embedding}
+\textbf{Inputs:} $e[L,D]$, learned position table $P[N,D]$ and learned read-identity table $E[M,D]$. Token index $t=mN+n$ identifies read m and position n.
+
+\textbf{Internal blocks:} exact integer index controller, X/P/E memory readers, two sequential additions with their conversion boundaries, and in-place output writer. P and E are trained tables, not inference-time calculations.
+
+\textbf{Architectural FSM:} INIT, READ\_X, READ\_P, ADD\_P, READ\_E, ADD\_E, WRITE, NEXT\_INDEX, DONE. Traverse feature j, then position n, then read m using terminal comparisons; NEXT\_INDEX returns to READ\_X while entries remain.
+
+\textbf{Output and handoff:} $X^{(0)}[L,D]$ with position and read identity included. Stage 3 starts after all $LD$ feature writes commit. The mask bypasses this stage unchanged.
+
+\subsection{Stage 3 overview: transformer encoder}
+\textbf{Inputs:} $X^{(0)}[L,D]$, padding mask and K distinct layer-parameter sets. Configuration supplies D, H and K, with head width $d=D/H$; these are not learned values.
+
+\textbf{Internal blocks:} one physical layer engine reused K times. Each layer contains LN1, self-attention, residual addition 1, LN2, FFN and residual addition 2. Original X bypasses LN1/attention into the first addition. Its result R bypasses LN2/FFN into the second addition.
+
+\textbf{Attention subblocks:} Q/K/V projections; head-slice addressing; one QK score row and constant scaling; mask/softmax; probability-weighted V dot products; joined-head storage; output projection. Q and K feed scores; V bypasses scores/softmax and feeds the weighted-value block. FFN contains D-to-4D linear, GELU and 4D-to-D linear.
+
+\textbf{Encoder FSM:} INIT\_LAYER, RUN\_LAYER, WAIT\_LAYER, NEXT\_LAYER, DONE. Advance the layer index and parameter bases only after a complete layer result.
+
+\textbf{Layer FSM:} LN1\_ALL\_TOKENS, ATTENTION, RESIDUAL1\_ALL, LN2\_TOKEN, FFN\_TOKEN, RESIDUAL2\_TOKEN, NEXT\_TOKEN, DONE. The final four processing states repeat over tokens; the first three process the complete frame.
+
+\textbf{Attention FSM:} project all Q, all K and all V; initialize head/query; compute SCORE\_ROW, SOFTMAX\_ROW and WEIGHTED\_VALUES; advance query then head; finally run OUTPUT\_PROJECTION. One row buffer is reused only after all weighted features for that row are stored.
+
+\textbf{Output and handoff:} $X^{(K)}[L,D]$. Stage 4 starts only after the last token's second residual write in the final layer. Residual lifetimes are preserved throughout the computation.
+
+\subsection{Stage 4 overview: final projection}
+\textbf{Inputs:} $X^{(K)}[L,D]$, final weight vector $w^{final}[D]$ and scalar bias.
+
+\textbf{Internal blocks:} token selector and the shared D-to-1 linear controller, including dot accumulation, conversion and logit writer. There is no sigmoid in this stage.
+
+\textbf{Architectural FSM:} INIT\_TOKEN, ISSUE\_LINEAR, WAIT\_LINEAR, NEXT\_TOKEN, DONE. The linear controller owns the write; NEXT\_TOKEN repeats the command for each token without a duplicate store step.
+
+\textbf{Output and handoff:} $z[L]$, viewed as $[M,N]$ per-read logits. Stage 5 starts after all L logits are committed. These signed scores are neither probabilities nor hard decisions.
+
+\subsection{Stage 5 overview: read aggregation and output}
+\textbf{Inputs:} $z[M,N]$ and the original padding mask $[M,N]$. No trained parameters are needed.
+
+\textbf{Internal blocks:} path selector, valid-read counter, masked-logit accumulator, reciprocal unit, scalar multiplier/converter and output buffer. For M=1, a direct copy path bypasses counting and averaging, including masking, to preserve the software branch.
+
+\textbf{Architectural FSM:} SELECT\_PATH; for M greater than one, COUNT\_VALID\_SLOTS, CHECK\_COUNT, RECIPROCAL, INIT\_POSITION, SUM\_READS, SCALE, WRITE, NEXT\_POSITION, DONE. The reciprocal of the frame-wide count is calculated once. NEXT\_POSITION repeats accumulation/scaling/writing until N positions are stored. The M=1 branch copies N logits and then completes.
+
+\textbf{Output and handoff:} $y[N]$. A zero valid-read count raises an error in the averaging branch. The core subsequently transfers N buffered logits to the host and declares successful frame completion only after the last accepted output transfer. An optional downstream sign comparison can generate hard decisions.
+
+\subsection{Controller hierarchy and interpretation of FSM states}
+The core controls stages; stage controllers control reusable vector operations; linear/vector controllers control the dot or scalar arithmetic engines. These are nested control responsibilities, not additional neural-network layers. The frame sequence is LOAD\_FEATURES, LOAD\_MASK, EMBED, POSITION, ENCODER, FINAL, AGGREGATE, OUTPUT, COMPLETE, between idle periods.
+
+A named high-level state denotes a complete operation, not one clock cycle. Its implementation may include memory-read, request, response and write-commit substates. Ready/valid handshakes accommodate stalls and variable arithmetic latency. Exact register widths, transaction details, mathematical derivations and numerical risks are specified in the following detailed design. This separation permits architectural review without requiring the reader to follow RTL-level timing first.

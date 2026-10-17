@@ -1,0 +1,65 @@
+\section{Numerical Research Findings and Black-Box Validation Plan}
+These findings support choosing implementations; they do not establish that the current BCJRFormer quantization contracts pass. No new bit-accurate implementation, BER experiment or synthesis result is claimed in this document.
+
+\subsection{Course material and reference semantics}
+The local compression tutorial, ee046211\_tutorial\_10\_compression\_pruning\_amp.pdf (28 pages, especially pages 8--14), motivates calibration observers, static quantization, per-channel weights and quantization-aware training. Its dynamic-quantization software recommendations are not an ASIC implementation recipe. AMP and gradient scaling concern floating-point training, not integer-only inference.
+DL10\_Transfer learning.pptx (62 slides) provides background on transfer learning and fine-tuning, but does not specify fixed-point GELU, softmax or normalization hardware. It may help if later adaptation or quantization-aware fine-tuning is required.
+The repository declares PyTorch 2.4.0+cu118. Its LayerNorm uses population variance and default epsilon $10^{-5}$; nn.GELU() defaults to the erf formulation, not the optional tanh approximation. PyTorch 2.4 CPU softmax uses a maximum shift, exponential, sum and reciprocal multiplication. Fix the actual checkpoint, runtime, device, dtype and arithmetic settings for the reference; different kernels need not produce identical floating-point bits.
+\begin{itemize}
+\item PyTorch version-matched GELU implementation: \url{https://raw.githubusercontent.com/pytorch/pytorch/v2.4.0/aten/src/ATen/native/cpu/Activation.cpp}
+\item PyTorch version-matched softmax implementation: \url{https://raw.githubusercontent.com/pytorch/pytorch/v2.4.0/aten/src/ATen/native/cpu/SoftMaxKernel.cpp}
+\item LayerNorm mathematical definition: \url{https://docs.pytorch.org/docs/2.14/generated/torch.nn.LayerNorm.html}
+\end{itemize}
+
+\subsection{Relevant papers: methods and evidence level}
+\begin{itemize}
+\item I-BERT (ICML 2021) demonstrates integer-only Transformer inference using polynomial GELU/exponential approximations and iterative integer square root, with integer matrix operations and wider nonlinear arithmetic. Its evaluation is software/GPU, not an ASIC chip. Its reported GELU error of about 0.018 and exponential approximation gap of about 0.0019 do not establish our much tighter candidate targets of $2^{-9}$ and $2^{-20}$. Reuse the ideas, then measure against our formats and task. \url{https://proceedings.mlr.press/v139/kim21d.html}
+\item SwiftTron (IJCNN 2023) describes an integer Transformer accelerator with requantization and nonlinear units, evaluated through 65 nm synthesis and gate-level analysis, not measured silicon. Useful ideas include multiplier/shift rescaling and handling residual scale alignment. Its architecture and numerical settings cannot be transferred to our pre-normalization model without checking semantics and error. \url{https://arxiv.org/pdf/2304.03986}
+\item ITA (ISLPED 2023) provides an attention accelerator with hardware-friendly softmax and an open implementation. Its 22 nm results are physical-implementation/post-layout estimates rather than measured-chip results. Shift-based exponential approximations and streaming normalization rely on the paper's quantization choices; it is not a complete solution for our LayerNorm and GELU. \url{https://arxiv.org/pdf/2307.03493}
+\item Softermax (DAC 2021) explores base-two exponentiation, piecewise approximations and online normalization, evaluated using synthesized hardware and approximation-aware model adaptation. Replacing $\exp(x)$ by $2^x$ is not mathematically identical; exact conversion requires $2^{x\log_2 e}$. Its streaming design is a possible later optimization, not a reason to change our reviewed row-buffer schedule now. \url{https://arxiv.org/pdf/2103.09301}
+\end{itemize}
+
+\subsection{Common quantized arithmetic contract}
+An initial symmetric fixed-point candidate is
+\[
+q_x=\operatorname{clip}\left(\operatorname{RNE}(x/s_x),q_{min},q_{max}\right),\qquad \hat x=s_xq_x.
+\]
+RNE denotes round-to-nearest, ties-to-even. For a dot product, align bias with product scale before accumulation:
+\[
+A=\sum_r q_{x,r}q_{w,r}+q_b,\qquad
+q_y=\operatorname{clip}\left(\operatorname{RNE}\left(\frac{s_xs_w}{s_y}A\right),q_{min},q_{max}\right).
+\]
+Approximate scale ratios by an integer multiplier and power-of-two shift only with a defined signed rounding rule, sufficient intermediate width and measured error. Per-output-channel weight scales are candidates, not an already implemented feature. Residual branches must be converted to compatible scales before addition. Probability arithmetic is unsigned; activations and values are signed.
+Do not apply one narrow format to every intermediate. Dot accumulators, mean/variance reductions, exponential sums and reciprocal products need separate range analysis. Proposed 96/136-bit intermediate paths and watchdog limits in the draft remain feasibility hypotheses. Epsilon $10^{-5}$ rounds to zero with only ten fractional bits, so it needs a suitably wider representation.
+
+\subsection{LayerNorm: variance and inverse square root}
+Begin with centered two-pass variance to avoid subtracting nearly equal large values in $E[x^2]-E[x]^2$. Measure required widths for the sum, centered differences, squares and scaled variance; preserve epsilon before inverse square root. Test constant and nearly constant tokens, maximum representable inputs and large learned gamma/beta.
+Compare a normalized lookup-table seed plus refinement against integer square root followed by division. The integer square-root Newton candidate uses
+\[
+x_{k+1}=\left\lfloor\frac{x_k+\lfloor n/x_k\rfloor}{2}\right\rfloor.
+\]
+It requires explicit handling of zero, initialization, termination, scaling and division latency; a published iteration count for one width is not a cycle bound for our wider datapath. The scalar unit returns only when complete. Select precision from end-to-end results, not from the primitive's error alone.
+
+\subsection{Softmax: exponential and reciprocal}
+Keep maximum subtraction and the saved exponential row. Compare a lookup table with interpolation against range reduction and a low-degree polynomial:
+\[
+x=-k\ln 2+r,\qquad -\ln 2<r\leq0,\qquad \exp(x)=2^{-k}\exp(r).
+\]
+Finite-precision constants, interval boundaries, discarded tails and $\exp(0)=1$ all need explicit tests. Accumulate $S_{exp}$ widely and compare serial division with a normalized reciprocal approximation/refinement. The padded-query uniform branch must use the same stored probability format. Test uniform and highly peaked rows, near-equal maxima, longest rows and masking corner cases. Measure absolute error, probability-row sum, ordering and downstream weighted-value error. Keep online normalization as a later optimization.
+
+\subsection{GELU and other scaling boundaries}
+Compare polynomial, piecewise-linear and lookup-table implementations against exact-erf GELU. Calibrate the interval from actual hidden activations, allocate accuracy near the curved central region and test tail transitions. A paper's approximation does not automatically satisfy our candidate tolerance. Preserve the first-linear conversion boundary and evaluate its error separately from GELU error.
+Also test the stored attention factor $1/\sqrt d$, aggregation reciprocal $1/C$, residual rescaling, bias alignment and final-logit conversion. Small logit errors near zero can flip decisions even when average numeric error is small.
+
+\subsection{Experiment sequence and acceptance gates}
+\begin{enumerate}
+\item Freeze a matching checkpoint/configuration and deterministic evaluation conditions with dropout disabled. Separate calibration frames from held-out evaluation frames; record dataset and channel/noise conditions.
+\item Add non-mutating observers for ranges, percentiles, saturation and distributions at every conversion boundary. Include LN statistics, scores, probabilities, hidden activations, residuals and final logits.
+\item Establish floating-point baseline outputs and BER/FER. Use higher precision only as a diagnostic where useful; it is not the hardware reference.
+\item Introduce quantization with otherwise accurate nonlinear calculations to isolate storage and accumulation error. Compare candidate 16-bit and narrower/mixed formats before selecting widths.
+\item Replace one nonlinear primitive at a time; sweep approximation, table size, internal width and iteration count. Save before/after snapshots and test overflow, near-zero variance, tails, masks and stalls.
+\item Integrate the selected primitives in a bit-accurate software model with explicit rounding, saturation, widths and operation order. Measure logit errors, hard-decision flips, BER/FER and numerical flags on held-out data, with sample counts and uncertainty.
+\item Agree accuracy, memory, latency and area limits with Amit. If post-training quantization fails, consider quantization-aware fine-tuning as a separately scoped step rather than silently changing the trained model.
+\item Freeze the arithmetic contracts only after those gates. RTL must match the selected bit-accurate model exactly; floating-point agreement is evaluated with agreed numerical and task-level criteria. Synthesis then checks resource and timing feasibility.
+\end{enumerate}
+The next deliverable for these black boxes is a measured comparison of candidate implementations, not an assumption that every operation must be expanded into a new top-level FSM stage. Keep the reviewed handshake boundaries and refine internal substates once the arithmetic implementation is selected.

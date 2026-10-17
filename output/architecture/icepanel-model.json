@@ -1,0 +1,1547 @@
+{
+  "objects": [
+    {
+      "key": "control",
+      "name": "Host & core control",
+      "type": "app",
+      "parent": "root",
+      "status": "future",
+      "description": "Logical architecture grouping inside bcjrformer_core; controllers are single physical instances. Numerical methods and selected dimensions remain deferred."
+    },
+    {
+      "key": "embed",
+      "name": "Stage 1 — Input embedding",
+      "type": "app",
+      "parent": "root",
+      "status": "future",
+      "description": "Logical architecture grouping inside bcjrformer_core; controllers are single physical instances. Numerical methods and selected dimensions remain deferred."
+    },
+    {
+      "key": "position",
+      "name": "Stage 2 — Position/read embedding",
+      "type": "app",
+      "parent": "root",
+      "status": "future",
+      "description": "Logical architecture grouping inside bcjrformer_core; controllers are single physical instances. Numerical methods and selected dimensions remain deferred."
+    },
+    {
+      "key": "encoder",
+      "name": "Stage 3 — Encoder",
+      "type": "app",
+      "parent": "root",
+      "status": "future",
+      "description": "Logical architecture grouping inside bcjrformer_core; controllers are single physical instances. Numerical methods and selected dimensions remain deferred."
+    },
+    {
+      "key": "final",
+      "name": "Stage 4 — Final projection",
+      "type": "app",
+      "parent": "root",
+      "status": "future",
+      "description": "Logical architecture grouping inside bcjrformer_core; controllers are single physical instances. Numerical methods and selected dimensions remain deferred."
+    },
+    {
+      "key": "aggregate",
+      "name": "Stage 5 — Aggregation",
+      "type": "app",
+      "parent": "root",
+      "status": "future",
+      "description": "Logical architecture grouping inside bcjrformer_core; controllers are single physical instances. Numerical methods and selected dimensions remain deferred."
+    },
+    {
+      "key": "shared",
+      "name": "Shared compute services",
+      "type": "app",
+      "parent": "root",
+      "status": "future",
+      "description": "Logical architecture grouping inside bcjrformer_core; controllers are single physical instances. Numerical methods and selected dimensions remain deferred."
+    },
+    {
+      "key": "protocol",
+      "name": "Protocol & memory routing",
+      "type": "app",
+      "parent": "root",
+      "status": "future",
+      "description": "Logical architecture grouping inside bcjrformer_core; controllers are single physical instances. Numerical methods and selected dimensions remain deferred."
+    },
+    {
+      "key": "core_ctrl",
+      "name": "core_ctrl",
+      "type": "component",
+      "parent": "control",
+      "status": "future",
+      "description": "| core_ctrl | Host loading, image/frame validity, stage sequence, output transfer, completion code | All N output transfers accepted, or one held error report |\nPlanned processing/control RTL; port contract exists; arithmetic calibration deferred."
+    },
+    {
+      "key": "embedding_ctrl",
+      "name": "embedding_ctrl",
+      "type": "component",
+      "parent": "embed",
+      "status": "future",
+      "description": "| embedding_ctrl | Token loop, FEATURE-to-TOKEN copy, norm/linear/norm calls, VECTOR-to-X copy | All X writes committed |\nPlanned processing/control RTL; port contract exists; arithmetic calibration deferred."
+    },
+    {
+      "key": "position_ctrl",
+      "name": "position_ctrl",
+      "type": "component",
+      "parent": "position",
+      "status": "future",
+      "description": "| position_ctrl | m/n/feature loops, P/E reads, widened additions/conversions | All enriched X writes committed |\nPlanned processing/control RTL; port contract exists; arithmetic calibration deferred."
+    },
+    {
+      "key": "encoder_ctrl",
+      "name": "encoder_ctrl",
+      "type": "component",
+      "parent": "encoder",
+      "status": "future",
+      "description": "| encoder_ctrl | k loop, layer-specific parameter descriptor | K successful layer responses accepted |\nPlanned processing/control RTL; port contract exists; arithmetic calibration deferred."
+    },
+    {
+      "key": "layer_ctrl",
+      "name": "layer_ctrl",
+      "type": "component",
+      "parent": "encoder",
+      "status": "future",
+      "description": "| layer_ctrl | LN1 sweep, attention, residual1 sweep, LN2 sweep, FFN/residual2 token loop | All second-residual X writes committed |\nPlanned processing/control RTL; port contract exists; arithmetic calibration deferred."
+    },
+    {
+      "key": "attention_ctrl",
+      "name": "attention_ctrl",
+      "type": "component",
+      "parent": "encoder",
+      "status": "future",
+      "description": "| attention_ctrl | QKV phase, head/query loops, query-mask read, score/softmax/weighted sequence, output projection | All ATTN_OUT writes committed |\nPlanned processing/control RTL; port contract exists; arithmetic calibration deferred."
+    },
+    {
+      "key": "qkv_ctrl",
+      "name": "qkv_ctrl",
+      "type": "component",
+      "parent": "encoder",
+      "status": "future",
+      "description": "| qkv_ctrl | Projection selection Q then KEY then VALUE; token loop | All three LD projection arrays committed |\nPlanned processing/control RTL; port contract exists; arithmetic calibration deferred."
+    },
+    {
+      "key": "score_row_ctrl",
+      "name": "score_row_ctrl",
+      "type": "component",
+      "parent": "encoder",
+      "status": "future",
+      "description": "| score_row_ctrl | Key loop for one fixed head/query, dot/scale, SCORE writes | One complete L-element score row committed |\nPlanned processing/control RTL; port contract exists; arithmetic calibration deferred."
+    },
+    {
+      "key": "softmax_ctrl",
+      "name": "softmax_ctrl",
+      "type": "component",
+      "parent": "encoder",
+      "status": "future",
+      "description": "| softmax_ctrl | Max pass, exp/store/sum pass, reciprocal, probability write pass or uniform bypass | All L probability writes committed |\nPlanned processing/control RTL; port contract exists; arithmetic calibration deferred."
+    },
+    {
+      "key": "weighted_value_ctrl",
+      "name": "weighted_value_ctrl",
+      "type": "component",
+      "parent": "encoder",
+      "status": "future",
+      "description": "| weighted_value_ctrl | Feature loop within fixed head/query, probability-by-V dots | d Z components committed |\nPlanned processing/control RTL; port contract exists; arithmetic calibration deferred."
+    },
+    {
+      "key": "output_projection_ctrl",
+      "name": "output_projection_ctrl",
+      "type": "component",
+      "parent": "encoder",
+      "status": "future",
+      "description": "| output_projection_ctrl | Token loop, Z-to-ATTN_OUT linear calls | All ATTN_OUT tokens committed |\nPlanned processing/control RTL; port contract exists; arithmetic calibration deferred."
+    },
+    {
+      "key": "ffn_ctrl",
+      "name": "ffn_ctrl",
+      "type": "component",
+      "parent": "encoder",
+      "status": "future",
+      "description": "| ffn_ctrl | First linear, 4D GELU read/replace loop, second linear | D VECTOR outputs committed |\nPlanned processing/control RTL; port contract exists; arithmetic calibration deferred."
+    },
+    {
+      "key": "residual_ctrl",
+      "name": "residual_ctrl",
+      "type": "component",
+      "parent": "encoder",
+      "status": "future",
+      "description": "| residual_ctrl | Element loop, capture both operands, add/convert/write | All requested destination sums committed |\nPlanned processing/control RTL; port contract exists; arithmetic calibration deferred."
+    },
+    {
+      "key": "final_ctrl",
+      "name": "final_ctrl",
+      "type": "component",
+      "parent": "final",
+      "status": "future",
+      "description": "| final_ctrl | Token loop, D-to-1 linear calls | L LOGIT values committed |\nPlanned processing/control RTL; port contract exists; arithmetic calibration deferred."
+    },
+    {
+      "key": "aggregation_ctrl",
+      "name": "aggregation_ctrl",
+      "type": "component",
+      "parent": "aggregate",
+      "status": "future",
+      "description": "| aggregation_ctrl | n/m loops, per-position sum/count, reciprocal/scale, private output writes | All N writes committed, or typed empty-position/fatal response |\nPlanned processing/control RTL; port contract exists; arithmetic calibration deferred."
+    },
+    {
+      "key": "layernorm_ctrl",
+      "name": "layernorm_ctrl",
+      "type": "component",
+      "parent": "shared",
+      "status": "future",
+      "description": "| layernorm_ctrl | Statistics passes, RSQRT, affine pass, conversion and writes | Every normalized output write acknowledged |\nPlanned processing/control RTL; port contract exists; arithmetic calibration deferred."
+    },
+    {
+      "key": "linear_ctrl",
+      "name": "linear_ctrl",
+      "type": "component",
+      "parent": "shared",
+      "status": "future",
+      "description": "| linear_ctrl | Output loop, bias read, dot descriptor, conversion, destination write | Every output write acknowledged |\nPlanned processing/control RTL; port contract exists; arithmetic calibration deferred."
+    },
+    {
+      "key": "dot_engine",
+      "name": "dot_engine",
+      "type": "component",
+      "parent": "shared",
+      "status": "future",
+      "description": "| dot_engine | Term loop, two reads, MAC request/result, wide accumulator | Wide result held; it never writes the caller's destination |\nPlanned processing/control RTL; port contract exists; arithmetic calibration deferred."
+    },
+    {
+      "key": "mac_unit",
+      "name": "mac_unit",
+      "type": "component",
+      "parent": "shared",
+      "status": "future",
+      "description": "\nPlanned processing/control RTL; port contract exists; arithmetic calibration deferred."
+    },
+    {
+      "key": "exp_unit",
+      "name": "exp_unit",
+      "type": "component",
+      "parent": "shared",
+      "status": "future",
+      "description": "\nPlanned processing/control RTL; port contract exists; arithmetic calibration deferred."
+    },
+    {
+      "key": "reciprocal_unit",
+      "name": "reciprocal_unit",
+      "type": "component",
+      "parent": "shared",
+      "status": "future",
+      "description": "\nPlanned processing/control RTL; port contract exists; arithmetic calibration deferred."
+    },
+    {
+      "key": "rsqrt_unit",
+      "name": "rsqrt_unit",
+      "type": "component",
+      "parent": "shared",
+      "status": "future",
+      "description": "\nPlanned processing/control RTL; port contract exists; arithmetic calibration deferred."
+    },
+    {
+      "key": "gelu_unit",
+      "name": "gelu_unit",
+      "type": "component",
+      "parent": "shared",
+      "status": "future",
+      "description": "\nPlanned processing/control RTL; port contract exists; arithmetic calibration deferred."
+    },
+    {
+      "key": "norm_switch",
+      "name": "norm_switch",
+      "type": "component",
+      "parent": "protocol",
+      "status": "live",
+      "description": "\nImplemented protocol RTL; retained transaction owner, one outstanding request, lowest-index arbitration, stable responses until accepted."
+    },
+    {
+      "key": "linear_switch",
+      "name": "linear_switch",
+      "type": "component",
+      "parent": "protocol",
+      "status": "live",
+      "description": "\nImplemented protocol RTL; retained transaction owner, one outstanding request, lowest-index arbitration, stable responses until accepted."
+    },
+    {
+      "key": "dot_switch",
+      "name": "dot_switch",
+      "type": "component",
+      "parent": "protocol",
+      "status": "live",
+      "description": "\nImplemented protocol RTL; retained transaction owner, one outstanding request, lowest-index arbitration, stable responses until accepted."
+    },
+    {
+      "key": "reciprocal_switch",
+      "name": "reciprocal_switch",
+      "type": "component",
+      "parent": "protocol",
+      "status": "live",
+      "description": "\nImplemented protocol RTL; retained transaction owner, one outstanding request, lowest-index arbitration, stable responses until accepted."
+    },
+    {
+      "key": "memory_fabric",
+      "name": "memory_fabric",
+      "type": "component",
+      "parent": "protocol",
+      "status": "live",
+      "description": "\nImplemented protocol RTL; retained transaction owner, one outstanding request, lowest-index arbitration, stable responses until accepted."
+    },
+    {
+      "key": "parameter_mem",
+      "name": "parameter_mem",
+      "type": "store",
+      "parent": "root",
+      "status": "live",
+      "description": "Implemented behavioral RTL adapter. Native-width storage; IDLE -> WAIT_ACCESS -> RESPONSE; RESPONSE_DELAY >=1; successful write response follows commitment. Reset cancels pending access, retains committed words. Depth defaults zero and must be configured. Physical SRAM implementation unresolved."
+    },
+    {
+      "key": "scratch_mem",
+      "name": "scratch_mem",
+      "type": "store",
+      "parent": "root",
+      "status": "live",
+      "description": "Implemented behavioral RTL adapter. Native-width storage; IDLE -> WAIT_ACCESS -> RESPONSE; RESPONSE_DELAY >=1; successful write response follows commitment. Reset cancels pending access, retains committed words. Depth defaults zero and must be configured. Physical SRAM implementation unresolved."
+    },
+    {
+      "key": "bank_PARAM",
+      "name": "0 PARAM",
+      "type": "component",
+      "parent": "parameter_mem",
+      "status": "live",
+      "description": "Logical bank, not a separate SRAM macro. Capacity/format (provisional): PARAM_WORDS, signed16/F10\nProducer: Core host loader while idle\nConsumer: Position, LayerNorm, linear bias reads, dot weight reads"
+    },
+    {
+      "key": "bank_FEATURE",
+      "name": "1 FEATURE",
+      "type": "component",
+      "parent": "scratch_mem",
+      "status": "live",
+      "description": "Logical bank, not a separate SRAM macro. Capacity/format (provisional): L*F, signed16/F10\nProducer: Core feature loader\nConsumer: Embedding copy loop"
+    },
+    {
+      "key": "bank_MASK",
+      "name": "2 MASK",
+      "type": "component",
+      "parent": "scratch_mem",
+      "status": "live",
+      "description": "Logical bank, not a separate SRAM macro. Capacity/format (provisional): L, bit\nProducer: Core mask loader\nConsumer: Attention query flag; aggregation"
+    },
+    {
+      "key": "bank_X",
+      "name": "3 X",
+      "type": "component",
+      "parent": "scratch_mem",
+      "status": "live",
+      "description": "Logical bank, not a separate SRAM macro. Capacity/format (provisional): L*D, signed16/F10\nProducer: Embedding, position, residual\nConsumer: Position, LayerNorm, residual, final dot"
+    },
+    {
+      "key": "bank_U",
+      "name": "4 U",
+      "type": "component",
+      "parent": "scratch_mem",
+      "status": "live",
+      "description": "Logical bank, not a separate SRAM macro. Capacity/format (provisional): L*D, signed16/F10\nProducer: LayerNorm 1, then LayerNorm 2 after residual 1\nConsumer: Q/K/V dot, then FFN dot"
+    },
+    {
+      "key": "bank_Q",
+      "name": "5 Q",
+      "type": "component",
+      "parent": "scratch_mem",
+      "status": "live",
+      "description": "Logical bank, not a separate SRAM macro. Capacity/format (provisional): L*D, signed16/F10\nProducer: Q linear\nConsumer: Score dot"
+    },
+    {
+      "key": "bank_KEY",
+      "name": "6 KEY",
+      "type": "component",
+      "parent": "scratch_mem",
+      "status": "live",
+      "description": "Logical bank, not a separate SRAM macro. Capacity/format (provisional): L*D, signed16/F10\nProducer: K linear\nConsumer: Score dot"
+    },
+    {
+      "key": "bank_VALUE",
+      "name": "7 VALUE",
+      "type": "component",
+      "parent": "scratch_mem",
+      "status": "live",
+      "description": "Logical bank, not a separate SRAM macro. Capacity/format (provisional): L*D, signed16/F10\nProducer: V linear\nConsumer: Weighted dot"
+    },
+    {
+      "key": "bank_Z",
+      "name": "8 Z",
+      "type": "component",
+      "parent": "scratch_mem",
+      "status": "live",
+      "description": "Logical bank, not a separate SRAM macro. Capacity/format (provisional): L*D, signed16/F10\nProducer: Weighted controller\nConsumer: Output-projection dot"
+    },
+    {
+      "key": "bank_ATTN_OUT",
+      "name": "9 ATTN_OUT",
+      "type": "component",
+      "parent": "scratch_mem",
+      "status": "live",
+      "description": "Logical bank, not a separate SRAM macro. Capacity/format (provisional): L*D, signed16/F10\nProducer: Output-projection linear\nConsumer: First residual"
+    },
+    {
+      "key": "bank_TOKEN",
+      "name": "10 TOKEN",
+      "type": "component",
+      "parent": "scratch_mem",
+      "status": "live",
+      "description": "Logical bank, not a separate SRAM macro. Capacity/format (provisional): max(F,D), signed16/F10\nProducer: Embedding copy, input LayerNorm\nConsumer: LayerNorm, embedding dot"
+    },
+    {
+      "key": "bank_FFN_HIDDEN",
+      "name": "11 FFN_HIDDEN",
+      "type": "component",
+      "parent": "scratch_mem",
+      "status": "live",
+      "description": "Logical bank, not a separate SRAM macro. Capacity/format (provisional): 4D, signed16/F10\nProducer: First FFN linear, then in-place GELU write loop\nConsumer: GELU read loop, then second FFN linear's dot"
+    },
+    {
+      "key": "bank_VECTOR",
+      "name": "12 VECTOR",
+      "type": "component",
+      "parent": "scratch_mem",
+      "status": "live",
+      "description": "Logical bank, not a separate SRAM macro. Capacity/format (provisional): max(D,4D), signed16/F10\nProducer: Embedding linear/LN; second FFN linear\nConsumer: Embedding copy/LN, second residual"
+    },
+    {
+      "key": "bank_SCORE",
+      "name": "13 SCORE",
+      "type": "component",
+      "parent": "scratch_mem",
+      "status": "live",
+      "description": "Logical bank, not a separate SRAM macro. Capacity/format (provisional): L, signed48/F20\nProducer: Score controller\nConsumer: Softmax"
+    },
+    {
+      "key": "bank_EXP",
+      "name": "14 EXP",
+      "type": "component",
+      "parent": "scratch_mem",
+      "status": "live",
+      "description": "Logical bank, not a separate SRAM macro. Capacity/format (provisional): L, unsigned24/F22\nProducer: Softmax\nConsumer: Softmax"
+    },
+    {
+      "key": "bank_PROB",
+      "name": "15 PROB",
+      "type": "component",
+      "parent": "scratch_mem",
+      "status": "live",
+      "description": "Logical bank, not a separate SRAM macro. Capacity/format (provisional): L, unsigned24/F22\nProducer: Softmax\nConsumer: Weighted dot"
+    },
+    {
+      "key": "bank_LOGIT",
+      "name": "16 LOGIT",
+      "type": "component",
+      "parent": "scratch_mem",
+      "status": "live",
+      "description": "Logical bank, not a separate SRAM macro. Capacity/format (provisional): L, signed16/F10\nProducer: Final linear\nConsumer: Aggregation"
+    },
+    {
+      "key": "bank_OUTPUT",
+      "name": "17 OUTPUT",
+      "type": "component",
+      "parent": "scratch_mem",
+      "status": "live",
+      "description": "Logical bank, not a separate SRAM macro. Capacity/format (provisional): N, signed16/F10\nProducer: Aggregation\nConsumer: Core output transfer"
+    }
+  ],
+  "banks": [
+    {
+      "id": 0,
+      "name": "PARAM",
+      "capacity": "PARAM_WORDS, signed16/F10",
+      "producer": "Core host loader while idle",
+      "consumer": "Position, LayerNorm, linear bias reads, dot weight reads"
+    },
+    {
+      "id": 1,
+      "name": "FEATURE",
+      "capacity": "L*F, signed16/F10",
+      "producer": "Core feature loader",
+      "consumer": "Embedding copy loop"
+    },
+    {
+      "id": 2,
+      "name": "MASK",
+      "capacity": "L, bit",
+      "producer": "Core mask loader",
+      "consumer": "Attention query flag; aggregation"
+    },
+    {
+      "id": 3,
+      "name": "X",
+      "capacity": "L*D, signed16/F10",
+      "producer": "Embedding, position, residual",
+      "consumer": "Position, LayerNorm, residual, final dot"
+    },
+    {
+      "id": 4,
+      "name": "U",
+      "capacity": "L*D, signed16/F10",
+      "producer": "LayerNorm 1, then LayerNorm 2 after residual 1",
+      "consumer": "Q/K/V dot, then FFN dot"
+    },
+    {
+      "id": 5,
+      "name": "Q",
+      "capacity": "L*D, signed16/F10",
+      "producer": "Q linear",
+      "consumer": "Score dot"
+    },
+    {
+      "id": 6,
+      "name": "KEY",
+      "capacity": "L*D, signed16/F10",
+      "producer": "K linear",
+      "consumer": "Score dot"
+    },
+    {
+      "id": 7,
+      "name": "VALUE",
+      "capacity": "L*D, signed16/F10",
+      "producer": "V linear",
+      "consumer": "Weighted dot"
+    },
+    {
+      "id": 8,
+      "name": "Z",
+      "capacity": "L*D, signed16/F10",
+      "producer": "Weighted controller",
+      "consumer": "Output-projection dot"
+    },
+    {
+      "id": 9,
+      "name": "ATTN_OUT",
+      "capacity": "L*D, signed16/F10",
+      "producer": "Output-projection linear",
+      "consumer": "First residual"
+    },
+    {
+      "id": 10,
+      "name": "TOKEN",
+      "capacity": "max(F,D), signed16/F10",
+      "producer": "Embedding copy, input LayerNorm",
+      "consumer": "LayerNorm, embedding dot"
+    },
+    {
+      "id": 11,
+      "name": "FFN_HIDDEN",
+      "capacity": "4D, signed16/F10",
+      "producer": "First FFN linear, then in-place GELU write loop",
+      "consumer": "GELU read loop, then second FFN linear's dot"
+    },
+    {
+      "id": 12,
+      "name": "VECTOR",
+      "capacity": "max(D,4D), signed16/F10",
+      "producer": "Embedding linear/LN; second FFN linear",
+      "consumer": "Embedding copy/LN, second residual"
+    },
+    {
+      "id": 13,
+      "name": "SCORE",
+      "capacity": "L, signed48/F20",
+      "producer": "Score controller",
+      "consumer": "Softmax"
+    },
+    {
+      "id": 14,
+      "name": "EXP",
+      "capacity": "L, unsigned24/F22",
+      "producer": "Softmax",
+      "consumer": "Softmax"
+    },
+    {
+      "id": 15,
+      "name": "PROB",
+      "capacity": "L, unsigned24/F22",
+      "producer": "Softmax",
+      "consumer": "Weighted dot"
+    },
+    {
+      "id": 16,
+      "name": "LOGIT",
+      "capacity": "L, signed16/F10",
+      "producer": "Final linear",
+      "consumer": "Aggregation"
+    },
+    {
+      "id": 17,
+      "name": "OUTPUT",
+      "capacity": "N, signed16/F10",
+      "producer": "Aggregation",
+      "consumer": "Core output transfer"
+    }
+  ],
+  "manifest": {
+    "status": "structural baseline; numerical type widths provisional",
+    "modules": [
+      "bcjrformer_core",
+      "core_ctrl",
+      "embedding_ctrl",
+      "position_ctrl",
+      "encoder_ctrl",
+      "layer_ctrl",
+      "attention_ctrl",
+      "qkv_ctrl",
+      "score_row_ctrl",
+      "softmax_ctrl",
+      "weighted_value_ctrl",
+      "output_projection_ctrl",
+      "ffn_ctrl",
+      "layernorm_ctrl",
+      "linear_ctrl",
+      "residual_ctrl",
+      "final_ctrl",
+      "aggregation_ctrl",
+      "dot_engine",
+      "mac_unit",
+      "exp_unit",
+      "reciprocal_unit",
+      "rsqrt_unit",
+      "gelu_unit",
+      "command_switch",
+      "arithmetic_switch",
+      "memory_fabric",
+      "parameter_mem",
+      "scratch_mem"
+    ],
+    "links": [
+      {
+        "parent": "core_ctrl.embed",
+        "child": "embedding_ctrl.command",
+        "command": "empty_t",
+        "response": "empty_t"
+      },
+      {
+        "parent": "core_ctrl.position",
+        "child": "position_ctrl.command",
+        "command": "empty_t",
+        "response": "empty_t"
+      },
+      {
+        "parent": "core_ctrl.encoder",
+        "child": "encoder_ctrl.command",
+        "command": "empty_t",
+        "response": "empty_t"
+      },
+      {
+        "parent": "core_ctrl.final_project",
+        "child": "final_ctrl.command",
+        "command": "empty_t",
+        "response": "empty_t"
+      },
+      {
+        "parent": "core_ctrl.aggregate",
+        "child": "aggregation_ctrl.command",
+        "command": "empty_t",
+        "response": "aggregation_rsp_t"
+      },
+      {
+        "parent": "encoder_ctrl.layer",
+        "child": "layer_ctrl.command",
+        "command": "layer_cmd_t",
+        "response": "empty_t"
+      },
+      {
+        "parent": "layer_ctrl.attention",
+        "child": "attention_ctrl.command",
+        "command": "layer_cmd_t",
+        "response": "empty_t"
+      },
+      {
+        "parent": "layer_ctrl.ffn",
+        "child": "ffn_ctrl.command",
+        "command": "ffn_cmd_t",
+        "response": "empty_t"
+      },
+      {
+        "parent": "layer_ctrl.residual",
+        "child": "residual_ctrl.command",
+        "command": "residual_cmd_t",
+        "response": "empty_t"
+      },
+      {
+        "parent": "attention_ctrl.qkv",
+        "child": "qkv_ctrl.command",
+        "command": "layer_cmd_t",
+        "response": "empty_t"
+      },
+      {
+        "parent": "attention_ctrl.score",
+        "child": "score_row_ctrl.command",
+        "command": "row_cmd_t",
+        "response": "empty_t"
+      },
+      {
+        "parent": "attention_ctrl.softmax",
+        "child": "softmax_ctrl.command",
+        "command": "softmax_cmd_t",
+        "response": "empty_t"
+      },
+      {
+        "parent": "attention_ctrl.weighted",
+        "child": "weighted_value_ctrl.command",
+        "command": "row_cmd_t",
+        "response": "empty_t"
+      },
+      {
+        "parent": "attention_ctrl.out_project",
+        "child": "output_projection_ctrl.command",
+        "command": "layer_cmd_t",
+        "response": "empty_t"
+      }
+    ],
+    "switches": [
+      {
+        "name": "norm_switch",
+        "module": "command_switch",
+        "callers": [
+          "embedding_ctrl.norm",
+          "layer_ctrl.norm"
+        ],
+        "service": "layernorm_ctrl.command",
+        "command": "layernorm_cmd_t",
+        "response": "empty_t"
+      },
+      {
+        "name": "linear_switch",
+        "module": "command_switch",
+        "callers": [
+          "embedding_ctrl.linear",
+          "qkv_ctrl.linear",
+          "output_projection_ctrl.linear",
+          "ffn_ctrl.linear",
+          "final_ctrl.linear"
+        ],
+        "service": "linear_ctrl.command",
+        "command": "linear_cmd_t",
+        "response": "empty_t"
+      },
+      {
+        "name": "dot_switch",
+        "module": "command_switch",
+        "callers": [
+          "linear_ctrl.dot",
+          "score_row_ctrl.dot",
+          "weighted_value_ctrl.dot"
+        ],
+        "service": "dot_engine.command",
+        "command": "dot_cmd_t",
+        "response": "accum_t"
+      },
+      {
+        "name": "reciprocal_switch",
+        "module": "arithmetic_switch",
+        "callers": [
+          "softmax_ctrl.reciprocal",
+          "aggregation_ctrl.reciprocal"
+        ],
+        "service": "reciprocal_unit.operation",
+        "command": "denominator_t",
+        "response": "reciprocal_t"
+      }
+    ],
+    "arithmetic": [
+      {
+        "parent": "dot_engine.mac",
+        "child": "mac_unit.operation",
+        "request": "mac_req_t",
+        "response": "accum_t"
+      },
+      {
+        "parent": "softmax_ctrl.exponential",
+        "child": "exp_unit.operation",
+        "request": "score_t",
+        "response": "probability_t"
+      },
+      {
+        "parent": "layernorm_ctrl.rsqrt",
+        "child": "rsqrt_unit.operation",
+        "request": "variance_t",
+        "response": "rsqrt_t"
+      },
+      {
+        "parent": "ffn_ctrl.gelu",
+        "child": "gelu_unit.operation",
+        "request": "act_t",
+        "response": "act_t"
+      }
+    ],
+    "memoryClients": [
+      "core_ctrl",
+      "embedding_ctrl",
+      "position_ctrl",
+      "attention_ctrl",
+      "layernorm_ctrl",
+      "linear_ctrl",
+      "score_row_ctrl",
+      "softmax_ctrl",
+      "weighted_value_ctrl",
+      "ffn_ctrl",
+      "residual_ctrl",
+      "aggregation_ctrl",
+      "dot_engine"
+    ],
+    "memoryRouting": {
+      "parameter": "memory_fabric.parameters -> parameter_mem.access",
+      "scratch": "memory_fabric.scratch -> scratch_mem.access"
+    },
+    "host": "bcjrformer_core.host -> core_ctrl.host"
+  },
+  "channelText": "// Wire bundles and direction declarations only; no behavioral logic.\ninterface bcjr_cmd_if #(\n  parameter type CMD_T = bcjrformer_contract_pkg::empty_t,\n  parameter type RSP_T = bcjrformer_contract_pkg::empty_t\n);\n  logic cmd_valid, cmd_ready;\n  CMD_T cmd;\n  logic rsp_valid, rsp_ready, rsp_error;\n  RSP_T rsp;\n  bcjrformer_contract_pkg::status_t rsp_status;\n  modport caller(output cmd_valid, cmd, rsp_ready,\n                 input cmd_ready, rsp_valid, rsp, rsp_error, rsp_status);\n  modport callee(input cmd_valid, cmd, rsp_ready,\n                 output cmd_ready, rsp_valid, rsp, rsp_error, rsp_status);\nendinterface\n\ninterface bcjr_mem_if;\n  logic req_valid, req_ready;\n  bcjrformer_contract_pkg::mem_req_t req;\n  logic rsp_valid, rsp_ready, rsp_error;\n  bcjrformer_contract_pkg::mem_data_t rsp_rdata;\n  modport requester(output req_valid, req, rsp_ready,\n                    input req_ready, rsp_valid, rsp_rdata, rsp_error);\n  modport responder(input req_valid, req, rsp_ready,\n                    output req_ready, rsp_valid, rsp_rdata, rsp_error);\nendinterface\n\ninterface bcjr_arith_if #(\n  parameter type REQ_T = bcjrformer_contract_pkg::act_t,\n  parameter type RSP_T = bcjrformer_contract_pkg::act_t\n);\n  logic req_valid, req_ready;\n  REQ_T req;\n  logic [7:0] req_tag;\n  logic rsp_valid, rsp_ready, rsp_error;\n  RSP_T rsp;\n  logic [7:0] rsp_tag;\n  bcjrformer_contract_pkg::status_t rsp_status;\n  modport requester(output req_valid, req, req_tag, rsp_ready,\n                    input req_ready, rsp_valid, rsp, rsp_tag, rsp_error, rsp_status);\n  modport responder(input req_valid, req, req_tag, rsp_ready,\n                    output req_ready, rsp_valid, rsp, rsp_tag, rsp_error, rsp_status);\nendinterface\n\ninterface bcjr_host_if #(parameter int unsigned INDEX_W = 1);\n  import bcjrformer_contract_pkg::*;\n  logic param_valid, param_ready;\n  addr_t param_addr;\n  act_t param_data;\n  // New explicit write acknowledgment closes the documented commit ordering.\n  logic param_rsp_valid, param_rsp_ready, param_rsp_error;\n  logic parameter_commit;\n  logic frame_valid, frame_ready;\n  logic feature_valid, feature_ready, feature_last;\n  act_t feature_data;\n  logic mask_valid, mask_ready, mask_bit, mask_last;\n  logic logit_valid, logit_ready, logit_last;\n  act_t logit_data;\n  logic [INDEX_W-1:0] logit_index;\n  logic completion_valid, completion_ready, completion_error;\n  completion_code_t completion_code;\n  logic [INDEX_W-1:0] completion_position;\n  logic busy;\n  status_t status;\n  modport core(\n    input param_valid, param_addr, param_data, param_rsp_ready, parameter_commit,\n          frame_valid, feature_valid, feature_data, feature_last,\n          mask_valid, mask_bit, mask_last, logit_ready, completion_ready,\n    output param_ready, param_rsp_valid, param_rsp_error, frame_ready,\n           feature_ready, mask_ready, logit_valid, logit_data, logit_index,\n           logit_last, completion_valid, completion_error, completion_code,\n           completion_position, busy, status);\n  modport host(\n    output param_valid, param_addr, param_data, param_rsp_ready, parameter_commit,\n           frame_valid, feature_valid, feature_data, feature_last,\n           mask_valid, mask_bit, mask_last, logit_ready, completion_ready,\n    input param_ready, param_rsp_valid, param_rsp_error, frame_ready,\n          feature_ready, mask_ready, logit_valid, logit_data, logit_index,\n          logit_last, completion_valid, completion_error, completion_code,\n          completion_position, busy, status);\nendinterface\n",
+  "pkgText": "// Interface draft only. Numerical formats require calibration.\n// Compile this package before the interfaces and declaration-only .svh file.\npackage bcjrformer_contract_pkg;\n  // Integration choice, not a selected model dimension. Regenerate/change this\n  // constant if any bank or parameter image cannot fit a 32-bit word address.\n  parameter int unsigned ADDR_W = 32;\n  typedef logic [ADDR_W-1:0] addr_t;\n  typedef logic [15:0] count_t;\n  typedef logic signed [15:0] act_t;       // signed 16, 10 fractional bits\n  typedef logic signed [47:0] score_t;     // signed 48, 20 fractional bits\n  typedef logic [23:0] probability_t;      // unsigned 24, 22 fractional bits\n  typedef logic signed [63:0] accum_t;     // mode selects fractional bits\n  typedef logic [63:0] denominator_t;      // unsigned 64, 22 fractional bits\n  typedef logic [39:0] reciprocal_t;       // unsigned 40, 32 fractional bits\n  typedef logic [47:0] variance_t;         // unsigned 48, 32 fractional bits\n  typedef logic [31:0] rsqrt_t;            // unsigned 32, 20 fractional bits\n  typedef logic [95:0] mem_data_t;\n  typedef logic empty_t;                  // reserved payload, always zero\n\n  typedef struct packed {\n    logic protocol_error; // fatal: illegal descriptor, bank, address or packet\n    logic numeric_error;  // fatal: overflow or arithmetic domain error\n    logic saturated;      // nonfatal: clipping occurred\n    logic rounded;        // nonfatal: conversion changed represented value\n  } status_t;\n\n  // Proposed Phase-1 control contract; independent of arithmetic calibration.\n  typedef enum logic [1:0] {\n    COMPLETION_OK = 2'd0,\n    COMPLETION_EMPTY_POSITION = 2'd1, // recoverable; parameters retained\n    COMPLETION_FATAL = 2'd2          // drain/report, then reset required\n  } completion_code_t;\n  typedef struct packed {\n    completion_code_t code;\n    count_t position; // meaningful only for COMPLETION_EMPTY_POSITION\n  } aggregation_rsp_t;\n\n  // Logical bank IDs are an explicit new interface encoding, not SRAM macros.\n  typedef enum logic [4:0] {\n    BANK_PARAM = 5'd0, BANK_FEATURE = 5'd1, BANK_MASK = 5'd2,\n    BANK_X = 5'd3, BANK_U = 5'd4, BANK_Q = 5'd5, BANK_KEY = 5'd6,\n    BANK_VALUE = 5'd7, BANK_Z = 5'd8, BANK_ATTN_OUT = 5'd9,\n    BANK_TOKEN = 5'd10, BANK_FFN_HIDDEN = 5'd11,\n    BANK_VECTOR = 5'd12, BANK_SCORE = 5'd13, BANK_EXP = 5'd14,\n    BANK_PROB = 5'd15, BANK_LOGIT = 5'd16, BANK_OUTPUT = 5'd17\n  } bank_t;\n  typedef enum logic [1:0] {\n    FMT_S16_F10 = 2'd0, FMT_BIT = 2'd1,\n    FMT_S48_F20 = 2'd2, FMT_U24_F22 = 2'd3\n  } mem_format_t;\n  typedef struct packed { bank_t bank; addr_t addr; } ptr_t;\n  typedef struct packed {\n    logic write;\n    bank_t bank;\n    addr_t addr;          // native elements, never byte addresses\n    mem_format_t format;\n    mem_data_t wdata;     // valid low bits; ALL unused high bits zero\n  } mem_req_t;\n\n  typedef struct packed {\n    count_t layer_index;\n    addr_t layer_param_base;\n  } layer_cmd_t;\n  typedef struct packed {\n    count_t length;\n    ptr_t src;\n    ptr_t dst;\n    addr_t gamma_base;\n    addr_t beta_base;\n  } layernorm_cmd_t;\n  typedef struct packed {\n    count_t in_count;\n    count_t out_count;\n    ptr_t src;\n    ptr_t dst;\n    addr_t weight_base;\n    addr_t bias_base;\n  } linear_cmd_t;\n  typedef struct packed {\n    count_t length;\n    ptr_t left;\n    ptr_t right;\n    ptr_t dst;\n  } residual_cmd_t;\n  typedef struct packed { count_t head_index; count_t query_index; } row_cmd_t;\n  typedef struct packed { logic padded_query; } softmax_cmd_t;\n  typedef struct packed {\n    ptr_t src;\n    ptr_t dst;\n    addr_t layer_param_base;\n  } ffn_cmd_t;\n  typedef enum logic {\n    DOT_S16_S16 = 1'b0,   // signed48/F20 range; sign extended to physical 64\n    DOT_U24_S16 = 1'b1    // signed64/F32 range\n  } dot_mode_t;\n  typedef struct packed {\n    count_t length;\n    ptr_t a;\n    addr_t a_stride;\n    ptr_t b;\n    addr_t b_stride;\n    dot_mode_t mode;\n    accum_t acc_init;\n  } dot_cmd_t;\n  typedef struct packed {\n    dot_mode_t mode;\n    logic [23:0] a;       // mode 0: signed a[15:0], a[23:16]=0\n    act_t b;             // mode 1: A is unsigned full 24 bits\n    accum_t acc;\n  } mac_req_t;\nendpackage\n",
+  "edges": [
+    {
+      "a": "core_ctrl",
+      "b": "embedding_ctrl",
+      "name": "core_ctrl.embed → embedding_ctrl.command",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\ncmd: empty_t; rsp: empty_t",
+      "kind": "command"
+    },
+    {
+      "a": "core_ctrl",
+      "b": "position_ctrl",
+      "name": "core_ctrl.position → position_ctrl.command",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\ncmd: empty_t; rsp: empty_t",
+      "kind": "command"
+    },
+    {
+      "a": "core_ctrl",
+      "b": "encoder_ctrl",
+      "name": "core_ctrl.encoder → encoder_ctrl.command",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\ncmd: empty_t; rsp: empty_t",
+      "kind": "command"
+    },
+    {
+      "a": "core_ctrl",
+      "b": "final_ctrl",
+      "name": "core_ctrl.final_project → final_ctrl.command",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\ncmd: empty_t; rsp: empty_t",
+      "kind": "command"
+    },
+    {
+      "a": "core_ctrl",
+      "b": "aggregation_ctrl",
+      "name": "core_ctrl.aggregate → aggregation_ctrl.command",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\ncmd: empty_t; rsp: aggregation_rsp_t",
+      "kind": "command"
+    },
+    {
+      "a": "encoder_ctrl",
+      "b": "layer_ctrl",
+      "name": "encoder_ctrl.layer → layer_ctrl.command",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\ncmd: layer_cmd_t; rsp: empty_t",
+      "kind": "command"
+    },
+    {
+      "a": "layer_ctrl",
+      "b": "attention_ctrl",
+      "name": "layer_ctrl.attention → attention_ctrl.command",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\ncmd: layer_cmd_t; rsp: empty_t",
+      "kind": "command"
+    },
+    {
+      "a": "layer_ctrl",
+      "b": "ffn_ctrl",
+      "name": "layer_ctrl.ffn → ffn_ctrl.command",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\ncmd: ffn_cmd_t; rsp: empty_t",
+      "kind": "command"
+    },
+    {
+      "a": "layer_ctrl",
+      "b": "residual_ctrl",
+      "name": "layer_ctrl.residual → residual_ctrl.command",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\ncmd: residual_cmd_t; rsp: empty_t",
+      "kind": "command"
+    },
+    {
+      "a": "attention_ctrl",
+      "b": "qkv_ctrl",
+      "name": "attention_ctrl.qkv → qkv_ctrl.command",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\ncmd: layer_cmd_t; rsp: empty_t",
+      "kind": "command"
+    },
+    {
+      "a": "attention_ctrl",
+      "b": "score_row_ctrl",
+      "name": "attention_ctrl.score → score_row_ctrl.command",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\ncmd: row_cmd_t; rsp: empty_t",
+      "kind": "command"
+    },
+    {
+      "a": "attention_ctrl",
+      "b": "softmax_ctrl",
+      "name": "attention_ctrl.softmax → softmax_ctrl.command",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\ncmd: softmax_cmd_t; rsp: empty_t",
+      "kind": "command"
+    },
+    {
+      "a": "attention_ctrl",
+      "b": "weighted_value_ctrl",
+      "name": "attention_ctrl.weighted → weighted_value_ctrl.command",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\ncmd: row_cmd_t; rsp: empty_t",
+      "kind": "command"
+    },
+    {
+      "a": "attention_ctrl",
+      "b": "output_projection_ctrl",
+      "name": "attention_ctrl.out_project → output_projection_ctrl.command",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\ncmd: layer_cmd_t; rsp: empty_t",
+      "kind": "command"
+    },
+    {
+      "a": "embedding_ctrl",
+      "b": "norm_switch",
+      "name": "embedding_ctrl.norm → clients[0]",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\nRequest: layernorm_cmd_t; response: empty_t; arbitration index 0",
+      "kind": "command"
+    },
+    {
+      "a": "layer_ctrl",
+      "b": "norm_switch",
+      "name": "layer_ctrl.norm → clients[1]",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\nRequest: layernorm_cmd_t; response: empty_t; arbitration index 1",
+      "kind": "command"
+    },
+    {
+      "a": "norm_switch",
+      "b": "layernorm_ctrl",
+      "name": "service → layernorm_ctrl.command",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\nRequest: layernorm_cmd_t; response: empty_t",
+      "kind": "command"
+    },
+    {
+      "a": "embedding_ctrl",
+      "b": "linear_switch",
+      "name": "embedding_ctrl.linear → clients[0]",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\nRequest: linear_cmd_t; response: empty_t; arbitration index 0",
+      "kind": "command"
+    },
+    {
+      "a": "qkv_ctrl",
+      "b": "linear_switch",
+      "name": "qkv_ctrl.linear → clients[1]",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\nRequest: linear_cmd_t; response: empty_t; arbitration index 1",
+      "kind": "command"
+    },
+    {
+      "a": "output_projection_ctrl",
+      "b": "linear_switch",
+      "name": "output_projection_ctrl.linear → clients[2]",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\nRequest: linear_cmd_t; response: empty_t; arbitration index 2",
+      "kind": "command"
+    },
+    {
+      "a": "ffn_ctrl",
+      "b": "linear_switch",
+      "name": "ffn_ctrl.linear → clients[3]",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\nRequest: linear_cmd_t; response: empty_t; arbitration index 3",
+      "kind": "command"
+    },
+    {
+      "a": "final_ctrl",
+      "b": "linear_switch",
+      "name": "final_ctrl.linear → clients[4]",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\nRequest: linear_cmd_t; response: empty_t; arbitration index 4",
+      "kind": "command"
+    },
+    {
+      "a": "linear_switch",
+      "b": "linear_ctrl",
+      "name": "service → linear_ctrl.command",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\nRequest: linear_cmd_t; response: empty_t",
+      "kind": "command"
+    },
+    {
+      "a": "linear_ctrl",
+      "b": "dot_switch",
+      "name": "linear_ctrl.dot → clients[0]",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\nRequest: dot_cmd_t; response: accum_t; arbitration index 0",
+      "kind": "command"
+    },
+    {
+      "a": "score_row_ctrl",
+      "b": "dot_switch",
+      "name": "score_row_ctrl.dot → clients[1]",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\nRequest: dot_cmd_t; response: accum_t; arbitration index 1",
+      "kind": "command"
+    },
+    {
+      "a": "weighted_value_ctrl",
+      "b": "dot_switch",
+      "name": "weighted_value_ctrl.dot → clients[2]",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\nRequest: dot_cmd_t; response: accum_t; arbitration index 2",
+      "kind": "command"
+    },
+    {
+      "a": "dot_switch",
+      "b": "dot_engine",
+      "name": "service → dot_engine.command",
+      "description": "Caller → callee: cmd_valid, cmd. Callee → caller: cmd_ready, rsp_valid, rsp, rsp_error, rsp_status[3:0]. Caller → callee: rsp_ready. Payload/response stable until handshake. Response certifies completed work and committed writes. Status: protocol_error, numeric_error, saturated, rounded.\nRequest: dot_cmd_t; response: accum_t",
+      "kind": "command"
+    },
+    {
+      "a": "softmax_ctrl",
+      "b": "reciprocal_switch",
+      "name": "softmax_ctrl.reciprocal → clients[0]",
+      "description": "Requester → service: req_valid, req, req_tag[7:0], rsp_ready. Service → requester: req_ready, rsp_valid, rsp, rsp_tag[7:0], rsp_error, rsp_status[3:0]. Echo tag; one outstanding; hold through stalls.\nRequest: denominator_t; response: reciprocal_t; arbitration index 0",
+      "kind": "arithmetic"
+    },
+    {
+      "a": "aggregation_ctrl",
+      "b": "reciprocal_switch",
+      "name": "aggregation_ctrl.reciprocal → clients[1]",
+      "description": "Requester → service: req_valid, req, req_tag[7:0], rsp_ready. Service → requester: req_ready, rsp_valid, rsp, rsp_tag[7:0], rsp_error, rsp_status[3:0]. Echo tag; one outstanding; hold through stalls.\nRequest: denominator_t; response: reciprocal_t; arbitration index 1",
+      "kind": "arithmetic"
+    },
+    {
+      "a": "reciprocal_switch",
+      "b": "reciprocal_unit",
+      "name": "service → reciprocal_unit.operation",
+      "description": "Requester → service: req_valid, req, req_tag[7:0], rsp_ready. Service → requester: req_ready, rsp_valid, rsp, rsp_tag[7:0], rsp_error, rsp_status[3:0]. Echo tag; one outstanding; hold through stalls.\nRequest: denominator_t; response: reciprocal_t",
+      "kind": "arithmetic"
+    },
+    {
+      "a": "dot_engine",
+      "b": "mac_unit",
+      "name": "dot_engine.mac → mac_unit.operation",
+      "description": "Requester → service: req_valid, req, req_tag[7:0], rsp_ready. Service → requester: req_ready, rsp_valid, rsp, rsp_tag[7:0], rsp_error, rsp_status[3:0]. Echo tag; one outstanding; hold through stalls.\nRequest: mac_req_t; response: accum_t",
+      "kind": "arithmetic"
+    },
+    {
+      "a": "softmax_ctrl",
+      "b": "exp_unit",
+      "name": "softmax_ctrl.exponential → exp_unit.operation",
+      "description": "Requester → service: req_valid, req, req_tag[7:0], rsp_ready. Service → requester: req_ready, rsp_valid, rsp, rsp_tag[7:0], rsp_error, rsp_status[3:0]. Echo tag; one outstanding; hold through stalls.\nRequest: score_t; response: probability_t",
+      "kind": "arithmetic"
+    },
+    {
+      "a": "layernorm_ctrl",
+      "b": "rsqrt_unit",
+      "name": "layernorm_ctrl.rsqrt → rsqrt_unit.operation",
+      "description": "Requester → service: req_valid, req, req_tag[7:0], rsp_ready. Service → requester: req_ready, rsp_valid, rsp, rsp_tag[7:0], rsp_error, rsp_status[3:0]. Echo tag; one outstanding; hold through stalls.\nRequest: variance_t; response: rsqrt_t",
+      "kind": "arithmetic"
+    },
+    {
+      "a": "ffn_ctrl",
+      "b": "gelu_unit",
+      "name": "ffn_ctrl.gelu → gelu_unit.operation",
+      "description": "Requester → service: req_valid, req, req_tag[7:0], rsp_ready. Service → requester: req_ready, rsp_valid, rsp, rsp_tag[7:0], rsp_error, rsp_status[3:0]. Echo tag; one outstanding; hold through stalls.\nRequest: act_t; response: act_t",
+      "kind": "arithmetic"
+    },
+    {
+      "a": "core_ctrl",
+      "b": "memory_fabric",
+      "name": "core_ctrl.mem → clients[0]",
+      "description": "Requester → responder: req_valid, req{write[1],bank[5],addr[32],format[2],wdata[96]}, rsp_ready. Responder → requester: req_ready, rsp_valid, rsp_rdata[96], rsp_error. Native-element address. Unused high write bits zero. Read extension depends on native signedness. Write acknowledgement after commitment.\nClient index 0; only client 0 writes PARAM/MASK; compute accesses otherwise follow bank ownership.",
+      "kind": "memory"
+    },
+    {
+      "a": "embedding_ctrl",
+      "b": "memory_fabric",
+      "name": "embedding_ctrl.mem → clients[1]",
+      "description": "Requester → responder: req_valid, req{write[1],bank[5],addr[32],format[2],wdata[96]}, rsp_ready. Responder → requester: req_ready, rsp_valid, rsp_rdata[96], rsp_error. Native-element address. Unused high write bits zero. Read extension depends on native signedness. Write acknowledgement after commitment.\nClient index 1; only client 0 writes PARAM/MASK; compute accesses otherwise follow bank ownership.",
+      "kind": "memory"
+    },
+    {
+      "a": "position_ctrl",
+      "b": "memory_fabric",
+      "name": "position_ctrl.mem → clients[2]",
+      "description": "Requester → responder: req_valid, req{write[1],bank[5],addr[32],format[2],wdata[96]}, rsp_ready. Responder → requester: req_ready, rsp_valid, rsp_rdata[96], rsp_error. Native-element address. Unused high write bits zero. Read extension depends on native signedness. Write acknowledgement after commitment.\nClient index 2; only client 0 writes PARAM/MASK; compute accesses otherwise follow bank ownership.",
+      "kind": "memory"
+    },
+    {
+      "a": "attention_ctrl",
+      "b": "memory_fabric",
+      "name": "attention_ctrl.mem → clients[3]",
+      "description": "Requester → responder: req_valid, req{write[1],bank[5],addr[32],format[2],wdata[96]}, rsp_ready. Responder → requester: req_ready, rsp_valid, rsp_rdata[96], rsp_error. Native-element address. Unused high write bits zero. Read extension depends on native signedness. Write acknowledgement after commitment.\nClient index 3; only client 0 writes PARAM/MASK; compute accesses otherwise follow bank ownership.",
+      "kind": "memory"
+    },
+    {
+      "a": "layernorm_ctrl",
+      "b": "memory_fabric",
+      "name": "layernorm_ctrl.mem → clients[4]",
+      "description": "Requester → responder: req_valid, req{write[1],bank[5],addr[32],format[2],wdata[96]}, rsp_ready. Responder → requester: req_ready, rsp_valid, rsp_rdata[96], rsp_error. Native-element address. Unused high write bits zero. Read extension depends on native signedness. Write acknowledgement after commitment.\nClient index 4; only client 0 writes PARAM/MASK; compute accesses otherwise follow bank ownership.",
+      "kind": "memory"
+    },
+    {
+      "a": "linear_ctrl",
+      "b": "memory_fabric",
+      "name": "linear_ctrl.mem → clients[5]",
+      "description": "Requester → responder: req_valid, req{write[1],bank[5],addr[32],format[2],wdata[96]}, rsp_ready. Responder → requester: req_ready, rsp_valid, rsp_rdata[96], rsp_error. Native-element address. Unused high write bits zero. Read extension depends on native signedness. Write acknowledgement after commitment.\nClient index 5; only client 0 writes PARAM/MASK; compute accesses otherwise follow bank ownership.",
+      "kind": "memory"
+    },
+    {
+      "a": "score_row_ctrl",
+      "b": "memory_fabric",
+      "name": "score_row_ctrl.mem → clients[6]",
+      "description": "Requester → responder: req_valid, req{write[1],bank[5],addr[32],format[2],wdata[96]}, rsp_ready. Responder → requester: req_ready, rsp_valid, rsp_rdata[96], rsp_error. Native-element address. Unused high write bits zero. Read extension depends on native signedness. Write acknowledgement after commitment.\nClient index 6; only client 0 writes PARAM/MASK; compute accesses otherwise follow bank ownership.",
+      "kind": "memory"
+    },
+    {
+      "a": "softmax_ctrl",
+      "b": "memory_fabric",
+      "name": "softmax_ctrl.mem → clients[7]",
+      "description": "Requester → responder: req_valid, req{write[1],bank[5],addr[32],format[2],wdata[96]}, rsp_ready. Responder → requester: req_ready, rsp_valid, rsp_rdata[96], rsp_error. Native-element address. Unused high write bits zero. Read extension depends on native signedness. Write acknowledgement after commitment.\nClient index 7; only client 0 writes PARAM/MASK; compute accesses otherwise follow bank ownership.",
+      "kind": "memory"
+    },
+    {
+      "a": "weighted_value_ctrl",
+      "b": "memory_fabric",
+      "name": "weighted_value_ctrl.mem → clients[8]",
+      "description": "Requester → responder: req_valid, req{write[1],bank[5],addr[32],format[2],wdata[96]}, rsp_ready. Responder → requester: req_ready, rsp_valid, rsp_rdata[96], rsp_error. Native-element address. Unused high write bits zero. Read extension depends on native signedness. Write acknowledgement after commitment.\nClient index 8; only client 0 writes PARAM/MASK; compute accesses otherwise follow bank ownership.",
+      "kind": "memory"
+    },
+    {
+      "a": "ffn_ctrl",
+      "b": "memory_fabric",
+      "name": "ffn_ctrl.mem → clients[9]",
+      "description": "Requester → responder: req_valid, req{write[1],bank[5],addr[32],format[2],wdata[96]}, rsp_ready. Responder → requester: req_ready, rsp_valid, rsp_rdata[96], rsp_error. Native-element address. Unused high write bits zero. Read extension depends on native signedness. Write acknowledgement after commitment.\nClient index 9; only client 0 writes PARAM/MASK; compute accesses otherwise follow bank ownership.",
+      "kind": "memory"
+    },
+    {
+      "a": "residual_ctrl",
+      "b": "memory_fabric",
+      "name": "residual_ctrl.mem → clients[10]",
+      "description": "Requester → responder: req_valid, req{write[1],bank[5],addr[32],format[2],wdata[96]}, rsp_ready. Responder → requester: req_ready, rsp_valid, rsp_rdata[96], rsp_error. Native-element address. Unused high write bits zero. Read extension depends on native signedness. Write acknowledgement after commitment.\nClient index 10; only client 0 writes PARAM/MASK; compute accesses otherwise follow bank ownership.",
+      "kind": "memory"
+    },
+    {
+      "a": "aggregation_ctrl",
+      "b": "memory_fabric",
+      "name": "aggregation_ctrl.mem → clients[11]",
+      "description": "Requester → responder: req_valid, req{write[1],bank[5],addr[32],format[2],wdata[96]}, rsp_ready. Responder → requester: req_ready, rsp_valid, rsp_rdata[96], rsp_error. Native-element address. Unused high write bits zero. Read extension depends on native signedness. Write acknowledgement after commitment.\nClient index 11; only client 0 writes PARAM/MASK; compute accesses otherwise follow bank ownership.",
+      "kind": "memory"
+    },
+    {
+      "a": "dot_engine",
+      "b": "memory_fabric",
+      "name": "dot_engine.mem → clients[12]",
+      "description": "Requester → responder: req_valid, req{write[1],bank[5],addr[32],format[2],wdata[96]}, rsp_ready. Responder → requester: req_ready, rsp_valid, rsp_rdata[96], rsp_error. Native-element address. Unused high write bits zero. Read extension depends on native signedness. Write acknowledgement after commitment.\nClient index 12; only client 0 writes PARAM/MASK; compute accesses otherwise follow bank ownership.",
+      "kind": "memory"
+    },
+    {
+      "a": "memory_fabric",
+      "b": "parameter_mem",
+      "name": "parameters → access [bank=0 PARAM]",
+      "description": "Requester → responder: req_valid, req{write[1],bank[5],addr[32],format[2],wdata[96]}, rsp_ready. Responder → requester: req_ready, rsp_valid, rsp_rdata[96], rsp_error. Native-element address. Unused high write bits zero. Read extension depends on native signedness. Write acknowledgement after commitment.\nOne global transaction; owner retained until response. Validation before dispatch.",
+      "kind": "memory"
+    },
+    {
+      "a": "memory_fabric",
+      "b": "scratch_mem",
+      "name": "scratch → access [banks=1…17]",
+      "description": "Requester → responder: req_valid, req{write[1],bank[5],addr[32],format[2],wdata[96]}, rsp_ready. Responder → requester: req_ready, rsp_valid, rsp_rdata[96], rsp_error. Native-element address. Unused high write bits zero. Read extension depends on native signedness. Write acknowledgement after commitment.\nBANK_DEPTHS[18] explicitly configured; zero disables. Invalid request returns local error and never reaches storage.",
+      "kind": "memory"
+    },
+    {
+      "a": "parameter_mem",
+      "b": "bank_PARAM",
+      "name": "bank 0 · PARAM",
+      "description": "Internal decoded native-width storage, not a new external RTL interface. PARAM_WORDS, signed16/F10; producer: Core host loader while idle; consumer: Position, LayerNorm, linear bias reads, dot weight reads",
+      "kind": "bank"
+    },
+    {
+      "a": "scratch_mem",
+      "b": "bank_FEATURE",
+      "name": "bank 1 · FEATURE",
+      "description": "Internal decoded native-width storage, not a new external RTL interface. L*F, signed16/F10; producer: Core feature loader; consumer: Embedding copy loop",
+      "kind": "bank"
+    },
+    {
+      "a": "scratch_mem",
+      "b": "bank_MASK",
+      "name": "bank 2 · MASK",
+      "description": "Internal decoded native-width storage, not a new external RTL interface. L, bit; producer: Core mask loader; consumer: Attention query flag; aggregation",
+      "kind": "bank"
+    },
+    {
+      "a": "scratch_mem",
+      "b": "bank_X",
+      "name": "bank 3 · X",
+      "description": "Internal decoded native-width storage, not a new external RTL interface. L*D, signed16/F10; producer: Embedding, position, residual; consumer: Position, LayerNorm, residual, final dot",
+      "kind": "bank"
+    },
+    {
+      "a": "scratch_mem",
+      "b": "bank_U",
+      "name": "bank 4 · U",
+      "description": "Internal decoded native-width storage, not a new external RTL interface. L*D, signed16/F10; producer: LayerNorm 1, then LayerNorm 2 after residual 1; consumer: Q/K/V dot, then FFN dot",
+      "kind": "bank"
+    },
+    {
+      "a": "scratch_mem",
+      "b": "bank_Q",
+      "name": "bank 5 · Q",
+      "description": "Internal decoded native-width storage, not a new external RTL interface. L*D, signed16/F10; producer: Q linear; consumer: Score dot",
+      "kind": "bank"
+    },
+    {
+      "a": "scratch_mem",
+      "b": "bank_KEY",
+      "name": "bank 6 · KEY",
+      "description": "Internal decoded native-width storage, not a new external RTL interface. L*D, signed16/F10; producer: K linear; consumer: Score dot",
+      "kind": "bank"
+    },
+    {
+      "a": "scratch_mem",
+      "b": "bank_VALUE",
+      "name": "bank 7 · VALUE",
+      "description": "Internal decoded native-width storage, not a new external RTL interface. L*D, signed16/F10; producer: V linear; consumer: Weighted dot",
+      "kind": "bank"
+    },
+    {
+      "a": "scratch_mem",
+      "b": "bank_Z",
+      "name": "bank 8 · Z",
+      "description": "Internal decoded native-width storage, not a new external RTL interface. L*D, signed16/F10; producer: Weighted controller; consumer: Output-projection dot",
+      "kind": "bank"
+    },
+    {
+      "a": "scratch_mem",
+      "b": "bank_ATTN_OUT",
+      "name": "bank 9 · ATTN_OUT",
+      "description": "Internal decoded native-width storage, not a new external RTL interface. L*D, signed16/F10; producer: Output-projection linear; consumer: First residual",
+      "kind": "bank"
+    },
+    {
+      "a": "scratch_mem",
+      "b": "bank_TOKEN",
+      "name": "bank 10 · TOKEN",
+      "description": "Internal decoded native-width storage, not a new external RTL interface. max(F,D), signed16/F10; producer: Embedding copy, input LayerNorm; consumer: LayerNorm, embedding dot",
+      "kind": "bank"
+    },
+    {
+      "a": "scratch_mem",
+      "b": "bank_FFN_HIDDEN",
+      "name": "bank 11 · FFN_HIDDEN",
+      "description": "Internal decoded native-width storage, not a new external RTL interface. 4D, signed16/F10; producer: First FFN linear, then in-place GELU write loop; consumer: GELU read loop, then second FFN linear's dot",
+      "kind": "bank"
+    },
+    {
+      "a": "scratch_mem",
+      "b": "bank_VECTOR",
+      "name": "bank 12 · VECTOR",
+      "description": "Internal decoded native-width storage, not a new external RTL interface. max(D,4D), signed16/F10; producer: Embedding linear/LN; second FFN linear; consumer: Embedding copy/LN, second residual",
+      "kind": "bank"
+    },
+    {
+      "a": "scratch_mem",
+      "b": "bank_SCORE",
+      "name": "bank 13 · SCORE",
+      "description": "Internal decoded native-width storage, not a new external RTL interface. L, signed48/F20; producer: Score controller; consumer: Softmax",
+      "kind": "bank"
+    },
+    {
+      "a": "scratch_mem",
+      "b": "bank_EXP",
+      "name": "bank 14 · EXP",
+      "description": "Internal decoded native-width storage, not a new external RTL interface. L, unsigned24/F22; producer: Softmax; consumer: Softmax",
+      "kind": "bank"
+    },
+    {
+      "a": "scratch_mem",
+      "b": "bank_PROB",
+      "name": "bank 15 · PROB",
+      "description": "Internal decoded native-width storage, not a new external RTL interface. L, unsigned24/F22; producer: Softmax; consumer: Weighted dot",
+      "kind": "bank"
+    },
+    {
+      "a": "scratch_mem",
+      "b": "bank_LOGIT",
+      "name": "bank 16 · LOGIT",
+      "description": "Internal decoded native-width storage, not a new external RTL interface. L, signed16/F10; producer: Final linear; consumer: Aggregation",
+      "kind": "bank"
+    },
+    {
+      "a": "scratch_mem",
+      "b": "bank_OUTPUT",
+      "name": "bank 17 · OUTPUT",
+      "description": "Internal decoded native-width storage, not a new external RTL interface. N, signed16/F10; producer: Aggregation; consumer: Core output transfer",
+      "kind": "bank"
+    },
+    {
+      "a": "host",
+      "b": "core_ctrl",
+      "name": "host ↔ bcjrformer_core.host ↔ core_ctrl.host",
+      "kind": "host",
+      "description": " #(parameter int unsigned INDEX_W = 1);\n  import bcjrformer_contract_pkg::*;\n  logic param_valid, param_ready;\n  addr_t param_addr;\n  act_t param_data;\n  // New explicit write acknowledgment closes the documented commit ordering.\n  logic param_rsp_valid, param_rsp_ready, param_rsp_error;\n  logic parameter_commit;\n  logic frame_valid, frame_ready;\n  logic feature_valid, feature_ready, feature_last;\n  act_t feature_data;\n  logic mask_valid, mask_ready, mask_bit, mask_last;\n  logic logit_valid, logit_ready, logit_last;\n  act_t logit_data;\n  logic [INDEX_W-1:0] logit_index;\n  logic completion_valid, completion_ready, completion_error;\n  completion_code_t completion_code;\n  logic [INDEX_W-1:0] completion_position;\n  logic busy;\n  status_t status;\n  modport core(\n    input param_valid, param_addr, param_data, param_rsp_ready, parameter_commit,\n          frame_valid, feature_valid, feature_data, feature_last,\n          mask_valid, mask_bit, mask_last, logit_ready, completion_ready,\n    output param_ready, param_rsp_valid, param_rsp_error, frame_ready,\n           feature_ready, mask_ready, logit_valid, logit_data, logit_index,\n           logit_last, completion_valid, completion_error, completion_code,\n           completion_position, busy, status);\n  modport host(\n    output param_valid, param_addr, param_data, param_rsp_ready, parameter_commit,\n           frame_valid, feature_valid, feature_data, feature_last,\n           mask_valid, mask_bit, mask_last, logit_ready, completion_ready,\n    input param_ready, param_rsp_valid, param_rsp_error, frame_ready,\n          feature_ready, mask_ready, logit_valid, logit_data, logit_index,\n          logit_last, completion_valid, completion_error, completion_code,\n          completion_position, busy, status);\nendinterface\n"
+    },
+    {
+      "a": "clock",
+      "b": "core_ctrl",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "embedding_ctrl",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "position_ctrl",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "encoder_ctrl",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "layer_ctrl",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "attention_ctrl",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "qkv_ctrl",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "score_row_ctrl",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "softmax_ctrl",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "weighted_value_ctrl",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "output_projection_ctrl",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "ffn_ctrl",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "residual_ctrl",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "final_ctrl",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "aggregation_ctrl",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "layernorm_ctrl",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "linear_ctrl",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "dot_engine",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "mac_unit",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "exp_unit",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "reciprocal_unit",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "rsqrt_unit",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "gelu_unit",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "norm_switch",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "linear_switch",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "dot_switch",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "reciprocal_switch",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "memory_fabric",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "parameter_mem",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    },
+    {
+      "a": "clock",
+      "b": "scratch_mem",
+      "name": "clk / rst",
+      "kind": "reset",
+      "description": "clk: input rising-edge clock; rst: input synchronous active-high reset. Flush pending valids/ownership and local state on reset. Memory retains committed words; pending access cancelled."
+    }
+  ],
+  "iceIds": {
+    "root": "3T9NNgvOF0ECmvvvhNQb",
+    "control": "KQ7iiixGHBeasRd8M9Gu",
+    "embed": "ynK29a5bOejEiaMDKqby",
+    "position": "IIit19W4g1T7ha9SuUen",
+    "encoder": "HH13OdBbhpvySXcwKU0B",
+    "final": "OuLkXnX7eOjHtfk3FgMz",
+    "aggregate": "k3VCy8eG9yBUX3o1aXdO",
+    "shared": "5MJBsypxEhEIUF2i33bV",
+    "protocol": "hu8pRfBHKYaBRaOEbfnz",
+    "core_ctrl": "KLPHhpYQiQSXxCY7Ddl0",
+    "embedding_ctrl": "EZRhOoa8isfY2vzTkVSK",
+    "position_ctrl": "sHw56dGNpnIrsEn2vacA",
+    "encoder_ctrl": "43Z53UHtcEQnZmwUxqTq",
+    "layer_ctrl": "3AGlpwcX4j3Lbm8Kdi5w",
+    "attention_ctrl": "cKkaJcmpfqrwnaTVfTvj",
+    "qkv_ctrl": "DvFs6hfivg2jzWDIgyTC",
+    "score_row_ctrl": "vKmxmiJYpNvzW9wlMSh9",
+    "softmax_ctrl": "59cR36H6UogIatlmfMce",
+    "weighted_value_ctrl": "dVNqQtwTD9pc3LkG9CYk",
+    "output_projection_ctrl": "FFTwoSnMu6MhhANY09vB",
+    "ffn_ctrl": "CEzHltyJTTc9NCR3foZD",
+    "residual_ctrl": "nhz9CMxBgDUPsXFQRslm",
+    "final_ctrl": "kWTHe48HPEbb06I1mVlG",
+    "aggregation_ctrl": "RP5HVogSxA5ocdQa29gY",
+    "layernorm_ctrl": "uJIvjznWaQEzL3vRNP85",
+    "linear_ctrl": "7T5wiYAFrCeiVZkkzXvg",
+    "dot_engine": "9wLiUkIYuzbQAlJwsgXO",
+    "mac_unit": "fcURkHMEHOvwXDMtUbNl",
+    "exp_unit": "1T0nJhmtQOu34wD2bqCB",
+    "reciprocal_unit": "S0vJRJRHi2T0yjZxfxN8",
+    "rsqrt_unit": "Q3OI97CxBlaiaLeSbijG",
+    "gelu_unit": "h69ETN2DikFGXOplMuP8",
+    "norm_switch": "bj1dHYivAadui6hcQv0Q",
+    "linear_switch": "00ufkte4wPR7VzFfnkQt",
+    "dot_switch": "rMGyh3U0uqWfMOoDQeeK",
+    "reciprocal_switch": "lDk25263uj153w1q1l2T",
+    "memory_fabric": "yo8FU3xWILtr4fq4mBjm",
+    "parameter_mem": "BB1YkNalMp1rmDnMEfDi",
+    "scratch_mem": "7pZFSrHBi825NDUK9pf0",
+    "bank_PARAM": "dM0kHzFRo4vC9WX8jK8W",
+    "bank_FEATURE": "Hbho7wlCt5U4zAI4UItd",
+    "bank_MASK": "a6vsft2wI0mQcLSg07hk",
+    "bank_X": "FM6AUjTy82RoQSERNskn",
+    "bank_U": "c8oOPigBMSlwUKjuk1q0",
+    "bank_Q": "XEX8upT9jkyXiVdP8uzb",
+    "bank_KEY": "QvXTtUPahJKwIng5dRr4",
+    "bank_VALUE": "m5SGHiP9JEQFFUDMLErp",
+    "bank_Z": "1QGLCS6KG8TBXWkLZE7d",
+    "bank_ATTN_OUT": "9tNzQYibISUWBDRx2zC5",
+    "bank_TOKEN": "IUAkjqKXZCJVYAUByKap",
+    "bank_FFN_HIDDEN": "b7RviGKdzbG1GgGk1XNu",
+    "bank_VECTOR": "X3DIf3y3Oo1mg6TpWMxN",
+    "bank_SCORE": "yrUKw6VuZLQf9SgWJe8w",
+    "bank_EXP": "0OhnNVLruQMJmhDvZpar",
+    "bank_PROB": "1RrfHlVtbohrdAXsu1aZ",
+    "bank_LOGIT": "o1F1gf40NtI7HI5UsENu",
+    "bank_OUTPUT": "EZZZx5c7RO7lptygwyKX",
+    "host": "bFj5JR2SHNGhBjda2jiK",
+    "clock": "OEGElBQ3CgHIfwT9Yv5A"
+  }
+}

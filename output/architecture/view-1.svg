@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 940" role="img" aria-label="01 · System black boxes"><defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8" fill="#8c9aac"/></marker></defs><rect width="100%" height="100%" fill="#101826"/><text x="25" y="42" font-size="25" fill="#f1f5fb" font-family="Arial">01 · System black boxes</text><text x="25" y="72" font-size="14" fill="#a8b7ca" font-family="Arial">10 October 2026 · solid green = implemented RTL · dashed blue = planned · widths / capacities provisional</text><g class="wire" data-edge="0" tabindex="0"><title>cmd / rsp (control only)
+Five-stage sequential schedule; wait for committed writes. Full tensors pass through memory, not direct stage wires.</title><path d="M460 215 C315 215,315 340,170 340" stroke="#6677ee" stroke-width="2" opacity=".6" fill="none" marker-end="url(#arrow)"/><path d="M460 215 C315 215,315 340,170 340" stroke="transparent" stroke-width="18" fill="none"/></g><g class="wire" data-edge="1" tabindex="0"><title>cmd / rsp (control only)
+Five-stage sequential schedule; wait for committed writes. Full tensors pass through memory, not direct stage wires.</title><path d="M460 215 C470 215,470 340,480 340" stroke="#6677ee" stroke-width="2" opacity=".6" fill="none" marker-end="url(#arrow)"/><path d="M460 215 C470 215,470 340,480 340" stroke="transparent" stroke-width="18" fill="none"/></g><g class="wire" data-edge="2" tabindex="0"><title>cmd / rsp (control only)
+Five-stage sequential schedule; wait for committed writes. Full tensors pass through memory, not direct stage wires.</title><path d="M460 215 C625 215,625 340,790 340" stroke="#6677ee" stroke-width="2" opacity=".6" fill="none" marker-end="url(#arrow)"/><path d="M460 215 C625 215,625 340,790 340" stroke="transparent" stroke-width="18" fill="none"/></g><g class="wire" data-edge="3" tabindex="0"><title>cmd / rsp (control only)
+Five-stage sequential schedule; wait for committed writes. Full tensors pass through memory, not direct stage wires.</title><path d="M600 167.5 C780 167.5,780 395,960 395" stroke="#6677ee" stroke-width="2" opacity=".6" fill="none" marker-end="url(#arrow)"/><path d="M600 167.5 C780 167.5,780 395,960 395" stroke="transparent" stroke-width="18" fill="none"/></g><g class="wire" data-edge="4" tabindex="0"><title>cmd / rsp (control only)
+Five-stage sequential schedule; wait for committed writes. Full tensors pass through memory, not direct stage wires.</title><path d="M600 167.5 C935 167.5,935 395,1270 395" stroke="#6677ee" stroke-width="2" opacity=".6" fill="none" marker-end="url(#arrow)"/><path d="M600 167.5 C935 167.5,935 395,1270 395" stroke="transparent" stroke-width="18" fill="none"/></g><g class="wire" data-edge="5" tabindex="0"><title>X · L×D
+Logical tensor dependency through memory; not an RTL point-to-point interface.</title><path d="M310 395 C325 395,325 395,340 395" stroke="#8b9bad" stroke-width="2" opacity=".6" fill="none" marker-end="url(#arrow)"/><path d="M310 395 C325 395,325 395,340 395" stroke="transparent" stroke-width="18" fill="none"/></g><g class="wire" data-edge="6" tabindex="0"><title>X + P + E
+Logical tensor dependency through memory; not an RTL point-to-point interface.</title><path d="M620 395 C635 395,635 395,650 395" stroke="#8b9bad" stroke-width="2" opacity=".6" fill="none" marker-end="url(#arrow)"/><path d="M620 395 C635 395,635 395,650 395" stroke="transparent" stroke-width="18" fill="none"/></g><g class="wire" data-edge="7" tabindex="0"><title>X after K layers
+Logical tensor dependency through memory; not an RTL point-to-point interface.</title><path d="M930 395 C945 395,945 395,960 395" stroke="#8b9bad" stroke-width="2" opacity=".6" fill="none" marker-end="url(#arrow)"/><path d="M930 395 C945 395,945 395,960 395" stroke="transparent" stroke-width="18" fill="none"/></g><g class="wire" data-edge="8" tabindex="0"><title>LOGIT · L
+Logical tensor dependency through memory; not an RTL point-to-point interface.</title><path d="M1240 395 C1255 395,1255 395,1270 395" stroke="#8b9bad" stroke-width="2" opacity=".6" fill="none" marker-end="url(#arrow)"/><path d="M1240 395 C1255 395,1255 395,1270 395" stroke="transparent" stroke-width="18" fill="none"/></g><g class="wire" data-edge="9" tabindex="0"><title>PARAM · bank 0
+</title><path d="M1080 665 C1100 665,1100 632.5,1120 632.5" stroke="#e5a53b" stroke-width="2" opacity=".6" fill="none" marker-end="url(#arrow)"/><path d="M1080 665 C1100 665,1100 632.5,1120 632.5" stroke="transparent" stroke-width="18" fill="none"/></g><g class="wire" data-edge="10" tabindex="0"><title>scratch · banks 1–17
+</title><path d="M1080 665 C1100 665,1100 822.5,1120 822.5" stroke="#e5a53b" stroke-width="2" opacity=".6" fill="none" marker-end="url(#arrow)"/><path d="M1080 665 C1100 665,1100 822.5,1120 822.5" stroke="transparent" stroke-width="18" fill="none"/></g><g class="wire" data-edge="11" tabindex="0"><title>mem client 0
+</title><path d="M600 167.5 C665 167.5,665 665,730 665" stroke="#e5a53b" stroke-width="2" opacity=".6" fill="none" marker-end="url(#arrow)"/><path d="M600 167.5 C665 167.5,665 665,730 665" stroke="transparent" stroke-width="18" fill="none"/></g><g class="wire" data-edge="12" tabindex="0"><title>shared engine memory requests
+</title><path d="M690 665 C710 665,710 665,730 665" stroke="#e5a53b" stroke-width="2" opacity=".6" fill="none" marker-end="url(#arrow)"/><path d="M690 665 C710 665,710 665,730 665" stroke="transparent" stroke-width="18" fill="none"/></g><g class="wire" data-edge="13" tabindex="0"><title>bcjr_host_if
+ #(parameter int unsigned INDEX_W = 1);
+  import bcjrformer_contract_pkg::*;
+  logic param_valid, param_ready;
+  addr_t param_addr;
+  act_t param_data;
+  // New explicit write acknowledgment closes the documented commit ordering.
+  logic param_rsp_valid, param_rsp_ready, param_rsp_error;
+  logic parameter_commit;
+  logic frame_valid, frame_ready;
+  logic feature_valid, feature_ready, feature_last;
+  act_t feature_data;
+  logic mask_valid, mask_ready, mask_bit, mask_last;
+  logic logit_valid, logit_ready, logit_last;
+  act_t logit_data;
+  logic [INDEX_W-1:0] logit_index;
+  logic completion_valid, completion_ready, completion_error;
+  completion_code_t completion_code;
+  logic [INDEX_W-1:0] completion_position;
+  logic busy;
+  status_t status;
+  modport core(
+    input param_valid, param_addr, param_data, param_rsp_ready, parameter_commit,
+          frame_valid, feature_valid, feature_data, feature_last,
+          mask_valid, mask_bit, mask_last, logit_ready, completion_ready,
+    output param_ready, param_rsp_valid, param_rsp_error, frame_ready,
+           feature_ready, mask_ready, logit_valid, logit_data, logit_index,
+           logit_last, completion_valid, completion_error, completion_code,
+           completion_position, busy, status);
+  modport host(
+    output param_valid, param_addr, param_data, param_rsp_ready, parameter_commit,
+           frame_valid, feature_valid, feature_data, feature_last,
+           mask_valid, mask_bit, mask_last, logit_ready, completion_ready,
+    input param_ready, param_rsp_valid, param_rsp_error, frame_ready,
+          feature_ready, mask_ready, logit_valid, logit_data, logit_index,
+          logit_last, completion_valid, completion_error, completion_code,
+          completion_position, busy, status);
+endinterface
+</title><path d="M270 167.5 C295 167.5,295 167.5,320 167.5" stroke="#5795d0" stroke-width="2" opacity=".6" fill="none" marker-end="url(#arrow)"/><path d="M270 167.5 C295 167.5,295 167.5,320 167.5" stroke="transparent" stroke-width="18" fill="none"/></g><g class="block" data-key="host" tabindex="0"><title> #(parameter int unsigned INDEX_W = 1);
+  import bcjrformer_contract_pkg::*;
+  logic param_valid, param_ready;
+  addr_t param_addr;
+  act_t param_data;
+  // New explicit write acknowledgment closes the documented commit ordering.
+  logic param_rsp_valid, param_rsp_ready, param_rsp_error;
+  logic parameter_commit;
+  logic frame_valid, frame_ready;
+  logic feature_valid, feature_ready, feature_last;
+  act_t feature_data;
+  logic mask_valid, mask_ready, mask_bit, mask_last;
+  logic logit_valid, logit_ready, logit_last;
+  act_t logit_data;
+  logic [INDEX_W-1:0] logit_index;
+  logic completion_valid, completion_ready, completion_error;
+  completion_code_t completion_code;
+  logic [INDEX_W-1:0] completion_position;
+  logic busy;
+  status_t status;
+  modport core(
+    input param_valid, param_addr, param_data, param_rsp_ready, parameter_commit,
+          frame_valid, feature_valid, feature_data, feature_last,
+          mask_valid, mask_bit, mask_last, logit_ready, completion_ready,
+    output param_ready, param_rsp_valid, param_rsp_error, frame_ready,
+           feature_ready, mask_ready, logit_valid, logit_data, logit_index,
+           logit_last, completion_valid, completion_error, completion_code,
+           completion_position, busy, status);
+  modport host(
+    output param_valid, param_addr, param_data, param_rsp_ready, parameter_commit,
+           frame_valid, feature_valid, feature_data, feature_last,
+           mask_valid, mask_bit, mask_last, logit_ready, completion_ready,
+    input param_ready, param_rsp_valid, param_rsp_error, frame_ready,
+          feature_ready, mask_ready, logit_valid, logit_data, logit_index,
+          logit_last, completion_valid, completion_error, completion_code,
+          completion_position, busy, status);
+endinterface
+</title><rect x="30" y="120" width="240" height="95" rx="12" fill="#1c2b42" stroke="#6e9bdb" stroke-width="2" stroke-dasharray="6 4"/><text x="45" y="149" font-size="17" fill="#eef4ff" font-family="Arial">Host / input &amp; output</text><text x="45" y="201" font-size="12" fill="#aebfd5" font-family="Arial">Planned RTL · inspect</text></g><g class="block" data-key="core_ctrl" tabindex="0"><title>| core_ctrl | Host loading, image/frame validity, stage sequence, output transfer, completion code | All N output transfers accepted, or one held error report |
+Planned processing/control RTL; port contract exists; arithmetic calibration deferred.</title><rect x="320" y="120" width="280" height="95" rx="12" fill="#1c2b42" stroke="#6e9bdb" stroke-width="2" stroke-dasharray="6 4"/><text x="335" y="149" font-size="17" fill="#eef4ff" font-family="Arial">core_ctrl</text><text x="335" y="201" font-size="12" fill="#aebfd5" font-family="Arial">Planned RTL · inspect</text></g><g class="block" data-key="embed" tabindex="0"><title>Logical architecture grouping inside bcjrformer_core; controllers are single physical instances. Numerical methods and selected dimensions remain deferred.</title><rect x="30" y="340" width="280" height="110" rx="12" fill="#1c2b42" stroke="#6e9bdb" stroke-width="2" stroke-dasharray="6 4"/><text x="45" y="369" font-size="17" fill="#eef4ff" font-family="Arial">Stage 1 — Input embedding</text><text x="45" y="436" font-size="12" fill="#aebfd5" font-family="Arial">Architecture view · inspect</text></g><g class="block" data-key="position" tabindex="0"><title>Logical architecture grouping inside bcjrformer_core; controllers are single physical instances. Numerical methods and selected dimensions remain deferred.</title><rect x="340" y="340" width="280" height="110" rx="12" fill="#1c2b42" stroke="#6e9bdb" stroke-width="2" stroke-dasharray="6 4"/><text x="355" y="369" font-size="13.77410468319559" fill="#eef4ff" font-family="Arial">Stage 2 — Position/read embedding</text><text x="355" y="436" font-size="12" fill="#aebfd5" font-family="Arial">Architecture view · inspect</text></g><g class="block" data-key="encoder" tabindex="0"><title>Logical architecture grouping inside bcjrformer_core; controllers are single physical instances. Numerical methods and selected dimensions remain deferred.</title><rect x="650" y="340" width="280" height="110" rx="12" fill="#1c2b42" stroke="#6e9bdb" stroke-width="2" stroke-dasharray="6 4"/><text x="665" y="369" font-size="17" fill="#eef4ff" font-family="Arial">Stage 3 — Encoder</text><text x="665" y="436" font-size="12" fill="#aebfd5" font-family="Arial">Architecture view · inspect</text></g><g class="block" data-key="final" tabindex="0"><title>Logical architecture grouping inside bcjrformer_core; controllers are single physical instances. Numerical methods and selected dimensions remain deferred.</title><rect x="960" y="340" width="280" height="110" rx="12" fill="#1c2b42" stroke="#6e9bdb" stroke-width="2" stroke-dasharray="6 4"/><text x="975" y="369" font-size="17" fill="#eef4ff" font-family="Arial">Stage 4 — Final projection</text><text x="975" y="436" font-size="12" fill="#aebfd5" font-family="Arial">Architecture view · inspect</text></g><g class="block" data-key="aggregate" tabindex="0"><title>Logical architecture grouping inside bcjrformer_core; controllers are single physical instances. Numerical methods and selected dimensions remain deferred.</title><rect x="1270" y="340" width="280" height="110" rx="12" fill="#1c2b42" stroke="#6e9bdb" stroke-width="2" stroke-dasharray="6 4"/><text x="1285" y="369" font-size="17" fill="#eef4ff" font-family="Arial">Stage 5 — Aggregation</text><text x="1285" y="436" font-size="12" fill="#aebfd5" font-family="Arial">Architecture view · inspect</text></g><g class="block" data-key="shared" tabindex="0"><title>Logical architecture grouping inside bcjrformer_core; controllers are single physical instances. Numerical methods and selected dimensions remain deferred.</title><rect x="340" y="610" width="350" height="110" rx="12" fill="#1c2b42" stroke="#6e9bdb" stroke-width="2" stroke-dasharray="6 4"/><text x="355" y="639" font-size="17" fill="#eef4ff" font-family="Arial">Shared compute services</text><text x="355" y="706" font-size="12" fill="#aebfd5" font-family="Arial">Architecture view · inspect</text></g><g class="block" data-key="protocol" tabindex="0"><title>Logical architecture grouping inside bcjrformer_core; controllers are single physical instances. Numerical methods and selected dimensions remain deferred.</title><rect x="730" y="610" width="350" height="110" rx="12" fill="#1c2b42" stroke="#6e9bdb" stroke-width="2" stroke-dasharray="6 4"/><text x="745" y="639" font-size="17" fill="#eef4ff" font-family="Arial">Protocol &amp; memory routing</text><text x="745" y="706" font-size="12" fill="#aebfd5" font-family="Arial">Architecture view · inspect</text></g><g class="block" data-key="parameter_mem" tabindex="0"><title>Implemented behavioral RTL adapter. Native-width storage; IDLE -&gt; WAIT_ACCESS -&gt; RESPONSE; RESPONSE_DELAY &gt;=1; successful write response follows commitment. Reset cancels pending access, retains committed words. Depth defaults zero and must be configured. Physical SRAM implementation unresolved.</title><rect x="1120" y="580" width="390" height="105" rx="12" fill="#123a34" stroke="#47d3a2" stroke-width="2" /><text x="1135" y="609" font-size="17" fill="#eef4ff" font-family="Arial">parameter_mem</text><text x="1135" y="671" font-size="12" fill="#aebfd5" font-family="Arial">Implemented RTL · inspect</text></g><g class="block" data-key="scratch_mem" tabindex="0"><title>Implemented behavioral RTL adapter. Native-width storage; IDLE -&gt; WAIT_ACCESS -&gt; RESPONSE; RESPONSE_DELAY &gt;=1; successful write response follows commitment. Reset cancels pending access, retains committed words. Depth defaults zero and must be configured. Physical SRAM implementation unresolved.</title><rect x="1120" y="770" width="390" height="105" rx="12" fill="#123a34" stroke="#47d3a2" stroke-width="2" /><text x="1135" y="799" font-size="17" fill="#eef4ff" font-family="Arial">scratch_mem</text><text x="1135" y="861" font-size="12" fill="#aebfd5" font-family="Arial">Implemented RTL · inspect</text></g></svg>

@@ -1,0 +1,521 @@
+
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tikz}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+\usepackage{enumitem}
+
+\title{\textbf{BCJRFormer ASIC Architecture}\\
+\large Stage 1: Neural-Network Black-Box Definition}
+\author{Taimor Sabek \and Haiel Bader}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Goal}
+
+The first architecture step is to define the exact input/output boundary of the
+\texttt{BCJRFormer} neural-network model used during inference. At this stage,
+the internal transformer datapath is intentionally treated as a black box.
+
+The scope of this document is therefore the software boundary of
+
+\[
+\texttt{BCJRFormer.forward}(y,\;padding\_mask)
+\]
+
+as implemented in the original BCJRFormer repository.
+
+\section{Inference Boundary in the Repository}
+
+During evaluation, the trainer invokes the model as
+
+\begin{verbatim}
+x_pred = self.model(y.to(self.device),
+                    padding_mask.to(self.device))
+\end{verbatim}
+
+Therefore, the BCJRFormer model has two algorithmic inputs:
+
+\begin{enumerate}[label=\arabic*.]
+    \item \texttt{y} -- the windowed representation of the received sequences.
+    \item \texttt{padding\_mask} -- identifies padded sequence positions.
+\end{enumerate}
+
+The model returns one output:
+
+\begin{enumerate}[label=\arabic*.]
+    \item \texttt{x\_pred} -- raw output logits of the BCJRFormer model.
+\end{enumerate}
+
+\section{First ASIC Black Box}
+
+For the first ASIC architecture iteration, batch size is fixed to one.
+
+\begin{center}
+\begin{tikzpicture}[>=latex, thick]
+    \node[
+        draw,
+        rounded corners,
+        minimum width=5.2cm,
+        minimum height=3.0cm,
+        align=center
+    ] (model) {\Large \textbf{BCJRFormer}\\[3mm]
+               Neural-Network Core};
+
+    \draw[->] (-5.0,0.65) -- (model.west |- 0,0.65)
+        node[midway,above] {$y$};
+
+    \draw[->] (-5.0,-0.65) -- (model.west |- 0,-0.65)
+        node[midway,above] {$padding\_mask$};
+
+    \draw[->] (model.east) -- (5.0,0)
+        node[midway,above] {$logits$};
+\end{tikzpicture}
+\end{center}
+
+This black box corresponds to the complete \texttt{BCJRFormer.forward()} function,
+including the input embedding, positional/sequence embeddings, transformer
+encoder, final linear projection, and the sequence-combination operation.
+
+\section{Input 1: Windowed Received Data \texttt{y}}
+
+The dataset first constructs a windowed representation with
+
+\begin{verbatim}
+y = self.trellis.get_windowed_version(...)
+\end{verbatim}
+
+Before batching, its shape is
+
+\[
+[M_{\max},\,N,\,W,\,S]
+\]
+
+and after the DataLoader adds the batch dimension,
+
+\[
+\boxed{
+y \in \mathbb{R}^{1 \times M_{\max} \times N \times W \times S}
+}
+\]
+
+where:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{>{\ttfamily}l p{9.5cm}}
+\toprule
+\textnormal{Parameter} & \textnormal{Meaning} \\
+\midrule
+M\_MAX & Maximum number of received sequences/transmissions. \\
+N & Encoded sequence length / number of transformer positions per received sequence. \\
+W & Trellis drift-window size. \\
+S & Number of retained trellis-state features per window position. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The trellis implementation defines
+
+\[
+S = q^{n_v}-1
+\]
+
+for the default non-full-state representation, and
+
+\[
+\texttt{WINDOW\_BLOCK\_DIM}
+    = W \cdot S.
+\]
+
+At the beginning of \texttt{BCJRFormer.forward()}, the final two dimensions are
+flattened. Thus the effective feature vector presented to the input embedding is
+
+\[
+\boxed{
+y_{\mathrm{flat}}
+\in
+\mathbb{R}^{1 \times (M_{\max}N) \times (WS)}
+}
+\]
+
+before projection to the transformer embedding dimension $d_{\mathrm{model}}$.
+
+\section{Input 2: Padding Mask}
+
+The dataset creates the padding mask from the padded entries of \texttt{y}.
+For batch size one,
+
+\[
+\boxed{
+padding\_mask
+\in
+\{0,1\}^{1 \times M_{\max} \times N}
+}
+\]
+
+The model reshapes this mask internally for use by the transformer encoder.
+
+Its purpose is to prevent padded positions, which correspond to unavailable
+received sequences, from contributing to the model result.
+
+\section{Output: Raw Logits}
+
+The transformer output is projected by the final linear layer. For the binary
+case ($q=2$), the model uses one output channel per encoded position.
+
+After the outputs of the available received sequences are combined, the
+BCJRFormer model returns
+
+\[
+\boxed{
+logits
+\in
+\mathbb{R}^{1 \times N}
+}
+\]
+
+for batch size one.
+
+These values are \textbf{raw logits}. They are not yet decoded binary values.
+
+\section{Sigmoid and Hard Decision}
+
+During evaluation, the repository performs
+
+\begin{verbatim}
+x_pred = torch.round(torch.sigmoid(x_pred))
+\end{verbatim}
+
+\textbf{after} the call to \texttt{BCJRFormer.forward()}.
+
+Therefore, for the first ASIC black box defined in this document,
+
+\[
+\boxed{\text{sigmoid and round are outside the BCJRFormer core}}
+\]
+
+and the output of the black box remains the raw logit vector.
+
+For a later complete decoder architecture, the binary hard decision can be
+implemented without explicitly calculating the sigmoid because
+
+\[
+\sigma(x) > 0.5
+\iff
+x > 0.
+\]
+
+Thus,
+
+\[
+\operatorname{round}(\sigma(x))
+=
+\begin{cases}
+1, & x > 0,\\
+0, & x \le 0.
+\end{cases}
+\]
+
+This possible hardware optimization is not part of the current black-box
+definition.
+
+\section{Generic Architecture Parameters}
+
+The first architecture can therefore be parameterized by:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{>{\ttfamily}l p{9.5cm}}
+\toprule
+\textnormal{Parameter} & \textnormal{Description} \\
+\midrule
+M\_MAX & Maximum number of received sequences. \\
+N & Encoded sequence length. \\
+WINDOW\_SIZE & Trellis window size $W$. \\
+N\_STATE\_FEATURES & Number of state features $S$. \\
+WINDOW\_BLOCK\_DIM & Input feature dimension $W \times S$. \\
+D\_MODEL & Transformer embedding dimension. \\
+NUM\_HEADS & Number of attention heads. \\
+NUM\_LAYERS & Number of transformer decoder/encoder blocks used by the model. \\
+Q & Symbol alphabet size; the first hardware target is $Q=2$. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The concrete values will later be configured to match the trained reference
+model and its golden Python results.
+
+\section{Current Black-Box Interface Summary}
+
+For the initial binary, batch-size-one architecture:
+
+\[
+\boxed{
+\begin{aligned}
+y &: [1,M_{\max},N,W,S] \\
+padding\_mask &: [1,M_{\max},N] \\
+BCJRFormer(y,padding\_mask) &\longrightarrow logits:[1,N]
+\end{aligned}
+}
+\]
+
+The next architecture step is to open this black box and divide
+\texttt{BCJRFormer.forward()} into synthesizable sub-blocks, beginning with the
+input embedding and transformer encoder.
+
+
+\section{Stage 2: Internal BCJRFormer Blocks}
+
+After defining the BCJRFormer as a single black box, we now open the model one
+level and identify its main internal blocks. At this stage, the goal is only to
+define the architectural hierarchy; numerical precision and detailed datapaths
+are left for later stages.
+
+The BCJRFormer core can be represented as
+
+\[
+y
+\rightarrow
+\text{Input Embedding}
+\rightarrow
+\text{Position/Sequence Embedding}
+\rightarrow
+\text{Transformer Encoder}
+\rightarrow
+\text{Final Linear Layer}
+\rightarrow
+\text{Sequence Aggregation}
+\rightarrow
+\text{Logits}.
+\]
+
+The padding mask is used by the transformer and by the final sequence
+aggregation.
+
+\begin{center}
+\begin{tikzpicture}[
+    >=latex,
+    thick,
+    block/.style={
+        draw,
+        rounded corners,
+        minimum width=5.2cm,
+        minimum height=1.0cm,
+        align=center
+    },
+    node distance=1.35cm
+]
+\node[block] (emb) {\textbf{Input Embedding}};
+\node[block, below of=emb] (pos) {\textbf{Position + Sequence Embedding}};
+\node[block, below of=pos] (tr) {\textbf{Transformer Encoder}\\$N_{\mathrm{dec}}$ repeated layers};
+\node[block, below of=tr] (fc) {\textbf{Final Linear Projection}};
+\node[block, below of=fc] (agg) {\textbf{Sequence Aggregation}};
+
+\draw[->] (0,1.5) -- (emb.north) node[midway,right] {$y$};
+\draw[->] (emb) -- (pos);
+\draw[->] (pos) -- (tr);
+\draw[->] (tr) -- (fc);
+\draw[->] (fc) -- (agg);
+\draw[->] (agg.south) -- (0,-6.7) node[midway,right] {logits};
+
+\draw[->] (-5,-2.7) -- (tr.west)
+    node[midway,above] {$padding\_mask$};
+\draw[->] (-5,-5.4) -- (agg.west)
+    node[midway,above] {$padding\_mask$};
+\end{tikzpicture}
+\end{center}
+
+\subsection{Transformer Encoder}
+
+The transformer encoder consists of $N_{\mathrm{dec}}$ repetitions of the same
+self-attention layer:
+
+\[
+X_0
+\rightarrow
+\boxed{\text{Self-Attention Layer}}
+\rightarrow
+\boxed{\text{Self-Attention Layer}}
+\rightarrow \cdots \rightarrow
+\boxed{\text{Self-Attention Layer}}
+\rightarrow X_{N_{\mathrm{dec}}}.
+\]
+
+Therefore, from an ASIC point of view, the repeated self-attention layer is the
+main computational building block of the transformer core.
+
+\subsection{Inside One Self-Attention Layer}
+
+One transformer layer has two main branches:
+
+\begin{enumerate}
+    \item LayerNorm $\rightarrow$ Multi-Head Self-Attention $\rightarrow$
+    Residual Addition.
+    \item LayerNorm $\rightarrow$ Feed-Forward Network $\rightarrow$
+    Residual Addition.
+\end{enumerate}
+
+This is a pre-normalization transformer structure.
+
+\begin{center}
+\begin{tikzpicture}[
+    >=latex,
+    thick,
+    block/.style={
+        draw,
+        rounded corners,
+        minimum width=4.2cm,
+        minimum height=0.85cm,
+        align=center
+    },
+    node distance=1.10cm
+]
+\node (xin) {$x$};
+\node[block, below of=xin] (ln1) {LayerNorm};
+\node[block, below of=ln1] (mha) {Multi-Head Self-Attention};
+\node[circle,draw,below of=mha,minimum size=0.55cm] (add1) {$+$};
+\node[block, below of=add1] (ln2) {LayerNorm};
+\node[block, below of=ln2] (ffn) {Feed-Forward Network};
+\node[circle,draw,below of=ffn,minimum size=0.55cm] (add2) {$+$};
+\node[below of=add2] (out) {$x_{\mathrm{out}}$};
+
+\draw[->] (xin) -- (ln1);
+\draw[->] (ln1) -- (mha);
+\draw[->] (mha) -- (add1);
+\draw[->] (add1) -- (ln2);
+\draw[->] (ln2) -- (ffn);
+\draw[->] (ffn) -- (add2);
+\draw[->] (add2) -- (out);
+
+\draw[->] (xin.east) -- ++(2.7,0) |- (add1.east);
+\draw[->] (add1.east) -- ++(2.2,0) |- (add2.east);
+\end{tikzpicture}
+\end{center}
+
+\subsection{Multi-Head Self-Attention}
+
+The multi-head attention block first produces the query, key, and value
+representations:
+
+\[
+Q=XW_Q,\qquad K=XW_K,\qquad V=XW_V.
+\]
+
+For each attention head, the core operation is
+
+\[
+A=
+\operatorname{softmax}
+\left(
+\frac{QK^T}{\sqrt{d_k}}+\mathrm{mask}
+\right),
+\]
+
+followed by
+
+\[
+Z=AV.
+\]
+
+The outputs of all heads are concatenated and passed through a final output
+projection $W_O$.
+
+At the block level:
+
+\[
+X
+\rightarrow
+\{W_Q,W_K,W_V\}
+\rightarrow
+QK^T
+\rightarrow
+\text{Scaling + Mask + Softmax}
+\rightarrow
+AV
+\rightarrow
+\text{Concatenate Heads}
+\rightarrow
+W_O.
+\]
+
+Thus, the attention block contains four learned linear projections:
+$W_Q$, $W_K$, $W_V$, and $W_O$.
+
+\subsection{Feed-Forward Network}
+
+The feed-forward network is composed of two linear transformations separated by
+a GELU activation:
+
+\[
+d_{\mathrm{model}}
+\rightarrow
+4d_{\mathrm{model}}
+\rightarrow
+d_{\mathrm{model}}.
+\]
+
+Equivalently,
+
+\[
+x
+\rightarrow
+\text{Linear}
+\rightarrow
+\text{GELU}
+\rightarrow
+\text{Linear}
+\rightarrow
+y.
+\]
+
+Dropout exists in the software model but is disabled during inference, and
+therefore does not require a dedicated arithmetic block in the inference ASIC.
+
+\subsection{Architecture Hierarchy}
+
+The current architecture decomposition is therefore:
+
+\begin{itemize}
+    \item \textbf{Level 0:} Complete BCJRFormer black box.
+    \item \textbf{Level 1:} Input Embedding, Position/Sequence Embedding,
+    Transformer Encoder, Final Linear Projection, and Sequence Aggregation.
+    \item \textbf{Level 2:} Transformer Encoder =
+    $N_{\mathrm{dec}}$ repeated Self-Attention Layers.
+    \item \textbf{Level 3:} Each Self-Attention Layer =
+    LayerNorm, Multi-Head Self-Attention, residual addition,
+    LayerNorm, Feed-Forward Network, residual addition.
+    \item \textbf{Level 4:} Multi-Head Self-Attention =
+    $Q/K/V$ projections, scaled dot-product attention, masking,
+    softmax, value multiplication, head concatenation, and output projection.
+\end{itemize}
+
+The next architecture stage will decide how these repeated blocks are mapped to
+hardware resources, for example whether all transformer layers are physically
+instantiated or whether one computation engine is reused across layers.
+
+
+\section{Repository References}
+
+\begin{itemize}
+    \item BCJRFormer repository:
+    \url{https://github.com/streit-julian/BCJRFormer}
+    \item BCJRFormer model:
+    \url{https://github.com/streit-julian/BCJRFormer/blob/main/bcjrformer/models/bcjrformer.py}
+    \item Marker trainer / inference path:
+    \url{https://github.com/streit-julian/BCJRFormer/blob/main/bcjrformer/trainers/bcjrformer_marker_trainer.py}
+    \item Dataset:
+    \url{https://github.com/streit-julian/BCJRFormer/blob/main/bcjrformer/datasets/bcjrformer_dataset.py}
+    \item Trellis window generation:
+    \url{https://github.com/streit-julian/BCJRFormer/blob/main/bcjrformer/trellis.py}
+\end{itemize}
+
+\end{document}

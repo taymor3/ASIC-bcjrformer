@@ -1,0 +1,3 @@
+const {chromium}=require('playwright');
+const {pathToFileURL}=require('url');const path=require('path');
+(async()=>{const browser=await chromium.launch({headless:true,channel:'msedge'});try{const page=await browser.newPage({viewport:{width:390,height:844}});await page.goto(pathToFileURL(path.resolve('web/bcjrformer-architecture.html')).href+'#document');console.log(await page.evaluate(()=>[...document.querySelectorAll('#document-view *')].map(el=>({tag:el.tagName,cls:el.className,text:el.textContent.slice(0,100),left:el.getBoundingClientRect().left,right:el.getBoundingClientRect().right,width:el.getBoundingClientRect().width})).filter(e=>e.right>innerWidth+1&&e.width>0).slice(0,25)));}finally{await browser.close();}})();

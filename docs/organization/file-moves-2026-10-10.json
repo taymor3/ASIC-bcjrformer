@@ -1,0 +1,652 @@
+[
+  {
+    "old": "Amit-review-decisions.md",
+    "new": "docs/reviews/Amit-review-decisions.md",
+    "sha256": "AE3761686BC6BDE163814868FEA55774098622279C81D4E614FF29AD555A83F1"
+  },
+  {
+    "old": "Architecture status 20-9.pdf",
+    "new": "references/Architecture status 20-9.pdf",
+    "sha256": "44D30066AFFA8A990B32E9FE02701A1A076272C4D69D311A2FB4237F5B84ACF0"
+  },
+  {
+    "old": "Architecture_overview.png",
+    "new": "images/overview/Architecture_overview.png",
+    "sha256": "7DC912F84DBEF87A069A67F5885C31E39D57526082709DE91CC9EA62E7C95726"
+  },
+  {
+    "old": "Architecture_overview.svg",
+    "new": "images/overview/Architecture_overview.svg",
+    "sha256": "A5CD5CE0713559C8119B82FCB0B9B00FEFFD263A39EFE664EF5917F9A4B4C2C7"
+  },
+  {
+    "old": "architecture-budget.cjs",
+    "new": "scripts/architecture-budget.cjs",
+    "sha256": "24755D53E7652C894E4CB97552178CB46429178EAD6E73F3DDB6C80CCF87E59E"
+  },
+  {
+    "old": "ARCHITECTURE-BUDGET.json",
+    "new": "docs/planning/ARCHITECTURE-BUDGET.json",
+    "sha256": "271D01BCF942E1206BA290CA0E4274112E3AE31FE9CD74DED33FD9676B8C67E4"
+  },
+  {
+    "old": "ARCHITECTURE-CHECKPOINT-1.md",
+    "new": "docs/architecture/ARCHITECTURE-CHECKPOINT-1.md",
+    "sha256": "4EDC6D66881E2688B57168D04E3B9B32CFECEC09B84865AB0D9F564377539531"
+  },
+  {
+    "old": "ARCHITECTURE-HANDOFF.md",
+    "new": "docs/architecture/ARCHITECTURE-HANDOFF.md",
+    "sha256": "126AA32976D4318FD8F21AE793FB088CE8ED908FFC1D6E7887C43DF69E3656BB"
+  },
+  {
+    "old": "ARCHITECTURE-REVIEW-AUDIT.md",
+    "new": "docs/reviews/ARCHITECTURE-REVIEW-AUDIT.md",
+    "sha256": "1E60362DB4B9FFC1754D5667762A6A1EE1BEEED907BD9C8BE0F7154447110C0F"
+  },
+  {
+    "old": "BCJRFormer_all_stages.drawio",
+    "new": "diagrams/drawio/BCJRFormer_all_stages.drawio",
+    "sha256": "ABCEA56437117063ED8D380FCEA94DF2296C80D5B851463DAAACE6D78A1325DC"
+  },
+  {
+    "old": "BCJRFormer_Architecture (1).drawio",
+    "new": "diagrams/drawio/BCJRFormer_Architecture (1).drawio",
+    "sha256": "F9430C394E3653B5CDD8F33AE7D9E81875D0CBFC6B2A304A8B379CE9389ECED9"
+  },
+  {
+    "old": "BCJRFormer_Architecture (2).drawio",
+    "new": "diagrams/drawio/BCJRFormer_Architecture (2).drawio",
+    "sha256": "F607194F38A23BB98DF259E29E5037B1431139A2C74979C36F598265D31BC6FB"
+  },
+  {
+    "old": "BCJRFormer_Architecture.drawio",
+    "new": "diagrams/drawio/BCJRFormer_Architecture.drawio",
+    "sha256": "B422C8C5F3F3A407AA76496B6EAA30BE66885CBB015EAF84FF40ADB48F1C037F"
+  },
+  {
+    "old": "bcjrformer_asic_architecture (1).tex",
+    "new": "docs/latex/bcjrformer_asic_architecture (1).tex",
+    "sha256": "10ACDE1E1A03DCF11EA2F56B2CFA0904C4A43DC5280581304ED0A46E9ECD91FF"
+  },
+  {
+    "old": "bcjrformer_asic_architecture (2).tex",
+    "new": "docs/latex/bcjrformer_asic_architecture (2).tex",
+    "sha256": "10ACDE1E1A03DCF11EA2F56B2CFA0904C4A43DC5280581304ED0A46E9ECD91FF"
+  },
+  {
+    "old": "bcjrformer_asic_architecture_v2.tex",
+    "new": "docs/latex/bcjrformer_asic_architecture_v2.tex",
+    "sha256": "4D507570ECD6B632BFDDC1BCDFC696B551E86E97EE1A8C70E90C0C78ED6905B3"
+  },
+  {
+    "old": "bcjrformer_asic_architecture_v5.tex",
+    "new": "docs/latex/bcjrformer_asic_architecture_v5.tex",
+    "sha256": "15715F4AEEC4137F22DBF92FEB925E02C08580C73D0BA206EBA34DAF68119BF0"
+  },
+  {
+    "old": "bcjrformer_asic_architecture.tex",
+    "new": "docs/latex/bcjrformer_asic_architecture.tex",
+    "sha256": "10ACDE1E1A03DCF11EA2F56B2CFA0904C4A43DC5280581304ED0A46E9ECD91FF"
+  },
+  {
+    "old": "BCJRFormer_design_review_Amit.tex",
+    "new": "docs/latex/BCJRFormer_design_review_Amit.tex",
+    "sha256": "BECCD2D5AFAA2202F8C654E37A301E6AAC6C7C63DFE72CD127CA3A5BF58CB99E"
+  },
+  {
+    "old": "bcjrformer-architecture.html",
+    "new": "web/bcjrformer-architecture.html",
+    "sha256": "73E1E044FBF64190FB270B505E39FDF7150DE572073125AEC349D7A271E95470"
+  },
+  {
+    "old": "build-project-page.cjs",
+    "new": "scripts/build-project-page.cjs",
+    "sha256": "8B28F2925068738ED86BE8DA5C5D13146DD080F662C2EEAA6F1ED77ABD230CF7"
+  },
+  {
+    "old": "Description-9.11.txt",
+    "new": "references/Description-9.11.txt",
+    "sha256": "945CE5D6C49E7D8C0974E922EE9BCFF9D252D337CB9CAC07E0BF75A7B4250CBF"
+  },
+  {
+    "old": "DL10_Transfer learning.pptx",
+    "new": "references/DL10_Transfer learning.pptx",
+    "sha256": "7F7F3AEE453B721FA2B98ED781DCBA0F50843AEAE71E65D78AD603605F2AEABC"
+  },
+  {
+    "old": "ee046211_tutorial_10_compression_pruning_amp.pdf",
+    "new": "references/ee046211_tutorial_10_compression_pruning_amp.pdf",
+    "sha256": "A4C02137937F5D839911892D7B9DE5774F8D65C5DAE41CE34BF191F7096F5D53"
+  },
+  {
+    "old": "Frame_controller.drawio",
+    "new": "diagrams/drawio/Frame_controller.drawio",
+    "sha256": "B33182D3C1DE0B025178409CB5519D007DC15C857EA4009C94D50E05CDE55B04"
+  },
+  {
+    "old": "Frame_fsm.png",
+    "new": "images/control/Frame_fsm.png",
+    "sha256": "7046D7A126BC33FEBB2C6F88CA49F02D47BBFE84302E101712EC42D5BB1185AF"
+  },
+  {
+    "old": "Frame_fsm.svg",
+    "new": "images/control/Frame_fsm.svg",
+    "sha256": "7BF7FD9BE956925D48166E1F013A39D98D7F3C716EB7F6EC82834C8338EFD17C"
+  },
+  {
+    "old": "prepare-math.cjs",
+    "new": "scripts/prepare-math.cjs",
+    "sha256": "79198C631FAD2A55E47783A594C6E51DD345A68E7E4B443F9CA217A3463A2C3B"
+  },
+  {
+    "old": "Project DNA.pdf",
+    "new": "references/Project DNA.pdf",
+    "sha256": "E14E3530BA044BDEA1CDDA35D07482B9533FBDE40C3D1E27753B87E672BFA2D3"
+  },
+  {
+    "old": "RTL-ARCHITECTURE.md",
+    "new": "docs/rtl/RTL-ARCHITECTURE.md",
+    "sha256": "9FDCB21153EC939CEEA32B50F2103C796065BDE3BBA8B1A93664FD74D459F6C3"
+  },
+  {
+    "old": "rtl-block-signals.html",
+    "new": "web/rtl-block-signals.html",
+    "sha256": "D7120AED66FE49FA1C9BA5BA101995CC6A2F71387AE12D0B44B4D0357ED7358C"
+  },
+  {
+    "old": "rtl-connected-blocks.html",
+    "new": "web/rtl-connected-blocks.html",
+    "sha256": "2D9176E6F56F45C4A8C9D968192FB5AC3BB58DFE2057CF3A97EDCA2BFF0D7E3D"
+  },
+  {
+    "old": "RTL-interfaces.md",
+    "new": "docs/rtl/RTL-interfaces.md",
+    "sha256": "BB94DF4E8D2A230C557D270FA681036E166C0CDD0BE58D3F4E5143F5C3ACDFD3"
+  },
+  {
+    "old": "RTL-MEMORY-CHECKPOINT.md",
+    "new": "docs/rtl/RTL-MEMORY-CHECKPOINT.md",
+    "sha256": "6145DBF00A975DE0F9825903EE575FFAF4D0847689937C2C372DA5DC7B14DCE0"
+  },
+  {
+    "old": "RTL-PROTOCOL-CHECKPOINT.md",
+    "new": "docs/rtl/RTL-PROTOCOL-CHECKPOINT.md",
+    "sha256": "E31679AB6286E8777DB3E9CFAF97C76EAC500838057C8AC0E270F9C492320BA6"
+  },
+  {
+    "old": "RTL-specification.md",
+    "new": "docs/rtl/RTL-specification.md",
+    "sha256": "0C23AC946060BEE2D651CAB63F83BE89AC5B937A4A0B4D343DAE88EDF6BD92BB"
+  },
+  {
+    "old": "Shared_memory_access.png",
+    "new": "images/shared/Shared_memory_access.png",
+    "sha256": "BD660189B7D17F29CDBDBCDAEED71CEF02BB9E5BFB2E68EDD393C1E526C8C606"
+  },
+  {
+    "old": "Shared_memory_access.svg",
+    "new": "images/shared/Shared_memory_access.svg",
+    "sha256": "97F3F4356B0E1BE4649F7B8C53E228A5E3B7EB98AE0BD84DD0C63482F88F7180"
+  },
+  {
+    "old": "Shared_memory_fsm.png",
+    "new": "images/shared/Shared_memory_fsm.png",
+    "sha256": "E29F30FE3991CFF388F7A852F2DA16BD5C9D119B06E3B7C8D8076AB5A3D559BE"
+  },
+  {
+    "old": "Shared_memory_fsm.svg",
+    "new": "images/shared/Shared_memory_fsm.svg",
+    "sha256": "B4BBD32DDA2DC8283E4FF231BCE59B8E3D486B6EE8CF6F80B1FD124475F86665"
+  },
+  {
+    "old": "Shared_nonlinear_contracts.png",
+    "new": "images/shared/Shared_nonlinear_contracts.png",
+    "sha256": "DEEEC1C1DCBA97E8292E6305BB1195A7832EAB0BDEE4E63D68C2AE8F1FC8CB7A"
+  },
+  {
+    "old": "Shared_nonlinear_contracts.svg",
+    "new": "images/shared/Shared_nonlinear_contracts.svg",
+    "sha256": "0862648728A219506F8AD8E88CEA09E874ADC31ADD882F3A36292E6CC8703119"
+  },
+  {
+    "old": "Shared_nonlinear_fsm.png",
+    "new": "images/shared/Shared_nonlinear_fsm.png",
+    "sha256": "0C870A6AD5BC619EB6FC0E707FEADE7E58AAC9F2E3E8BEA84FB2EA643D789989"
+  },
+  {
+    "old": "Shared_nonlinear_fsm.svg",
+    "new": "images/shared/Shared_nonlinear_fsm.svg",
+    "sha256": "421AA915B669E63EA00AE2E177BCCFC1612BB6E414B8B28731B50F275C40D35B"
+  },
+  {
+    "old": "Shared_scalar_datapath.png",
+    "new": "images/shared/Shared_scalar_datapath.png",
+    "sha256": "84D0FFC39E624BAD6161D0BCBDD317B8C6F5039DE6CD533665C4CFA6D496F49D"
+  },
+  {
+    "old": "Shared_scalar_datapath.svg",
+    "new": "images/shared/Shared_scalar_datapath.svg",
+    "sha256": "941448F4CD0B94C84FB254AE2B3C6733E091D7732BA0052844F3D6C438E66E88"
+  },
+  {
+    "old": "Shared_scalar_fsm.png",
+    "new": "images/shared/Shared_scalar_fsm.png",
+    "sha256": "88F96F845B4EE5713E68B707A9741A9632EFB61CBBEC4BF34A0D4FA348BB2750"
+  },
+  {
+    "old": "Shared_scalar_fsm.svg",
+    "new": "images/shared/Shared_scalar_fsm.svg",
+    "sha256": "E9F424A557E1FBCEED2251386279462DDA46728CBBB82FF0B6DB32ED7938DE30"
+  },
+  {
+    "old": "Stage1_copy.png",
+    "new": "images/stage1/Stage1_copy.png",
+    "sha256": "852089EC92B09D559509C7A2CE97C58B10E06F372CF033930445F5E6AD0C6A07"
+  },
+  {
+    "old": "Stage1_copy.svg",
+    "new": "images/stage1/Stage1_copy.svg",
+    "sha256": "C10AE3E4D6F96DE48DD50DE3A93895B583ED8238C47FB056C65EBAAA669CB356"
+  },
+  {
+    "old": "Stage1_datapath.drawio",
+    "new": "diagrams/drawio/Stage1_datapath.drawio",
+    "sha256": "7E8C91CA16FC352A444E5F7820319EC05C3CAEAB4D65DA93A9E748292304ED77"
+  },
+  {
+    "old": "Stage1_datapath.png",
+    "new": "images/stage1/Stage1_datapath.png",
+    "sha256": "8359E702DAFF170CDAF6432A75E380DE2AEB89378D1413457D5F17398A6DA4AB"
+  },
+  {
+    "old": "Stage1_datapath.svg",
+    "new": "images/stage1/Stage1_datapath.svg",
+    "sha256": "181545F510C7F3316B1A53D4C76EC74F38C894A4FB30E6FA9DC38F11D0553313"
+  },
+  {
+    "old": "Stage1_dot_product.png",
+    "new": "images/stage1/Stage1_dot_product.png",
+    "sha256": "964DC743FCA272175A50311CF9F06566D3A15F7BFEC15B400269A0AFEE124DE1"
+  },
+  {
+    "old": "Stage1_dot_product.svg",
+    "new": "images/stage1/Stage1_dot_product.svg",
+    "sha256": "EE5BD16F88C78344A3CDF060AFA2125065EB5277E2A0F2EEFF7F5CA00F4E5C3B"
+  },
+  {
+    "old": "Stage1_linear.png",
+    "new": "images/stage1/Stage1_linear.png",
+    "sha256": "5B4049E0C36C7212B1E006A55027507ABA4B3AB3B6C70EE09B1D01574406DCED"
+  },
+  {
+    "old": "Stage1_linear.svg",
+    "new": "images/stage1/Stage1_linear.svg",
+    "sha256": "99014AE4E4748257D1D184DA58718CB385CE8C77A7DF4724CAE8A799EEF324DB"
+  },
+  {
+    "old": "Stage1_normalization.png",
+    "new": "images/stage1/Stage1_normalization.png",
+    "sha256": "0ACCE7E14413FD3EF60C4E39B910D5A7635C7D2351FA980F05AE8055E40F85CF"
+  },
+  {
+    "old": "Stage1_normalization.svg",
+    "new": "images/stage1/Stage1_normalization.svg",
+    "sha256": "9F4833F6D1F3F6CEDCA99FD94B9FEF5DBB8619129B0842A6E85E55C824EDDAF2"
+  },
+  {
+    "old": "Stage2_addition_fsm.png",
+    "new": "images/stage2/Stage2_addition_fsm.png",
+    "sha256": "066DAD88C3530D2DBA421DCD9CC47D21D2213877B9296C4D9A01E6766A8A0D79"
+  },
+  {
+    "old": "Stage2_addition_fsm.svg",
+    "new": "images/stage2/Stage2_addition_fsm.svg",
+    "sha256": "69A58C595E4D0E05E740CCF88CAA4677EDB6225E2D0561FEE4A39E21FE00EB6F"
+  },
+  {
+    "old": "Stage2_addition.png",
+    "new": "images/stage2/Stage2_addition.png",
+    "sha256": "6BF04AF99351B4063854FF73C511EE4354C94335A0CD89FBB9C0B92544C1FF36"
+  },
+  {
+    "old": "Stage2_addition.svg",
+    "new": "images/stage2/Stage2_addition.svg",
+    "sha256": "D0BA9848E827BFFD9552C5FD3623C2872D2A008AD493035DD5A3137E9D7C9657"
+  },
+  {
+    "old": "Stage2_conversion.png",
+    "new": "images/stage2/Stage2_conversion.png",
+    "sha256": "AAFE214E7D1F8B01B34CBAE4778B2F718B4C066F3F5DC3328F9768C4FE78B34D"
+  },
+  {
+    "old": "Stage2_conversion.svg",
+    "new": "images/stage2/Stage2_conversion.svg",
+    "sha256": "EF7063903B2235B5AF3AB3FD70CBA9FD9E9AC553D1F539A3C2871819D388E50D"
+  },
+  {
+    "old": "Stage2_datapath.drawio",
+    "new": "diagrams/drawio/Stage2_datapath.drawio",
+    "sha256": "787E7889167B7C74EE6F0E406FD0EA23A29FF7C8DAFFDECE6025F617D2EFE5DA"
+  },
+  {
+    "old": "Stage2_datapath.png",
+    "new": "images/stage2/Stage2_datapath.png",
+    "sha256": "3F9F91D59EEECF46911076BAAB8A1398F6D3424B8CBBDA01A5510FF3F3FF9597"
+  },
+  {
+    "old": "Stage2_datapath.svg",
+    "new": "images/stage2/Stage2_datapath.svg",
+    "sha256": "49A12AE4E0871CB0B5CCFE12234E1B266A4CA6711BDFCDE09E47AB502339D4D2"
+  },
+  {
+    "old": "Stage2_error_fsm.png",
+    "new": "images/stage2/Stage2_error_fsm.png",
+    "sha256": "A5B837F0D1AEBC29F560915FC21ABB33D60E6E6E2126B915883D9EE352550912"
+  },
+  {
+    "old": "Stage2_error_fsm.svg",
+    "new": "images/stage2/Stage2_error_fsm.svg",
+    "sha256": "C14EA5B6F8CC87A2E38510322573D744E29E55353E8D8F7B9133E8C51E8493F6"
+  },
+  {
+    "old": "Stage2_fsm.png",
+    "new": "images/stage2/Stage2_fsm.png",
+    "sha256": "5DB4CDCFFC0F82721C29B27D5D7EF5A3A203A2F896F52EB45F0863DD12568E37"
+  },
+  {
+    "old": "Stage2_fsm.svg",
+    "new": "images/stage2/Stage2_fsm.svg",
+    "sha256": "A008A858BF17D4B9DCC7BB71E73F1964E1300DD844985BC62800C6C31D558FD7"
+  },
+  {
+    "old": "Stage2_indices.png",
+    "new": "images/stage2/Stage2_indices.png",
+    "sha256": "CA63B6B31B9422F2AD3D8FB010A7327A42D00BBC490BD33F991C8F4C8AB9DBCC"
+  },
+  {
+    "old": "Stage2_indices.svg",
+    "new": "images/stage2/Stage2_indices.svg",
+    "sha256": "D78304F9CFA7006B8DE3A9E64CCA1B36687A5D532D44029D8EA40C9A300C143A"
+  },
+  {
+    "old": "Stage3_attention_fsm.png",
+    "new": "images/stage3/Stage3_attention_fsm.png",
+    "sha256": "AFB57DF19281779A721714D2F0228F288D240FA919CDAC4E57CB317A446A9AD6"
+  },
+  {
+    "old": "Stage3_attention_fsm.svg",
+    "new": "images/stage3/Stage3_attention_fsm.svg",
+    "sha256": "BF842BF35EAB8492D29671C74CE5FC2DA54C35F230D48946EE4447BE505E870F"
+  },
+  {
+    "old": "Stage3_attention.png",
+    "new": "images/stage3/Stage3_attention.png",
+    "sha256": "1A9DBBDCC2F9C080CD4F7D6A7171D8725FF2C399D6DE9E1DF75BEEBA173DAAB6"
+  },
+  {
+    "old": "Stage3_attention.svg",
+    "new": "images/stage3/Stage3_attention.svg",
+    "sha256": "8BB0E777AED700DA3934A1C04F46C7EAD549094B72F5E7238452C63E89F5B509"
+  },
+  {
+    "old": "Stage3_datapath.drawio",
+    "new": "diagrams/drawio/Stage3_datapath.drawio",
+    "sha256": "D0E84D992759F9B4264687A0ACF3E3DDCAFE7EA2E80E9AED7ED8D6D65EAB1E10"
+  },
+  {
+    "old": "Stage3_datapath.png",
+    "new": "images/stage3/Stage3_datapath.png",
+    "sha256": "738E3E0840943E8521603DA6E4C3F689E2F65E788E2E93095C7A5EC2F960A1FF"
+  },
+  {
+    "old": "Stage3_datapath.svg",
+    "new": "images/stage3/Stage3_datapath.svg",
+    "sha256": "DB5F3DFA0049F4B4A285B5E00552B1E004C2038BD411FE191AF1EF94320ECFA2"
+  },
+  {
+    "old": "Stage3_ffn_fsm.png",
+    "new": "images/stage3/Stage3_ffn_fsm.png",
+    "sha256": "A1B4CE806E2D90C3D2E91FE435D993C73CAEA7A474DCC4A82A3A460774B22B12"
+  },
+  {
+    "old": "Stage3_ffn_fsm.svg",
+    "new": "images/stage3/Stage3_ffn_fsm.svg",
+    "sha256": "11B676394D0D9F5DD87B0AD921AB9592A2899A1B9AA59DBB2DDA45FD5605244A"
+  },
+  {
+    "old": "Stage3_ffn.png",
+    "new": "images/stage3/Stage3_ffn.png",
+    "sha256": "75FC97A3983E73AE883406054767410F47E78EA8EB1668FB006D3D5551FD999F"
+  },
+  {
+    "old": "Stage3_ffn.svg",
+    "new": "images/stage3/Stage3_ffn.svg",
+    "sha256": "4C4659A31C1E4F5C20FB02D6B45C3598DBF0C818867DA5E6B08C2E3B9D260206"
+  },
+  {
+    "old": "Stage3_fsm.png",
+    "new": "images/stage3/Stage3_fsm.png",
+    "sha256": "85203E582D787A588D63CF5DB868F45340381E0445F3D9A2B5DD55238A5117F5"
+  },
+  {
+    "old": "Stage3_fsm.svg",
+    "new": "images/stage3/Stage3_fsm.svg",
+    "sha256": "31774EE22F0B70FE68D13EB682E9E0607CEC91D83C5CCAECA995A1B561FE2BAD"
+  },
+  {
+    "old": "Stage3_layer_fsm.png",
+    "new": "images/stage3/Stage3_layer_fsm.png",
+    "sha256": "1E4D0559BEF30C00114401779A8CC7D6036FC8C02B7F1187540BEF5DC65329EF"
+  },
+  {
+    "old": "Stage3_layer_fsm.svg",
+    "new": "images/stage3/Stage3_layer_fsm.svg",
+    "sha256": "98007BCD867C754D2A6EB6D1C284EC2D35601063347C033708652D7A05C23F42"
+  },
+  {
+    "old": "Stage3_layer.png",
+    "new": "images/stage3/Stage3_layer.png",
+    "sha256": "2B14217B69ED803B426D1B4C79FC3BD2EFECB7029EB01A04D50276EBF40122EF"
+  },
+  {
+    "old": "Stage3_layer.svg",
+    "new": "images/stage3/Stage3_layer.svg",
+    "sha256": "60D248C8663067EAABAC979B5C178E79ECF172756E54C52C075C4A0F17EB84FF"
+  },
+  {
+    "old": "Stage3_qkv_fsm.png",
+    "new": "images/stage3/Stage3_qkv_fsm.png",
+    "sha256": "F5BF7427750D6B9B12DF092BF523FF9A8E66FCC5211C3D95D2AE4DCEA3B5F383"
+  },
+  {
+    "old": "Stage3_qkv_fsm.svg",
+    "new": "images/stage3/Stage3_qkv_fsm.svg",
+    "sha256": "B7E21EF55736EA93212B4B3339DA41B8664124C4A3E9CCDF69EF3E54CB9B299E"
+  },
+  {
+    "old": "Stage3_qkv.png",
+    "new": "images/stage3/Stage3_qkv.png",
+    "sha256": "CB0203944316E86CD2AFE8E1CB7E9A71AAA693637DAB7DA459402E313E3321BF"
+  },
+  {
+    "old": "Stage3_qkv.svg",
+    "new": "images/stage3/Stage3_qkv.svg",
+    "sha256": "17DC3640ACC23D0435B537C1C7A34D72D51E630CFADEE404A994BE9A3D17B8D9"
+  },
+  {
+    "old": "Stage3_residual_fsm.png",
+    "new": "images/stage3/Stage3_residual_fsm.png",
+    "sha256": "0C7307816D784DD610024840B7D832A865619FBB4BD9BE835F4361CDEC105F17"
+  },
+  {
+    "old": "Stage3_residual_fsm.svg",
+    "new": "images/stage3/Stage3_residual_fsm.svg",
+    "sha256": "F9A6AA051C86034C71B1836D2DA7DEDDC4FD71E7E69B7770B132B7F671AE7436"
+  },
+  {
+    "old": "Stage3_residual.png",
+    "new": "images/stage3/Stage3_residual.png",
+    "sha256": "89E32CBF003445A8AF733DC0ACB73E35D04D2BC8590D01D609B2C811C0291B18"
+  },
+  {
+    "old": "Stage3_residual.svg",
+    "new": "images/stage3/Stage3_residual.svg",
+    "sha256": "41BBA425D4E13FB702AA204216EA3B989FC14875DF23B0D568EDE159FDF3E7C3"
+  },
+  {
+    "old": "Stage3_score_fsm.png",
+    "new": "images/stage3/Stage3_score_fsm.png",
+    "sha256": "7F55C27A57F0F012FCC29219FDB2AE8D42E28CD7A08A94431D531CBC083D30C6"
+  },
+  {
+    "old": "Stage3_score_fsm.svg",
+    "new": "images/stage3/Stage3_score_fsm.svg",
+    "sha256": "C14FE379E2BB86CD8058069F4578A4F6965C27B418B3AC0A6B4FD5A5012CD200"
+  },
+  {
+    "old": "Stage3_score.png",
+    "new": "images/stage3/Stage3_score.png",
+    "sha256": "CD27397E46F4B402FA76FAB0CEB0CB0A7FBCCAC54CDB272066BFF32801C55E63"
+  },
+  {
+    "old": "Stage3_score.svg",
+    "new": "images/stage3/Stage3_score.svg",
+    "sha256": "82283874CB582B3036F69D0D318679537DB1DBC73CDFDC9DCC103DDA9933FDEF"
+  },
+  {
+    "old": "Stage3_softmax_fsm.png",
+    "new": "images/stage3/Stage3_softmax_fsm.png",
+    "sha256": "CE77B73D5B7DD31D2093D855EC5823FAB34C4485175108372483D599A2FF393C"
+  },
+  {
+    "old": "Stage3_softmax_fsm.svg",
+    "new": "images/stage3/Stage3_softmax_fsm.svg",
+    "sha256": "7993EF842BFC7246D84487071BD9D5A18E53BA3451F0D522414A56866B3A808C"
+  },
+  {
+    "old": "Stage3_softmax.png",
+    "new": "images/stage3/Stage3_softmax.png",
+    "sha256": "C6955AD8F0AE454FBA35C9A1AAD7E4B1EEB11FBC95388DB4891DC4A8E8A3F750"
+  },
+  {
+    "old": "Stage3_softmax.svg",
+    "new": "images/stage3/Stage3_softmax.svg",
+    "sha256": "6716A6A366EB0EA404F54A3A37A51531DD402B395066A60D5AADB80101370980"
+  },
+  {
+    "old": "Stage3_weighted_fsm.png",
+    "new": "images/stage3/Stage3_weighted_fsm.png",
+    "sha256": "DBB37DE1E4E874A62497FAA3B22DD713483EF602F3EA736C2E1BA3269C280023"
+  },
+  {
+    "old": "Stage3_weighted_fsm.svg",
+    "new": "images/stage3/Stage3_weighted_fsm.svg",
+    "sha256": "4FE150E5695E949F4AA690733AD58BB0ABCBF440524B647A9E685B95D7DD5DA7"
+  },
+  {
+    "old": "Stage3_weighted.png",
+    "new": "images/stage3/Stage3_weighted.png",
+    "sha256": "2DBFE9114BA903DCFC98723B49D178829BFE460F0831841B10C72D0EA4EB389E"
+  },
+  {
+    "old": "Stage3_weighted.svg",
+    "new": "images/stage3/Stage3_weighted.svg",
+    "sha256": "A2B04895EA991AC61CADAB0923F519FACA8F5FAF66C99197F9464B6EE4692728"
+  },
+  {
+    "old": "Stage4_datapath.drawio",
+    "new": "diagrams/drawio/Stage4_datapath.drawio",
+    "sha256": "88607EF2DA78D65C5A775EBC76116DBF73A6966CDB63DFC218A9E83B65FA4913"
+  },
+  {
+    "old": "Stage4_datapath.png",
+    "new": "images/stage4/Stage4_datapath.png",
+    "sha256": "1D3AA39990DECEA695DB285DEB53D869A6A48F97A90F6FAC3F26B233C26A843A"
+  },
+  {
+    "old": "Stage4_datapath.svg",
+    "new": "images/stage4/Stage4_datapath.svg",
+    "sha256": "818D871B7348918A6A3F9F4D8342477B7372AE664661358C0280E573DD7CC5CC"
+  },
+  {
+    "old": "Stage4_fsm.png",
+    "new": "images/stage4/Stage4_fsm.png",
+    "sha256": "8F31997DB9DE8EEC0C6C2F6BCD7A262DBAE0456B27CB2EFCE303316833AF0602"
+  },
+  {
+    "old": "Stage4_fsm.svg",
+    "new": "images/stage4/Stage4_fsm.svg",
+    "sha256": "4D2A9628DF797B0A2C9BA7B7B58EB0858877667B5CDE3D5A1D270404BBF4C21A"
+  },
+  {
+    "old": "Stage5_datapath.drawio",
+    "new": "diagrams/drawio/Stage5_datapath.drawio",
+    "sha256": "C300697102C962BBAFB592C91F08D5929B2F92CE48F4AD0E37352EC94A5CF930"
+  },
+  {
+    "old": "Stage5_datapath.png",
+    "new": "images/stage5/Stage5_datapath.png",
+    "sha256": "B1A490830A20B7FD3AD99E62EDEA911308802C24265B260D7971BE88A226D706"
+  },
+  {
+    "old": "Stage5_datapath.svg",
+    "new": "images/stage5/Stage5_datapath.svg",
+    "sha256": "C5CAE8F539A73CD4DBB084440043CBE19DCD2859BE77DFAD564941F7D0F2B199"
+  },
+  {
+    "old": "Stage5_empty_fsm.png",
+    "new": "images/stage5/Stage5_empty_fsm.png",
+    "sha256": "0A96928E621CEFAC2C224719432ABB2076E99F33FC1A9FC1E5D28A835FA0E5EB"
+  },
+  {
+    "old": "Stage5_empty_fsm.svg",
+    "new": "images/stage5/Stage5_empty_fsm.svg",
+    "sha256": "891B5492D8277772D760AEA53E66B8DECB16DF03B7620DE014B524E656D07BAB"
+  },
+  {
+    "old": "Stage5_fsm.png",
+    "new": "images/stage5/Stage5_fsm.png",
+    "sha256": "4E4C133A96359CD0016F2C032F4A29EF2097E25616F3B22B809E5015261156BB"
+  },
+  {
+    "old": "Stage5_fsm.svg",
+    "new": "images/stage5/Stage5_fsm.svg",
+    "sha256": "9BB0246CC6CA487A5A2459D61A2E32B6A513B8FBF1208474758613BEA7182D0D"
+  },
+  {
+    "old": "Stage5_output_fsm.png",
+    "new": "images/stage5/Stage5_output_fsm.png",
+    "sha256": "C133C1DF0B6F267CECC4B75CAC152825B34E171C403C615CA80B28294655F97D"
+  },
+  {
+    "old": "Stage5_output_fsm.svg",
+    "new": "images/stage5/Stage5_output_fsm.svg",
+    "sha256": "D13AB582D1F673078A3F05C369F0C41801EF28C04DC5C772356DC0DDA9CEFCD7"
+  },
+  {
+    "old": "Stage5_output.png",
+    "new": "images/stage5/Stage5_output.png",
+    "sha256": "FED63273716D29F95E3D3B83A71C55044A3764A1AF4694D69D7904F4950F4C8D"
+  },
+  {
+    "old": "Stage5_output.svg",
+    "new": "images/stage5/Stage5_output.svg",
+    "sha256": "D7AF3148F37E422B1981C8FE40F9681CF430D455937BD6BCC028A308FC13174B"
+  },
+  {
+    "old": "Stage5_sum_count.png",
+    "new": "images/stage5/Stage5_sum_count.png",
+    "sha256": "4977CF4255B87DD8916EFFA778BED82815D7CE9934F25A2AF947115999D1D6DE"
+  },
+  {
+    "old": "Stage5_sum_count.svg",
+    "new": "images/stage5/Stage5_sum_count.svg",
+    "sha256": "D7446A371C20401E0A423AD7D15BA353B57366998334DEAF9156C6689D939AEE"
+  },
+  {
+    "old": "Stages3-5-design.md",
+    "new": "docs/architecture/Stages3-5-design.md",
+    "sha256": "FB4DA596762D2BEA7FD74544AAFD83C01B8C0DDA34084DF03D753B0BA92B63B1"
+  }
+]

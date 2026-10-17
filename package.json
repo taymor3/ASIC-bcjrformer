@@ -1,0 +1,11 @@
+{
+  "name": "asic-bcjrformer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Optional authoring dependencies for the BCJRFormer ASIC project",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "devDependencies": {
+    "playwright": "1.62.1",
+    "sharp": "0.35.5"
+  }
+}

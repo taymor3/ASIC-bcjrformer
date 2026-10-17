@@ -1,0 +1,216 @@
+{
+  "status": "implemented provisional numerical RTL; review and numerical validation pending",
+  "modules": [
+    "bcjrformer_core",
+    "core_ctrl",
+    "embedding_ctrl",
+    "position_ctrl",
+    "encoder_ctrl",
+    "layer_ctrl",
+    "attention_ctrl",
+    "qkv_ctrl",
+    "score_row_ctrl",
+    "softmax_ctrl",
+    "weighted_value_ctrl",
+    "output_projection_ctrl",
+    "ffn_ctrl",
+    "layernorm_ctrl",
+    "linear_ctrl",
+    "residual_ctrl",
+    "final_ctrl",
+    "aggregation_ctrl",
+    "dot_engine",
+    "mac_unit",
+    "exp_unit",
+    "reciprocal_unit",
+    "rsqrt_unit",
+    "gelu_unit",
+    "command_switch",
+    "arithmetic_switch",
+    "memory_fabric",
+    "parameter_mem",
+    "scratch_mem"
+  ],
+  "links": [
+    {
+      "parent": "core_ctrl.embed",
+      "child": "embedding_ctrl.command",
+      "command": "empty_t",
+      "response": "empty_t"
+    },
+    {
+      "parent": "core_ctrl.position",
+      "child": "position_ctrl.command",
+      "command": "empty_t",
+      "response": "empty_t"
+    },
+    {
+      "parent": "core_ctrl.encoder",
+      "child": "encoder_ctrl.command",
+      "command": "empty_t",
+      "response": "empty_t"
+    },
+    {
+      "parent": "core_ctrl.final_project",
+      "child": "final_ctrl.command",
+      "command": "empty_t",
+      "response": "empty_t"
+    },
+    {
+      "parent": "core_ctrl.aggregate",
+      "child": "aggregation_ctrl.command",
+      "command": "empty_t",
+      "response": "aggregation_rsp_t"
+    },
+    {
+      "parent": "encoder_ctrl.layer",
+      "child": "layer_ctrl.command",
+      "command": "layer_cmd_t",
+      "response": "empty_t"
+    },
+    {
+      "parent": "layer_ctrl.attention",
+      "child": "attention_ctrl.command",
+      "command": "layer_cmd_t",
+      "response": "empty_t"
+    },
+    {
+      "parent": "layer_ctrl.ffn",
+      "child": "ffn_ctrl.command",
+      "command": "ffn_cmd_t",
+      "response": "empty_t"
+    },
+    {
+      "parent": "layer_ctrl.residual",
+      "child": "residual_ctrl.command",
+      "command": "residual_cmd_t",
+      "response": "empty_t"
+    },
+    {
+      "parent": "attention_ctrl.qkv",
+      "child": "qkv_ctrl.command",
+      "command": "layer_cmd_t",
+      "response": "empty_t"
+    },
+    {
+      "parent": "attention_ctrl.score",
+      "child": "score_row_ctrl.command",
+      "command": "row_cmd_t",
+      "response": "empty_t"
+    },
+    {
+      "parent": "attention_ctrl.softmax",
+      "child": "softmax_ctrl.command",
+      "command": "softmax_cmd_t",
+      "response": "empty_t"
+    },
+    {
+      "parent": "attention_ctrl.weighted",
+      "child": "weighted_value_ctrl.command",
+      "command": "row_cmd_t",
+      "response": "empty_t"
+    },
+    {
+      "parent": "attention_ctrl.out_project",
+      "child": "output_projection_ctrl.command",
+      "command": "layer_cmd_t",
+      "response": "empty_t"
+    }
+  ],
+  "switches": [
+    {
+      "name": "norm_switch",
+      "module": "command_switch",
+      "callers": [
+        "embedding_ctrl.norm",
+        "layer_ctrl.norm"
+      ],
+      "service": "layernorm_ctrl.command",
+      "command": "layernorm_cmd_t",
+      "response": "empty_t"
+    },
+    {
+      "name": "linear_switch",
+      "module": "command_switch",
+      "callers": [
+        "embedding_ctrl.linear",
+        "qkv_ctrl.linear",
+        "output_projection_ctrl.linear",
+        "ffn_ctrl.linear",
+        "final_ctrl.linear"
+      ],
+      "service": "linear_ctrl.command",
+      "command": "linear_cmd_t",
+      "response": "empty_t"
+    },
+    {
+      "name": "dot_switch",
+      "module": "command_switch",
+      "callers": [
+        "linear_ctrl.dot",
+        "score_row_ctrl.dot",
+        "weighted_value_ctrl.dot"
+      ],
+      "service": "dot_engine.command",
+      "command": "dot_cmd_t",
+      "response": "accum_t"
+    },
+    {
+      "name": "reciprocal_switch",
+      "module": "arithmetic_switch",
+      "callers": [
+        "softmax_ctrl.reciprocal",
+        "aggregation_ctrl.reciprocal"
+      ],
+      "service": "reciprocal_unit.operation",
+      "command": "denominator_t",
+      "response": "reciprocal_t"
+    }
+  ],
+  "arithmetic": [
+    {
+      "parent": "dot_engine.mac",
+      "child": "mac_unit.operation",
+      "request": "mac_req_t",
+      "response": "accum_t"
+    },
+    {
+      "parent": "softmax_ctrl.exponential",
+      "child": "exp_unit.operation",
+      "request": "score_t",
+      "response": "probability_t"
+    },
+    {
+      "parent": "layernorm_ctrl.rsqrt",
+      "child": "rsqrt_unit.operation",
+      "request": "variance_t",
+      "response": "rsqrt_t"
+    },
+    {
+      "parent": "ffn_ctrl.gelu",
+      "child": "gelu_unit.operation",
+      "request": "act_t",
+      "response": "gelu_t"
+    }
+  ],
+  "memoryClients": [
+    "core_ctrl",
+    "embedding_ctrl",
+    "position_ctrl",
+    "attention_ctrl",
+    "layernorm_ctrl",
+    "linear_ctrl",
+    "score_row_ctrl",
+    "softmax_ctrl",
+    "weighted_value_ctrl",
+    "ffn_ctrl",
+    "residual_ctrl",
+    "aggregation_ctrl",
+    "dot_engine"
+  ],
+  "memoryRouting": {
+    "parameter": "memory_fabric.parameters -> parameter_mem.access",
+    "scratch": "memory_fabric.scratch -> scratch_mem.access"
+  },
+  "host": "bcjrformer_core.host -> core_ctrl.host"
+}

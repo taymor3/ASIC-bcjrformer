@@ -1,0 +1,123 @@
+const {projectFile}=require('../scripts/project-paths.cjs');
+// Stage 2: native draw.io pages, with matching SVG previews.
+const fs=require('fs'),path=require('path');
+const {root,pages,page,box,edge,shell,note,xml,svg}=require('./build-stage1-hierarchy.cjs');
+const top=page('stage2','Stage 2','Stage2_datapath');
+shell(top,'Stage 2 — Position and read embedding');
+box(top,'input',20,300,145,80,'Stage 1 values\ne [L,D]');
+box(top,'value',260,290,195,90,'Current value\nregister','reg');
+box(top,'add',650,285,265,100,'Addition block\nUsed twice per value\nPage 2','unit');
+box(top,'output',1320,300,160,80,'Encoder input\nX⁽⁰⁾ [L,D]');
+box(top,'index',230,470,245,70,'Indices and addresses\nPage 3','unit');
+box(top,'access',605,475,620,65,'Memory access: X read / write\nposition P and read-slot E reads');
+edge(top,'input_value','input','value',[165,340],[260,335]);
+edge(top,'value_add','value','add',[455,325],[650,325]);
+edge(top,'add_result','add','value',[650,360],[355,380],[[575,360],[575,420],[355,420]]);
+edge(top,'result_out','add','output',[915,335],[1320,340]);
+edge(top,'control_add','ctrl','add',[780,175],[780,285],[],'control',true,'command / done',[790,235]);
+edge(top,'control_value','ctrl','value',[355,175],[355,290],[],'control');
+edge(top,'control_index','ctrl','index',[240,175],[230,505],[[205,175],[205,505]],'control');
+edge(top,'index_access','index','access',[475,505],[605,505]);
+edge(top,'value_memory','value','access',[455,360],[605,490],[[495,360],[495,445],[555,445],[555,490]],'data',true);
+edge(top,'param_add','access','add',[1050,475],[915,365],[[1050,410],[940,410],[940,365]]);
+edge(top,'mem_control','ctrl','access',[1160,175],[1160,475],[],'control',true);
+note(top,'For each feature: read e → add position P → convert → add read-slot E → convert → write X in the same location.\nP and E are trained values. Process all L = M × N tokens, including padded ones. One addition block is used twice.\nInput/output arrows show stored data flow, not a direct live link. Stage 3 waits for all writes. FSM: Page 4; errors: Page 7.');
+
+const add=page('addition','Addition block','Stage2_addition');
+shell(add,'Shared addition block — same hardware for position and read-slot additions');
+box(add,'input',20,285,145,95,'Command operands\nvalue and P or E');
+box(add,'regs',255,280,195,90,'Operand registers\nA and B','reg');
+box(add,'align',535,280,165,90,'Sign extend\nAlign fractions','unit');
+box(add,'sum',780,285,135,70,'Add\nwide sum','unit');
+box(add,'convert',1040,280,205,90,'Round / saturate\nPage 6','unit');
+box(add,'output',1320,285,160,90,'ACT result\nround / sat flags');
+edge(add,'capture','input','regs',[165,330],[255,325]);
+edge(add,'align_operands','regs','align',[450,325],[535,325]);
+edge(add,'aligned_add','align','sum',[700,325],[780,320]);
+edge(add,'sum_convert','sum','convert',[915,320],[1040,325]);
+edge(add,'convert_result','convert','output',[1245,325],[1320,330]);
+for(const [id,x] of [['regs',350],['align',615],['sum',845],['convert',1140]])edge(add,'control_'+id,'ctrl',id,[x,175],[x,280],[],'control');
+box(add,'math',250,450,990,80,'a = QACT(e + P[n,j])      then      X⁽⁰⁾ = QACT(a + E[m,j])\nQACT = round to nearest, ties to even, then clip to the stored activation range.','frame','text');
+note(add,'A is the current ACT value; B is a trained parameter. Fraction alignment uses exact shifts and extra bits, not early rounding.\nEach addition returns one converted result; the stage controller owns memory reads and writes. Addition FSM: Page 5.\nSaturation is recorded but does not stop the frame. No multiplication, division, normalization or dot product is needed here.');
+
+const idx=page('index','Indices and addresses','Stage2_indices');
+shell(idx,'Stage 2 index and address logic — controlled by the Stage 2 FSM');
+idx.nodes.find(n=>n.id==='ctrl').label='Stage 2 controller — owns these index registers';
+box(idx,'input',20,285,145,90,'Initialize / advance\nafter write done','control');
+box(idx,'counter',260,285,210,90,'Integer registers\nm, n, j\nXptr, Pptr, Eptr','reg');
+box(idx,'compare',585,255,200,100,'Compare last index\nj = D−1\nn = N−1; m = M−1','unit');
+box(idx,'update',870,265,260,90,'Add / select\nincrement or wrap\nnext index / pointer','unit');
+box(idx,'output',1320,285,160,90,'Read / write\naddresses');
+edge(idx,'advance','input','counter',[165,330],[260,325],[],'control');
+edge(idx,'reg_compare','counter','compare',[470,310],[585,305]);
+edge(idx,'compare_select','compare','update',[785,305],[870,310],[],'control');
+edge(idx,'next_regs','update','counter',[870,340],[360,375],[[825,340],[825,435],[360,435]]);
+edge(idx,'pointers_out','counter','output',[470,350],[1320,340],[[515,350],[515,465],[1260,465],[1260,340]]);
+edge(idx,'controller_compare','ctrl','compare',[680,175],[680,255],[],'control');
+edge(idx,'controller_update','ctrl','update',[1000,175],[1000,265],[],'control');
+box(idx,'mapping',260,490,985,70,'Addresses: Xbase + tD + j; Pbase + nD + j; Ebase + mD + j, with t = mN + n.\nThese formulas explain the layout. Hardware advances pointers; no runtime multiply, divide or modulo.','frame','text');
+note(idx,'j selects one feature; n selects a position; m selects a read slot. D = features/token, N = positions/read, M = read slots.\nXptr advances each value. Pptr wraps after N × D values; Eptr returns to the current read row for each new position.\nThese registers belong to the Stage 2 controller, not an independently scheduled child. All widths are sized for the allowed dimensions.');
+
+function state(p,id,x,y,label){box(p,id,x,y,105,105,label,'control','circle');}
+function link(p,a,b,label=''){
+ const na=p.nodes.find(n=>n.id===a),nb=p.nodes.find(n=>n.id===b);
+ const horizontal=na.y===nb.y;const forward=nb.x>na.x;
+ const start=horizontal?[na.x+(forward?105:0),na.y+52.5]:[na.x+52.5,na.y+105];
+ const end=horizontal?[nb.x+(forward?0:105),nb.y+52.5]:[nb.x+52.5,nb.y];
+ edge(p,a+'_'+b,a,b,start,end,[], 'control',false,label, label?[(start[0]+end[0])/2-35,(start[1]+end[1])/2-12]:null);
+}
+const fsm=page('stage-fsm','Stage 2 FSM','Stage2_fsm');
+box(fsm,'title',30,15,1440,35,'Stage 2 controller — circular FSM','frame','text');
+const first=[['idle','Idle'],['init','Initialize'],['xreq','Read X\nrequest'],['xwait','Wait X'],['preq','Read P\nrequest'],['pwait','Wait P']];
+const second=[['acmd','Add P\ncommand'],['await','Wait add P'],['ereq','Read E\nrequest'],['ewait','Wait E'],['bcmd','Add E\ncommand'],['bwait','Wait add E']];
+first.forEach(([id,label],i)=>state(fsm,id,80+i*230,100,label));
+second.forEach(([id,label],i)=>state(fsm,id,1230-i*230,325,label));
+state(fsm,'wreq',80,520,'Write X\nrequest');state(fsm,'wwait',310,520,'Wait write');state(fsm,'next',540,520,'Next index');state(fsm,'done',1000,520,'Done');
+const seq=[...first.map(s=>s[0]),...second.map(s=>s[0]),'wreq','wwait','next','done'];
+for(let i=0;i<seq.length-1;i++)link(fsm,seq[i],seq[i+1],seq[i]==='next'?'last value':'');
+edge(fsm,'loop','next','xreq',[592,520],[592,205],[[592,470],[35,470],[35,255],[592,255]],'control',false,'more values: j, then n, then m',[55,248]);
+edge(fsm,'done_idle','done','idle',[1052,625],[132,205],[[1052,650],[15,650],[15,235],[132,235]],'control',false,'completion accepted',[790,675]);
+box(fsm,'rule2',1130,505,350,145,'Stay in the same state while stalled.\nCapture a result once, on acceptance.\nAdvance indices only after write done.\nError: drain accepted work, report\nfailure; Stage 3 must not start.','frame','text');
+
+const afsm=page('add-fsm','Addition FSM','Stage2_addition_fsm');
+box(afsm,'title',30,15,1440,35,'Addition controller — circular FSM','frame','text');
+const states=[['idle','Idle /\ncapture'],['align','Align\noperands'],['issue','Issue add'],['wait','Wait add'],['convert','Convert'],['done','Done /\nhold result']];
+states.forEach(([id,label],i)=>state(afsm,id,80+i*230,220,label));
+for(let i=0;i<states.length-1;i++)link(afsm,states[i][0],states[i+1][0]);
+edge(afsm,'return','done','idle',[1282,325],[132,325],[[1282,420],[132,420]],'control',false,'result accepted',[590,445]);
+box(afsm,'details',180,490,1130,85,'Idle accepts one pair A,B. Issue add waits for request acceptance; Wait add captures one wide sum.\nConvert registers the rounded / saturated ACT result and flags. Done holds them unchanged until accepted.\nIf the adder is combinational, Issue / Wait can later be merged; keep this interface independent of latency.','frame','text');
+note(afsm,'This child never writes memory and never advances m, n or j. It reports completion to the Stage 2 controller.\nThe controller is reused for the P addition and the E addition. Reset initializes it; ordinary rounding/saturation is not a fatal error.');
+
+const conv=page('conversion','Round and saturate','Stage2_conversion');
+shell(conv,'Round and saturate — bit operations inside the addition block');
+box(conv,'input',20,300,145,75,'Wide signed\nsum v');
+box(conv,'split',240,280,200,105,'Shift / bit select\nq = v >> k\nguard, sticky, q bit 0','unit');
+box(conv,'logic',520,290,230,85,'OR and AND\ninc = guard AND\n(sticky OR q bit 0)','unit');
+box(conv,'round',825,290,145,85,'Add\nq + inc','unit');
+box(conv,'clip',1040,280,195,105,'Compare / select\nmin or max or\nrounded value','unit');
+box(conv,'output',1320,300,160,75,'ACT result\nflags');
+edge(conv,'split_input','input','split',[165,338],[240,333]);
+edge(conv,'split_logic','split','logic',[440,325],[520,332]);
+edge(conv,'logic_inc','logic','round',[750,332],[825,350]);
+edge(conv,'base_round','split','round',[350,385],[890,375],[[350,445],[890,445]]);
+edge(conv,'rounded_clip','round','clip',[970,332],[1040,332]);
+edge(conv,'clip_out','clip','output',[1235,332],[1320,338]);
+edge(conv,'ctrl_clip','ctrl','clip',[1140,175],[1140,280],[],'control');
+box(conv,'explain',240,470,1000,90,'k = fractional bits to remove. Guard is the highest removed bit; sticky is OR of the other removed bits.\nUse an arithmetic right shift (signed floor). The increment rule handles negative values and ties to even.\nIf k = 0: no bits are removed and inc = 0. Keep the carry bit before the min/max comparisons.','frame','text');
+note(conv,'The Addition controller supplies the controls here; this conversion path does not need a separate controller.\nClip only after rounding. Keep rounded-changed and saturated flags separate; log one result at the accepted write.\nIf the incoming format has fewer fractional bits than ACT, sign extend and shift left exactly instead of discarding bits.');
+
+// Conversion is part of the addition controller; do not invent a second one.
+conv.nodes.find(n=>n.id==='ctrl').label='Controlled by the Addition FSM (Page 5)';
+conv.nodes.find(n=>n.id==='command').label='Control inputs';
+conv.nodes.find(n=>n.id==='done').label='Status capture';
+const err=page('error','Error handling','Stage2_error_fsm');
+box(err,'title',30,15,1440,35,'Stage 2 failure path — applies from any active state','frame','text');
+const errorStates=[['failure','Failure\ndetected'],['stop','Stop new\nrequests'],['drain','Drain\naccepted\nwork'],['report','Hold failed\ncompletion'],['locked','Wait for\nreset']];
+errorStates.forEach(([id,label],i)=>state(err,id,190+i*245,230,label));
+for(let i=0;i<errorStates.length-1;i++)link(err,errorStates[i][0],errorStates[i+1][0]);
+box(err,'detail',160,430,1190,125,'Failure = memory / protocol error or overflow outside a declared temporary format.\nKeep handling accepted responses; do not request more reads, additions or writes.\nReport failure after outstanding work is drained; hold until the frame controller accepts it.\nPartial X values are invalid. Stage 3 is blocked. A new frame requires reset and reload under the fatal-error policy.','frame','text');
+note(err,'Normal rounding or saturation is not a failure; record the flags and continue.\nFor a child failure, the addition result/error handshake still completes so the Stage 2 controller can drain and report it.');
+const file='diagrams/drawio/Stage2_datapath.drawio';
+fs.writeFileSync(path.join(root,file),'<?xml version="1.0" encoding="UTF-8"?>\n<mxfile host="app.diagrams.net" type="device">'+pages.map(xml).join('\n')+'</mxfile>\n');
+for(const p of pages)fs.writeFileSync(projectFile(p.file+'.svg'),svg(p));
+console.log(JSON.stringify({file,pages:pages.map(p=>p.name)}));
