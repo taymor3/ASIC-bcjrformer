@@ -35,24 +35,35 @@ def numerics():
     run([PY, 'rtl/tests/verify_taylor_accuracy.py'], 'taylor-accuracy.log')
 
 
-def full():
-    smoke()
-    numerics()
+def regressions():
+    """Actual RTL and bounded checks that protect the critical-review fixes."""
     run([PY, 'rtl/tests/run_conversion_formal.py'], 'conversion-formal.log')
     run([PY, 'rtl/tests/arithmetic_vectors.py'])
     run([PY, 'rtl/tests/build_arithmetic_netlist.py'], 'arithmetic-build.log')
     run(['node', 'rtl/tests/run_arithmetic_cycle.cjs'], 'arithmetic-cycle.log')
-    for shape in ('single', 'multi', 'heads'):
+    run([PY, 'rtl/tests/layernorm_regression.py'], 'layernorm-regression.log')
+    run([PY, 'rtl/tests/run_controller_fault_suite.py'], 'controller-fault-suite.log')
+    run([PY, 'rtl/tests/check_host_width.py'], 'host-width.log')
+    run([PY, 'rtl/tests/run_hidden_memory_formal.py', 'prove'], 'hidden-memory.log')
+    run([PY, 'rtl/tests/run_formal.py', '13'], 'router-complete-regression.log')
+    run([PY, 'rtl/tests/run_memory_formal.py', 'fast'], 'memory-complete-regression.log')
+    for case in ('control','bank-11','bank-13','bank-14','bank-2'):
+        run([PY, 'rtl/tests/run_memory_formal.py', case], f'memory-{case}-regression.log')
+
+
+def full():
+    smoke()
+    numerics()
+    regressions()
+    for shape in ('single', 'multi', 'heads', 'precision'):
         run([PY, 'rtl/tests/build_cycle_netlist.py', shape], f'core-{shape}-build.log')
         run(['node', 'rtl/tests/run_complete_cycle.cjs', shape], f'complete-{shape}-cycle.log')
     run(['node', 'rtl/tests/run_core_fault_cycle.cjs'], 'core-fault-cycle.log')
-    run([PY, 'rtl/tests/run_formal.py', '5'], 'router-complete-regression.log')
-    run([PY, 'rtl/tests/run_memory_formal.py', 'fast'], 'memory-complete-regression.log')
     run([PY, 'rtl/tests/summarize_complete.py'])
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('group', choices=('smoke', 'numerics', 'full'))
+    parser.add_argument('group', choices=('smoke', 'numerics', 'regressions', 'full'))
     args = parser.parse_args()
-    {'smoke': smoke, 'numerics': numerics, 'full': full}[args.group]()
+    {'smoke': smoke, 'numerics': numerics, 'regressions': regressions, 'full': full}[args.group]()

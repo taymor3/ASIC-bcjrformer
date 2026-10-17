@@ -1,5 +1,5 @@
 {
-  "revision": "preserved-gelu-storage-and-consumption-2026-10-17",
+  "revision": "post-review-fixes-2026-10-17",
   "purpose": "Integrity index for the current implementation; correctness evidence is recorded separately after regression",
   "historical_evidence": "implementation-2026-10-16.json",
   "source_sha256": {
@@ -22,7 +22,7 @@
     "rtl/arithmetic/rsqrt_unit.sv": "f88efc001a86b09965d4d1e506d691a2e0809e36ebd1e6504b9304ff94785d20",
     "rtl/control/aggregation_ctrl.sv": "70570dc69c3ce908692e835b5c06e34fdb2b0575f753f1d74a4a6f5f6f7fd368",
     "rtl/control/attention_ctrl.sv": "ce68af14e0499826f4e37bdbaf400ff824516e4f5c453179e020099fab9f72b7",
-    "rtl/control/core_ctrl.sv": "9a4697a3acd4b5790e9065e7c238ae32c4b411a0cb425a43c5a6531ae7ed1125",
+    "rtl/control/core_ctrl.sv": "6a77482f9f85a18567480eab61883a7b64ca3c862be25468341e93066af1e5fa",
     "rtl/control/dot_engine.sv": "8d0478ef7f4a5e9fbb63d1ad18e32d9aedf41c74bfa53941c8ebcc2953326268",
     "rtl/control/embedding_ctrl.sv": "2cd514e2c731e18d823455f68eff7f22497eef66284abdc719ca863a3acb9f27",
     "rtl/control/encoder_ctrl.sv": "14d1b3fdf04bd0c1133de5ab2903cf592d20fd9ae6d70848bc4bc003cd310481",

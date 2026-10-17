@@ -48,9 +48,11 @@ module core_ctrl #(
         PARAM_WORDS>(64'd1<<ADDR_W) || FEATURE_WORDS>(64'd1<<ADDR_W) ||
         MASK_WORDS>(64'd1<<ADDR_W))
       $fatal(1,"core_ctrl needs positive, addressable manifest lengths");
-`ifndef SYNTHESIS
-    if (OUTPUT_WORDS>(64'd1<<$bits(host.logit_index)))
+    // Interface parameter references are constant in simulation and synthesis.
+    // Unlike $bits(interface.member), read_slang supports this check in both.
+    if (host.INDEX_W<OUTPUT_INDEX_W)
       $fatal(1,"host INDEX_W cannot represent every output position");
+`ifndef SYNTHESIS
     if ($bits(aggregate.rsp)!=$bits(aggregation_rsp_t))
       $fatal(1,"aggregate must use aggregation_rsp_t");
 `endif
