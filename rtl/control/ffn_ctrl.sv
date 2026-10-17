@@ -6,15 +6,13 @@ module ffn_ctrl #(
   import bcjrformer_contract_pkg::*;import fixed_math_pkg::*;
   typedef enum logic [3:0] {IDLE,LINEAR_ISSUE,LINEAR_WAIT,READ_ISSUE,READ_WAIT,GELU_ISSUE,GELU_WAIT,WRITE_ISSUE,WRITE_WAIT,RESPONSE} state_t;
   state_t state;ffn_cmd_t descriptor_q,incoming;linear_cmd_t linear_descriptor;
-  count_t index_q;logic second_q;act_t value_q;status_t status_q;
-  conversion_t gelu_stored;
+  count_t index_q;logic second_q;act_t input_q;gelu_t value_q;status_t status_q;
   initial if(D==0 || D>16383 || LAYER_WORDS==0 || LAYER_WORDS>(64'd1<<ADDR_W) ||
     64'(W1_OFFSET)+4*D*D>LAYER_WORDS || 64'(B1_OFFSET)+4*D>LAYER_WORDS ||
     64'(W2_OFFSET)+4*D*D>LAYER_WORDS || 64'(B2_OFFSET)+D>LAYER_WORDS)
     $fatal(1,"invalid FFN dimensions or tensor offsets");
   always_comb begin
     incoming=ffn_cmd_t'(command.cmd);
-    gelu_stored=convert(wide_t'(gelu_t'(gelu.rsp)),12,16,1,1);
     linear_descriptor='{in_count:count_t'(second_q ? 4*D:D),out_count:count_t'(second_q ? D:4*D),
       src:second_q ? ptr_t'{bank:BANK_FFN_HIDDEN,addr:0}:descriptor_q.src,
       dst:second_q ? descriptor_q.dst:ptr_t'{bank:BANK_FFN_HIDDEN,addr:0},
@@ -24,14 +22,14 @@ module ffn_ctrl #(
     command.rsp_valid=!rst && state==RESPONSE;command.rsp='0;
     command.rsp_error=fatal(status_q);command.rsp_status=status_q;
     linear.cmd=linear_descriptor;linear.cmd_valid=!rst && state==LINEAR_ISSUE;linear.rsp_ready=!rst && state==LINEAR_WAIT;
-    mem.req='0;mem.req.bank=BANK_FFN_HIDDEN;mem.req.addr=addr_t'(index_q);mem.req.format=FMT_S16_F10;
-    mem.req.write=state==WRITE_ISSUE;mem.req.wdata={80'b0,value_q};
+    mem.req='0;mem.req.bank=BANK_FFN_HIDDEN;mem.req.addr=addr_t'(index_q);mem.req.format=FMT_S32_F22;
+    mem.req.write=state==WRITE_ISSUE;mem.req.wdata={64'b0,value_q};
     mem.req_valid=!rst && (state==READ_ISSUE || state==WRITE_ISSUE);
     mem.rsp_ready=!rst && (state==READ_WAIT || state==WRITE_WAIT);
-    gelu.req=value_q;gelu.req_tag=0;gelu.req_valid=!rst && state==GELU_ISSUE;gelu.rsp_ready=!rst && state==GELU_WAIT;
+    gelu.req=input_q;gelu.req_tag=0;gelu.req_valid=!rst && state==GELU_ISSUE;gelu.rsp_ready=!rst && state==GELU_WAIT;
   end
   always_ff @(posedge clk) begin
-    if(rst) begin state<=IDLE;descriptor_q<='0;index_q<=0;second_q<=0;value_q<=0;status_q<='0;end
+    if(rst) begin state<=IDLE;descriptor_q<='0;index_q<=0;second_q<=0;input_q<=0;value_q<=0;status_q<='0;end
     else case(state)
       IDLE:if(command.cmd_valid && command.cmd_ready) begin
         descriptor_q<=incoming;index_q<=0;second_q<=0;status_q<='0;
@@ -50,13 +48,16 @@ module ffn_ctrl #(
       READ_ISSUE:if(mem.req_ready) state<=READ_WAIT;
       READ_WAIT:if(mem.rsp_valid) begin
         if(mem.rsp_error) begin status_q.protocol_error<=1;state<=RESPONSE;end
-        else begin value_q<=act_t'(mem.rsp_rdata[15:0]);state<=GELU_ISSUE;end
+        else if(mem.rsp_rdata[11:0]!=0 ||
+          (gelu_t'(mem.rsp_rdata[31:0])>>>12)!=gelu_t'(act_t'(mem.rsp_rdata[27:12]))) begin
+          status_q.protocol_error<=1;state<=RESPONSE;end
+        else begin input_q<=act_t'(mem.rsp_rdata[27:12]);state<=GELU_ISSUE;end
       end
       GELU_ISSUE:if(gelu.req_ready) state<=GELU_WAIT;
       GELU_WAIT:if(gelu.rsp_valid) begin
-        status_q<=status_q | child_status(gelu.rsp_status,gelu.rsp_error,gelu.rsp_tag!=0) | gelu_stored.status;
+        status_q<=status_q | child_status(gelu.rsp_status,gelu.rsp_error,gelu.rsp_tag!=0);
         if(gelu.rsp_error || fatal(gelu.rsp_status) || gelu.rsp_tag!=0) state<=RESPONSE;
-        else begin value_q<=act_t'(gelu_stored.value);state<=WRITE_ISSUE;end
+        else begin value_q<=gelu_t'(gelu.rsp);state<=WRITE_ISSUE;end
       end
       WRITE_ISSUE:if(mem.req_ready) state<=WRITE_WAIT;
       WRITE_WAIT:if(mem.rsp_valid) begin

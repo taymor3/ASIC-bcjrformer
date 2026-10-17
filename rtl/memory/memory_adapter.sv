@@ -9,7 +9,7 @@ module memory_adapter #(
   state_t state;
   mem_req_t request_q;
   mem_data_t result_q, bank_read [18];
-  logic error_q, legal, commit_write, write_bits_ok;
+  logic error_q, legal, commit_write, write_bits_ok, format_ok;
   localparam int DELAY_W = RESPONSE_DELAY>1 ? $clog2(RESPONSE_DELAY) : 1;
   logic [DELAY_W-1:0] delay_q;
   mem_format_t expected_format;
@@ -21,10 +21,19 @@ module memory_adapter #(
       BANK_EXP, BANK_PROB: begin write_bits_ok=request_q.wdata[95:24]=='0; expected_format=FMT_U24_F22; end
       default: ;
     endcase
+    format_ok=request_q.format==expected_format;
+    // FFN preactivations enter as F10; storage and every read retain F22.
+    // The narrow write is promoted exactly, never rounded or sign-truncated.
+    if(request_q.bank==BANK_FFN_HIDDEN) begin
+      format_ok=request_q.format==FMT_S32_F22 ||
+                (request_q.write && request_q.format==FMT_S16_F10);
+      write_bits_ok=request_q.format==FMT_S16_F10 ?
+                    request_q.wdata[95:16]=='0 : request_q.wdata[95:32]=='0;
+    end
     legal=1'b0;
     if (int'(request_q.bank)<=int'(BANK_OUTPUT))
       legal=(64'(request_q.addr)<BANK_DEPTHS[int'(request_q.bank)]) &&
-            (request_q.format==expected_format) &&
+            format_ok &&
             (PARAMETER_ONLY ? request_q.bank==BANK_PARAM : request_q.bank!=BANK_PARAM);
     if (request_q.write && !write_bits_ok) legal=1'b0;
     commit_write=!rst && state==WAIT_ACCESS && delay_q==0 && legal && request_q.write;
@@ -34,7 +43,7 @@ module memory_adapter #(
     access.rsp_rdata=result_q;
   end
   for(genvar b=0;b<18;b++) begin : banks
-    localparam int WIDTH = b==2 ? 1 : b==13 ? 48 : (b==14 || b==15) ? 24 : 16;
+    localparam int WIDTH = b==2 ? 1 : b==11 ? 32 : b==13 ? 48 : (b==14 || b==15) ? 24 : 16;
     localparam bit SIGNED_BANK = !(b==2 || b==14 || b==15);
     localparam bit ENABLED = BANK_DEPTHS[b]>0 && (PARAMETER_ONLY ? b==0 : b!=0);
     if(ENABLED) begin : storage
@@ -44,8 +53,16 @@ module memory_adapter #(
       wire [WIDTH-1:0] value = words[index];
       if(SIGNED_BANK) assign bank_read[b]={{($bits(mem_data_t)-WIDTH){value[WIDTH-1]}},value};
       else assign bank_read[b]={{($bits(mem_data_t)-WIDTH){1'b0}},value};
-      always_ff @(posedge clk)
-        if(commit_write && int'(request_q.bank)==b) words[index]<=request_q.wdata[WIDTH-1:0];
+      if(b==11) begin : hidden_conversion
+        always_ff @(posedge clk)
+          if(commit_write && int'(request_q.bank)==b)
+            words[index]<=request_q.format==FMT_S16_F10 ?
+                          { {4{request_q.wdata[15]}},request_q.wdata[15:0],12'b0 } :
+                          request_q.wdata[31:0];
+      end else begin : native_write
+        always_ff @(posedge clk)
+          if(commit_write && int'(request_q.bank)==b) words[index]<=request_q.wdata[WIDTH-1:0];
+      end
     end else begin : disabled
       assign bank_read[b]='0;
     end

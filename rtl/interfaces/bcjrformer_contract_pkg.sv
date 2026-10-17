@@ -50,9 +50,10 @@ package bcjrformer_contract_pkg;
     BANK_VECTOR = 5'd12, BANK_SCORE = 5'd13, BANK_EXP = 5'd14,
     BANK_PROB = 5'd15, BANK_LOGIT = 5'd16, BANK_OUTPUT = 5'd17
   } bank_t;
-  typedef enum logic [1:0] {
-    FMT_S16_F10 = 2'd0, FMT_BIT = 2'd1,
-    FMT_S48_F20 = 2'd2, FMT_U24_F22 = 2'd3
+  typedef enum logic [2:0] {
+    FMT_S16_F10 = 3'd0, FMT_BIT = 3'd1,
+    FMT_S48_F20 = 3'd2, FMT_U24_F22 = 3'd3,
+    FMT_S32_F22 = 3'd4
   } mem_format_t;
   typedef struct packed { bank_t bank; addr_t addr; } ptr_t;
   typedef struct packed {
@@ -95,9 +96,10 @@ package bcjrformer_contract_pkg;
     ptr_t dst;
     addr_t layer_param_base;
   } ffn_cmd_t;
-  typedef enum logic {
-    DOT_S16_S16 = 1'b0,   // signed48/F20 range; sign extended to physical 64
-    DOT_U24_S16 = 1'b1    // signed64/F32 range
+  typedef enum logic [1:0] {
+    DOT_S16_S16 = 2'd0,   // signed48/F20 range; sign extended to physical 64
+    DOT_U24_S16 = 2'd1,   // signed64/F32 range
+    DOT_S32_S16 = 2'd2    // signed32/F22 activation times signed16/F10 weight
   } dot_mode_t;
   typedef struct packed {
     count_t length;
@@ -110,8 +112,8 @@ package bcjrformer_contract_pkg;
   } dot_cmd_t;
   typedef struct packed {
     dot_mode_t mode;
-    logic [23:0] a;       // mode 0: signed a[15:0], a[23:16]=0
-    act_t b;             // mode 1: A is unsigned full 24 bits
+    logic [31:0] a;       // mode0: low16 signed; mode1: low24 unsigned; mode2: signed32
+    act_t b;             // unused upper A bits must be zero in modes0/1
     accum_t acc;
   } mac_req_t;
 endpackage

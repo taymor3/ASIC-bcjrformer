@@ -2,7 +2,7 @@ const fs=require('fs'),assert=require('assert');
 const {CycleSimulator,signed}=require('./cycle_simulator.cjs');
 const shape=process.argv[2]||'multi',fixture=JSON.parse(fs.readFileSync(`rtl/tests/core-${shape}-reference.json`));
 const sim=new CycleSimulator(`rtl/tests/core-${shape}-netlist.json`);
-const start=Date.now();let commits=0,frame=null,eventIndex=0,outputIndex=0;
+const start=Date.now();let commits=0,frame=null,eventIndex=0,outputIndex=0,preciseGeluWrites=0;
 const ready=()=>({param_rsp_ready:sim.cycles%5!==0,logit_ready:sim.cycles%4!==0,completion_ready:sim.cycles%3!==0});
 const get=n=>Number(sim.get(n));
 let held={};
@@ -17,11 +17,18 @@ function step(inputs={}){
   }
   if(frame && get('scratch_write')){
     const req=sim.get('scratch_request'); // packed write, bank, address, format, wdata
-    const bank=Number((req>>130n)&31n),address=Number((req>>98n)&0xffffffffn);
-    const width=bank===13 ? 48n:bank===14||bank===15 ? 24n:16n;
+    const bank=Number((req>>131n)&31n),address=Number((req>>99n)&0xffffffffn);
+    const width=bank===13 ? 48n:bank===11 ? 32n:bank===14||bank===15 ? 24n:16n;
+    // The adapter promotes first-linear F10 writes into native hidden F22.
+    const raw=req&((1n<<width)-1n);
+    const value=bank===11 && ((req>>96n)&7n)===0n ?
+      BigInt.asUintN(32,BigInt.asIntN(16,raw)<<12n):raw;
     if(bank!==1 && bank!==2){
-      const event=[bank,address,Number(req&((1n<<width)-1n))];
+      const event=[bank,address,Number(value)];
       assert.deepStrictEqual(event,frame.events[eventIndex],`write mismatch at event ${eventIndex}, cycle ${sim.cycles}`);
+      if(shape==='precision' && bank===11 && ((req>>96n)&7n)===4n){
+        assert.strictEqual(value,3528856n,'Stored GELU(1) lost its F22 fraction');preciseGeluWrites++;
+      }
       eventIndex++;commits++;
     }
   }
@@ -65,6 +72,7 @@ for(let f=0;f<fixture.frames.length;f++){
   console.log(`${shape} frame ${f}: PASS, ${eventIndex} checked writes, ${outputIndex} outputs, cycle ${sim.cycles}`);
   frame=null;
 }
+if(shape==='precision')assert.strictEqual(preciseGeluWrites,fixture.frames.length*4*fixture.shape[3]);
 const report={shape,method:'cycle simulation of lowered actual RTL, independent Python integer write-stream reference',
   cycles:sim.cycles,checkedWrites:commits,seconds:(Date.now()-start)/1000,results};
 fs.writeFileSync(`rtl/tests/complete-${shape}-results.json`,JSON.stringify(report,null,2)+'\n');

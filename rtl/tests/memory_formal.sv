@@ -34,6 +34,7 @@ module memory_formal #(
         case(TEST_BANK)
           2: begin injected[i].format=FMT_BIT; injected[i].wdata={95'b0,injected[i].wdata[0]}; end
           13: begin injected[i].format=FMT_S48_F20; injected[i].wdata={48'b0,injected[i].wdata[47:0]}; end
+          11: begin injected[i].format=FMT_S32_F22; injected[i].wdata={64'b0,injected[i].wdata[31:0]}; end
           14,15: begin injected[i].format=FMT_U24_F22; injected[i].wdata={72'b0,injected[i].wdata[23:0]}; end
           default: begin injected[i].format=FMT_S16_F10; injected[i].wdata={80'b0,injected[i].wdata[15:0]}; end
         endcase
@@ -57,6 +58,9 @@ module memory_formal #(
     case(r.bank)
       BANK_MASK: ok=ok && r.format==FMT_BIT && (!r.write || r.wdata[95:1]==0);
       BANK_SCORE: ok=ok && r.format==FMT_S48_F20 && (!r.write || r.wdata[95:48]==0);
+      BANK_FFN_HIDDEN: ok=ok &&
+        ((r.format==FMT_S32_F22 && (!r.write || r.wdata[95:32]==0)) ||
+         (r.write && r.format==FMT_S16_F10 && r.wdata[95:16]==0));
       BANK_EXP, BANK_PROB: ok=ok && r.format==FMT_U24_F22 && (!r.write || r.wdata[95:24]==0);
       default: ok=ok && r.format==FMT_S16_F10 && (!r.write || r.wdata[95:16]==0);
     endcase
@@ -67,6 +71,8 @@ module memory_formal #(
     case(r.bank)
       BANK_MASK: return {95'b0,r.wdata[0]};
       BANK_SCORE: return {{48{r.wdata[47]}},r.wdata[47:0]};
+      BANK_FFN_HIDDEN: return r.format==FMT_S16_F10 ?
+        {{68{r.wdata[15]}},r.wdata[15:0],12'b0}:{{64{r.wdata[31]}},r.wdata[31:0]};
       BANK_EXP, BANK_PROB: return {72'b0,r.wdata[23:0]};
       default: return {{80{r.wdata[15]}},r.wdata[15:0]};
     endcase

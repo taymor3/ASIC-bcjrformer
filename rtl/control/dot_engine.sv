@@ -6,7 +6,7 @@ module dot_engine(input logic clk,rst,bcjr_cmd_if.callee command,
   dot_cmd_t descriptor_q,incoming;
   count_t term_q;
   addr_t a_address_q,b_address_q;
-  logic [23:0] a_q;
+  logic [31:0] a_q;
   act_t b_q;
   accum_t accumulator_q;
   status_t status_q;
@@ -18,7 +18,8 @@ module dot_engine(input logic clk,rst,bcjr_cmd_if.callee command,
     command.rsp_status=status_q;command.rsp_error=fatal(status_q);
     mem.req='0;mem.req.bank=state==B_ISSUE ? descriptor_q.b.bank:descriptor_q.a.bank;
     mem.req.addr=state==B_ISSUE ? b_address_q:a_address_q;
-    mem.req.format=state==A_ISSUE && descriptor_q.mode==DOT_U24_S16 ? FMT_U24_F22:FMT_S16_F10;
+    mem.req.format=state==A_ISSUE && descriptor_q.mode==DOT_U24_S16 ? FMT_U24_F22:
+      state==A_ISSUE && descriptor_q.mode==DOT_S32_S16 ? FMT_S32_F22:FMT_S16_F10;
     mem.req_valid=!rst && (state==A_ISSUE || state==B_ISSUE);
     mem.rsp_ready=!rst && (state==A_WAIT || state==B_WAIT);
     mac_request='{mode:descriptor_q.mode,a:a_q,b:b_q,acc:accumulator_q};
@@ -32,8 +33,11 @@ module dot_engine(input logic clk,rst,bcjr_cmd_if.callee command,
       IDLE:if(command.cmd_valid && command.cmd_ready) begin
         descriptor_q<=incoming;term_q<=0;a_address_q<=incoming.a.addr;b_address_q<=incoming.b.addr;
         accumulator_q<=incoming.acc_init;status_q<='0;
-        if(incoming.length==0 || !act_bank(incoming.b.bank) ||
-          (incoming.mode==DOT_U24_S16 ? incoming.a.bank!=BANK_PROB:!act_bank(incoming.a.bank)) ||
+        if(incoming.length==0 || !act_bank(incoming.b.bank) || incoming.b.bank==BANK_FFN_HIDDEN ||
+          (incoming.mode!=DOT_S16_S16 && incoming.mode!=DOT_U24_S16 && incoming.mode!=DOT_S32_S16) ||
+          (incoming.mode==DOT_U24_S16 ? incoming.a.bank!=BANK_PROB:
+           incoming.mode==DOT_S32_S16 ? incoming.a.bank!=BANK_FFN_HIDDEN:
+           (!act_bank(incoming.a.bank) || incoming.a.bank==BANK_FFN_HIDDEN)) ||
           !extent(incoming.a.addr,64'(incoming.length-1)*64'(incoming.a_stride)+1) ||
           !extent(incoming.b.addr,64'(incoming.length-1)*64'(incoming.b_stride)+1)) begin
           status_q.protocol_error<=1;state<=RESPONSE;end
@@ -45,7 +49,9 @@ module dot_engine(input logic clk,rst,bcjr_cmd_if.callee command,
       B_ISSUE:if(mem.req_ready) state<=B_WAIT;
       A_WAIT,B_WAIT:if(mem.rsp_valid) begin
         if(mem.rsp_error) begin status_q.protocol_error<=1;state<=RESPONSE;end
-        else if(state==A_WAIT) begin a_q<=descriptor_q.mode==DOT_U24_S16 ? mem.rsp_rdata[23:0]:{8'b0,mem.rsp_rdata[15:0]};state<=B_ISSUE;end
+        else if(state==A_WAIT) begin
+          a_q<=descriptor_q.mode==DOT_S32_S16 ? mem.rsp_rdata[31:0]:
+            descriptor_q.mode==DOT_U24_S16 ? {8'b0,mem.rsp_rdata[23:0]}:{16'b0,mem.rsp_rdata[15:0]};state<=B_ISSUE;end
         else begin b_q<=act_t'(mem.rsp_rdata[15:0]);state<=MAC_ISSUE;end
       end
       MAC_ISSUE:if(mac.req_ready) state<=MAC_WAIT;

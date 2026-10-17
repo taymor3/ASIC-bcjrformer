@@ -43,7 +43,7 @@ for raw in samples:
     observed=exp(raw)/(1<<22);exact=real_exp(raw/(1<<20));error=abs(observed-exact)
     if error>max_exp[0]:max_exp=(error,raw)
     assert error<1e-5,(raw,observed,exact)
-report={'status':'PASS','date':'2026-10-16','absolute_error_target':float(target),
+report={'status':'PASS','date':'2026-10-17','absolute_error_target':float(target),
  'exp':{'degree':7,'range_reduction':32,'squarings':5,'internal_fractional_bits':48,
    'lagrange_after_squaring_bound':float(exp_remainder),'total_output_error_bound':float(exp_remainder+exp_rounding),
    'sampled_inputs':len(samples),'maximum_sampled_error':max_exp[0],'worst_sample_raw_Q20':max_exp[1]},
@@ -51,7 +51,7 @@ report={'status':'PASS','date':'2026-10-16','absolute_error_target':float(target
    'lagrange_bound':float(gelu_remainder),'total_output_error_bound':float(gelu_remainder+gelu_rounding),
    'tail_bound':float(gelu_tail),'exhaustive_Q10_inputs':65536,'maximum_swept_error':max_gelu[0],
    'worst_input_raw_Q10':max_gelu[1],'phi_zero_coefficient_rounding_certified':True},
- 'scope':'function outputs relative to the exact function of the already represented input; subsequent FFN Q10 storage is excluded',
+ 'scope':'function outputs and identical signed32/F22 FFN hidden storage, relative to the exact function of represented input; later linear output conversions are separate',
  'sources':['https://dlmf.nist.gov/7.6.E1','https://dlmf.nist.gov/4.2']}
 (root/'rtl/tests/taylor-accuracy-results.json').write_text(json.dumps(report,indent=2)+'\n')
 print(json.dumps(report,indent=2))

@@ -15,7 +15,7 @@ module memory_fabric #(
   logic request_valid, request_ready, response_valid, response_ready;
   logic [$bits(mem_data_t):0] response_data;
   mem_req_t request_q;
-  logic legal, local_error, write_bits_ok;
+  logic legal, local_error, write_bits_ok, format_ok;
   logic [OWNER_W-1:0] captured_owner;
   mem_format_t expected_format;
   for (genvar i=0; i<CLIENTS; i++) begin : client_wires
@@ -41,10 +41,17 @@ module memory_fabric #(
       BANK_EXP, BANK_PROB: begin expected_format=FMT_U24_F22; write_bits_ok=request_q.wdata[95:24]=='0; end
       default: ;
     endcase
+    format_ok=request_q.format==expected_format;
+    if(request_q.bank==BANK_FFN_HIDDEN) begin
+      format_ok=request_q.format==FMT_S32_F22 ||
+                (request_q.write && request_q.format==FMT_S16_F10);
+      write_bits_ok=request_q.format==FMT_S16_F10 ?
+                    request_q.wdata[95:16]=='0 : request_q.wdata[95:32]=='0;
+    end
     legal = 1'b0;
     if (int'(request_q.bank) <= int'(BANK_OUTPUT)) begin
       legal = (64'(request_q.addr) < BANK_DEPTHS[int'(request_q.bank)]) &&
-              request_q.format == expected_format;
+              format_ok;
     end
     if (request_q.write && !write_bits_ok) legal=1'b0;
     if (request_q.write && (request_q.bank==BANK_PARAM || request_q.bank==BANK_MASK) && captured_owner!='0)

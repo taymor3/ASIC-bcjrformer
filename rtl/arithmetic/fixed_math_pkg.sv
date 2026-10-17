@@ -30,7 +30,7 @@ package fixed_math_pkg;
   function automatic bit act_bank(bank_t b);
     return b==BANK_PARAM || b==BANK_FEATURE || b==BANK_X || b==BANK_U ||
       b==BANK_Q || b==BANK_KEY || b==BANK_VALUE || b==BANK_Z || b==BANK_ATTN_OUT ||
-      b==BANK_TOKEN || b==BANK_FFN_HIDDEN || b==BANK_VECTOR || b==BANK_LOGIT || b==BANK_OUTPUT;
+      b==BANK_TOKEN || b==BANK_VECTOR || b==BANK_LOGIT || b==BANK_OUTPUT;
   endfunction
   function automatic bit act_destination(bank_t b); return act_bank(b) && b!=BANK_PARAM; endfunction
   function automatic bit extent(addr_t base,logic [63:0] length);

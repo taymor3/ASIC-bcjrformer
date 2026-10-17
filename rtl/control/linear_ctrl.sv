@@ -8,8 +8,9 @@ module linear_ctrl(input logic clk,rst,bcjr_cmd_if.callee command,bcjr_cmd_if.ca
     incoming=linear_cmd_t'(command.cmd);
     dot_descriptor='{length:descriptor_q.in_count,a:descriptor_q.src,a_stride:1,
       b:'{bank:BANK_PARAM,addr:weight_address_q},
-      b_stride:1,mode:DOT_S16_S16,acc_init:accum_t'(bias_q)<<<10};
-    converted=convert(wide_t'(accum_t'(dot.rsp)),10,16,1,1);
+      b_stride:1,mode:descriptor_q.src.bank==BANK_FFN_HIDDEN ? DOT_S32_S16:DOT_S16_S16,
+      acc_init:accum_t'(bias_q)<<<(descriptor_q.src.bank==BANK_FFN_HIDDEN ? 22:10)};
+    converted=convert(wide_t'(accum_t'(dot.rsp)),descriptor_q.src.bank==BANK_FFN_HIDDEN ? 22:10,16,1,1);
     command.cmd_ready=!rst && state==IDLE && !fatal(status_q);
     command.rsp_valid=!rst && state==RESPONSE;command.rsp='0;
     command.rsp_status=status_q;command.rsp_error=fatal(status_q);
@@ -27,7 +28,8 @@ module linear_ctrl(input logic clk,rst,bcjr_cmd_if.callee command,bcjr_cmd_if.ca
     else case(state)
       IDLE:if(command.cmd_valid && command.cmd_ready) begin
         descriptor_q<=incoming;output_q<=0;weight_address_q<=incoming.weight_base;status_q<='0;
-        if(!act_bank(incoming.src.bank) || !act_destination(incoming.dst.bank) ||
+        if((!act_bank(incoming.src.bank) && incoming.src.bank!=BANK_FFN_HIDDEN) ||
+          (!act_destination(incoming.dst.bank) && incoming.dst.bank!=BANK_FFN_HIDDEN) ||
           !extent(incoming.src.addr,64'(incoming.in_count)) || !extent(incoming.dst.addr,64'(incoming.out_count)) ||
           !extent(incoming.weight_base,64'(incoming.in_count)*64'(incoming.out_count)) ||
           !extent(incoming.bias_base,64'(incoming.out_count)) ||

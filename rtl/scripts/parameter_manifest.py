@@ -42,16 +42,19 @@ assert cursor==2*F+D*F+3*D+N*D+M*D+K*(12*D*D+13*D)+D+1
 lengths=[cursor,M*N*F,M*N]+[M*N*D]*7+[F,4*D,D,M*N,M*N,M*N,M*N,N]
 if any(v>1<<32 for v in lengths):parser.error('bank or parameter image exceeds 32-bit native-element address space')
 names=['PARAM','FEATURE','MASK','X','U','Q','KEY','VALUE','Z','ATTN_OUT','TOKEN','FFN_HIDDEN','VECTOR','SCORE','EXP','PROB','LOGIT','OUTPUT']
-widths=[1 if i==2 else 48 if i==13 else 24 if i in (14,15) else 16 for i in range(18)]
-manifest={'status':'provisional numerical RTL configuration; model selection and numerical validation remain external',
+widths=[1 if i==2 else 48 if i==13 else 32 if i==11 else 24 if i in (14,15) else 16 for i in range(18)]
+manifest={'interface_revision':2,'memory_request_bits':137,'mac_request_bits':114,'dot_command_bits':220,
+ 'status':'provisional numerical RTL configuration; model selection and numerical validation remain external',
  'dimensions':dict(F=F,M=M,N=N,D=D,H=H,K=K,L=M*N,head_dimension=D//H),
  'parameter_words':cursor,'first_layer_base':first_layer,'layer_stride':12*D*D+13*D,
  'static_mask_supported':False,'rounding':'nearest, ties to even',
  'nonlinear_method':'Taylor arithmetic; see RTL-TAYLOR-CHECKPOINT.md',
  'primitive_formats':{'exp_response':'unsigned24/F22','gelu_request':'signed16/F10',
-   'gelu_response':'signed32/F22','ffn_hidden_storage':'signed16/F10'},
- 'constants':{'inverse_f_Q32':nearest(1<<32,F),'inverse_d_Q32':nearest(1<<32,D),
-   'score_scale_Q30':scale(D//H),'uniform_Q22':nearest(1<<22,M*N),'epsilon_Q32':42950},
+   'gelu_response':'signed32/F22','ffn_hidden_storage':'signed32/F22',
+   'ffn_second_linear_accumulator':'signed64/F32'},
+ 'normalization':{'mean':'exact nearest-even division into signed32/F20',
+   'variance':'exact nearest-even population division into unsigned48/F32'},
+ 'constants':{'score_scale_Q30':scale(D//H),'uniform_Q22':nearest(1<<22,M*N),'epsilon_Q32':42950},
  'tensors':tensors,'banks':[{'id':i,'name':name,'elements':lengths[i],'width':widths[i],'bits':lengths[i]*widths[i]}
                           for i,name in enumerate(names)],'total_storage_bits':sum(v*w for v,w in zip(lengths,widths))}
 if bool(args.tensor_json)!=bool(args.image):parser.error('--tensor-json and --image must be supplied together')

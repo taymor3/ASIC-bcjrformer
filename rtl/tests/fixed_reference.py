@@ -31,7 +31,7 @@ def gelu_wide(x):
         term=rne_div(-term*square*(2*k-1),(2*k*(2*k+1))<<20)
         total+=term
     return rne(total+(x<<53),42)
-def gelu(x):return act(gelu_wide(x),12)
+def gelu(x):return gelu_wide(x)
 
 class Reference:
     def __init__(self,shape,parameters,features,mask):
@@ -43,11 +43,13 @@ class Reference:
     def write(self,b,i,v):
         a=self.banks[b]
         if len(a)<=i:a.extend([0]*(i+1-len(a)))
-        a[i]=v;self.events.append([b,i,v & ((1<<(48 if b==13 else 24 if b in (14,15) else 16))-1)])
+        a[i]=v;self.events.append([b,i,v & ((1<<(48 if b==13 else 32 if b==11 else 24 if b in (14,15) else 16))-1)])
     def linear(self,src,base,dst,target,I,O,w,b):
         for o in range(O):
-            result=(self.params[b+o]<<10)+sum(self.banks[src][base+i]*self.params[w+o*I+i] for i in range(I))
-            self.write(dst,target+o,act(result,10))
+            shift=22 if src==11 else 10
+            result=(self.params[b+o]<<shift)+sum(self.banks[src][base+i]*self.params[w+o*I+i] for i in range(I))
+            value=act(result,shift)
+            self.write(dst,target+o,value<<12 if dst==11 else value)
     def norm(self,src,base,dst,target,length,g,b):
         x=self.banks[src][base:base+length]
         mean=rne_div(sum(x)<<10,length)
@@ -96,7 +98,7 @@ class Reference:
             for t in range(L):self.norm(3,t*D,4,t*D,D,base+2*D,base+3*D)
             for t in range(L):
                 self.linear(4,t*D,11,0,D,4*D,base+8*D+4*D*D,base+8*D+8*D*D)
-                for j in range(4*D):self.write(11,j,gelu(self.banks[11][j]))
+                for j in range(4*D):self.write(11,j,gelu(self.banks[11][j]>>12))
                 self.linear(11,0,12,0,4*D,D,base+12*D+8*D*D,base+12*D+12*D*D)
                 for i in range(D):self.write(3,t*D+i,act(self.banks[3][t*D+i]+self.banks[12][i]))
         final=first+K*region
@@ -117,8 +119,22 @@ def fixtures(shape):
     masks=[[0]*L,[int(t%3==1) for t in range(L)],[int(t%N==N-1) for t in range(L)],[1]*L]
     return {'shape':shape,'parameters':parameters,'features':features,'frames':[
         {'mask':mask,**Reference(shape,parameters,features,mask).run()} for mask in masks]}
+def precision_fixture():
+    # Force every FFN preactivation to exactly1.0; a large but legal W2 weight
+    # makes an accidental F10 activation truncation visible in the next linear.
+    shape=(2,1,1,2,1,1);fixture=fixtures(shape);F,M,N,D,H,K=shape
+    first=2*F+D*F+3*D+N*D+M*D
+    w1=first+8*D+4*D*D;b1=first+8*D+8*D*D
+    w2=first+12*D+8*D*D;b2=first+12*D+12*D*D
+    p=fixture['parameters'];p[w1:w1+4*D*D]=[0]*(4*D*D)
+    p[b1:b1+4*D]=[1024]*(4*D);p[w2:w2+4*D*D]=[0]*(4*D*D)
+    p[w2]=32767;p[w2+4*D]=-32768;p[b2:b2+D]=[0]*D
+    fixture['frames']=[{'mask':f['mask'],**Reference(shape,p,fixture['features'],f['mask']).run()}
+                       for f in fixture['frames']]
+    return fixture
 if __name__=='__main__':
-    for name,shape in [('single',(1,1,1,1,1,1)),('multi',(2,2,2,2,1,2)),('heads',(2,1,2,3,3,1))]:
-        result=fixtures(shape)
+    for name,shape in [('single',(1,1,1,1,1,1)),('multi',(2,2,2,2,1,2)),('heads',(2,1,2,3,3,1)),
+                       ('precision',(2,1,1,2,1,1))]:
+        result=precision_fixture() if name=='precision' else fixtures(shape)
         (ROOT/f'rtl/tests/core-{name}-reference.json').write_text(json.dumps(result,separators=(',',':'))+'\n')
         print(name,[(f['code'],len(f['events']),f['outputs']) for f in result['frames']])
