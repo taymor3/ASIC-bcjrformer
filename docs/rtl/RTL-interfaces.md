@@ -1,3 +1,5 @@
+> 17 October correction: LayerNorm statistics use exact nearest-even division; FFN hidden storage is signed32/F22 and its consuming dot uses signed64/F32. See [fix checkpoint](RTL-REVIEW-FIXES-2026-10-17.md).
+
 # BCJRFormer: block inputs and outputs at the RTL boundary
 
 16 October 2026: all public module contracts have matching implementations in the production file list. The generated `rtl/interfaces/bcjrformer_ports.svh` contains their current configuration parameters. `bcjrformer_core` accepts F/M/N/D/H/K, MEMORY_DELAY and STATIC_MASK (unsupported true configurations are rejected); it derives the canonical manifest and bank depths. EXP/GELU table paths were removed when those units changed to Taylor arithmetic. GELU requests remain `act_t`; its response is now signed32/F22 `gelu_t`, with explicit conversion to activation storage in FFN. See `RTL-TAYLOR-CHECKPOINT.md`. Earlier implementation-status paragraphs below are historical; numerical type widths remain provisional.
@@ -173,9 +175,9 @@ All fields below are inputs on `command.cmd`, held stable until accepted and lat
 | `row_cmd_t` | `head_index:16`, `query_index:16` | `head<H`, `query<L`; score/probability buffers start at address 0 |
 | `softmax_cmd_t` | `padded_query:1` | Captured by attention from MASK[query]; 1 chooses uniform row |
 | `ffn_cmd_t` | `src:ptr_t`, `dst:ptr_t`, `layer_param_base:ADDR_W` | D-element source/destination; W1/b1/W2/b2 offsets from layer manifest |
-| `dot_cmd_t` | `length:16`, `a:ptr_t`, `a_stride:ADDR_W`, `b:ptr_t`, `b_stride:ADDR_W`, `mode:1`, `acc_init:signed64` | Term i reads `a.addr+i*a_stride` and `b.addr+i*b_stride`; bounds checked without address wrap |
+| `dot_cmd_t` | `length:16`, `a:ptr_t`, `a_stride:ADDR_W`, `b:ptr_t`, `b_stride:ADDR_W`, `mode:2`, `acc_init:signed64` | Term i reads `a.addr+i*a_stride` and `b.addr+i*b_stride`; bounds checked without address wrap |
 
-For `ADDR_W=32`, descriptor widths are: layer 48, layernorm 154, linear 170, residual 127, row 32, softmax 1, FFN 106, dot 219 bits. These are bundles of scalar control wires, not feature-data widths. No descriptor is a host-configurable packet in this baseline.
+For `ADDR_W=32`, descriptor widths are: layer 48, layernorm 154, linear 170, residual 127, row 32, softmax 1, FFN 106, dot 220 bits. These are bundles of scalar control wires, not feature-data widths. No descriptor is a host-configurable packet in this baseline.
 
 Parameter tensor offsets must come from the same manifest as the host image. They are not assigned numeric values until dimensions are selected. One layer occupies `12*D*D+13*D` parameter words; the full baseline contains `2*F+D*F+3*D+N*D+M*D+K*(12*D*D+13*D)+D+1` words. A layer base alone does not identify tensor ordering: the manifest must define every relative gamma/beta/W/b offset.
 
@@ -199,6 +201,8 @@ The linear controller holds this command until `cmd_valid && cmd_ready`, waits f
 
 For a score, A is Q[query*D+head*d], B is KEY[key*D+head*d], both strides 1, length d, initial sum 0. Scale with constant `1/sqrt(d)` after dot completion.
 
+For the second FFN linear, A is FFN_HIDDEN in signed32/F22, mode `DOT_S32_S16`; B remains signed16/F10 weights. Bias is sign-extended then shifted left22 into F32; the linear output conversion shifts right22 to F10 after all products accumulate.
+
 For a weighted value, A is PROB[0], stride 1; B is VALUE[head*d+r], stride D; length L; initial sum 0; mode `DOT_U24_S16`. Convert signed64/F32 to signed16/F10 and store Z[query*D+head*d+r]. There is no bias or extra scale.
 
 ## 6. Exact memory interface
@@ -212,7 +216,7 @@ Each listed `mem` port is a `bcjr_mem_if.requester`. The fabric/memory sees the 
 | `mem.req.write` | Output | 1 | 0 read, 1 write |
 | `mem.req.bank` | Output | 5 | Logical bank ID |
 | `mem.req.addr` | Output | `ADDR_W` | Element address within that bank |
-| `mem.req.format` | Output | 2 | Expected native format; checked against bank |
+| `mem.req.format` | Output | 3 | Expected native format; checked against bank |
 | `mem.req.wdata` | Output | 96 | Write payload; unused high bits zero |
 | `mem.rsp_valid` | Input | 1 | Read data or write acknowledgment available |
 | `mem.rsp_ready` | Output | 1 | Requester accepts response |
@@ -224,6 +228,8 @@ One response per accepted request, including writes. A successful write response
 The conservative fabric has one transaction outstanding globally. It captures requester and destination on acceptance and keeps that routing through response acceptance. Request-ready remains low until then. Requests must not create a combinational ready/valid loop. Even register-backed banks return responses no earlier than the edge after acceptance, so controllers can use distinct ISSUE and WAIT states.
 
 `parameter_mem.access` responds to BANK_PARAM only. `scratch_mem.access` responds to every other listed bank and decodes native width/depth internally. Both expose the responder directions of the same table. These are adapter boundaries; macro-specific enable/address/write-data signals belong inside their eventual implementation. The design review calls parameter storage ROM: to preserve host loading from the detailed specification, this draft uses writable parameter storage that becomes read-only during inference. A true fixed ROM build would remove the loader and change reset/image-valid behavior explicitly.
+
+The packed request is 137 bits for ADDR_W=32. BANK_FFN_HIDDEN accepts native FMT_S32_F22 reads/writes and FMT_S16_F10 writes with exact signed promotion by <<12; F10 reads are rejected. Other banks retain their formats. Signed32 writes use low32 bits with zero unused high bits; reads sign-extend bit31.
 
 ### Banks, producer and consumer connections
 
@@ -242,7 +248,7 @@ All fixed banks start at element address zero. Parameter tensors are exceptions:
 | 8 Z | `L*D`, signed16/F10 | Weighted controller | Output-projection dot |
 | 9 ATTN_OUT | `L*D`, signed16/F10 | Output-projection linear | First residual |
 | 10 TOKEN | `max(F,D)`, signed16/F10 | Embedding copy, input LayerNorm | LayerNorm, embedding dot |
-| 11 FFN_HIDDEN | `4D`, signed16/F10 | First FFN linear, then in-place GELU write loop | GELU read loop, then second FFN linear's dot |
+| 11 FFN_HIDDEN | `4D`, signed32/F22 | First FFN linear, then in-place GELU write loop | GELU read loop, then second FFN linear's dot |
 | 12 VECTOR | `max(D,4D)`, signed16/F10 | Embedding linear/LN; second FFN linear | Embedding copy/LN, second residual |
 | 13 SCORE | `L`, signed48/F20 | Score controller | Softmax |
 | 14 EXP | `L`, unsigned24/F22 | Softmax | Softmax |
@@ -279,11 +285,11 @@ The tag is echoed unchanged and can be zero for a dedicated caller; it does not 
 
 | Unit / caller port | Request type and fields | Result type | Connection / interpretation |
 |---|---|---|---|
-| `mac_unit` / `dot_engine.mac` | `mac_req_t`: `mode:1`, `a:24`, `b:signed16`, `acc:signed64` (105 bits total) | `accum_t`, signed64 | `acc + a*b`; mode determines A signedness and accumulator fraction/range |
+| `mac_unit` / `dot_engine.mac` | `mac_req_t`: `mode:2`, `a:32`, `b:signed16`, `acc:signed64` (114 bits total) | `accum_t`, signed64 | `acc + a*b`; mode determines A signedness and accumulator fraction/range |
 | `exp_unit` / `softmax_ctrl.exponential` | `score_t`, signed48/F20 | `probability_t`, unsigned24/F22 | Difference <=0; exp(0)=1; below -16 returns 0 |
 | `reciprocal_unit` / softmax and aggregation `reciprocal` | `denominator_t`, unsigned64/F22 | `reciprocal_t`, unsigned40/F32 | Positive denominator in [1,65535] |
 | `rsqrt_unit` / `layernorm_ctrl.rsqrt` | `variance_t`, unsigned48/F32 | `rsqrt_t`, unsigned32/F20 | Variance + epsilon, in [quantized epsilon,4096] |
-| `gelu_unit` / `ffn_ctrl.gelu` | `act_t`, signed16/F10 | `gelu_t`, signed32/F22 | Taylor k=0..57 on [-6,6], analytically bounded tails; total function error <10^-5, followed by explicit FFN storage conversion |
+| `gelu_unit` / `ffn_ctrl.gelu` | `act_t`, signed16/F10 | `gelu_t`, signed32/F22 | Taylor k=0..57 on [-6,6], analytically bounded tails; total function error <10^-5, stored without precision loss in the F22 hidden bank |
 
 In MAC mode 0, sign-interpret `a[15:0]` and require `a[23:16]==0`; multiply signed16 by signed16 and check signed48 accumulator range. In mode 1, A is unsigned24, zero-extend it before signed multiplication with B, and check signed64 accumulator range. Do not accidentally treat probability bit 23 as a sign bit. The physical result is always signed64.
 

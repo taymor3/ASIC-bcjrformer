@@ -146,7 +146,7 @@ def overview():
     c.wire([(1300,741),(1300,776)],PURPLE,both=True)
     c.wire([(1600,741),(1600,776)],PURPLE,both=True)
     c.box(1175,776,250,90,'exp_unit',['Taylor · softmax x ≤ 0'],PURPLE)
-    c.box(1475,776,250,90,'gelu_unit',['Taylor · exact GELU'],PURPLE)
+    c.box(1475,776,250,90,'gelu_unit',['Taylor · exact GELU','result: signed32/F22'],PURPLE)
     c.text(1175,913,'Clients: softmax_ctrl, aggregation_ctrl',16,GREEN)
     c.box(1175,934,550,72,'reciprocal_switch',color=GREEN)
     c.wire([(1450,1006),(1450,1038)],PURPLE,both=True)
@@ -159,7 +159,7 @@ def overview():
     c.wire([(475,1292),(475,1335)],GOLD,both=True)
     c.wire([(1300,1292),(1300,1335)],GOLD,both=True)
     c.box(50,1335,650,145,'parameter_mem',['PARAM: embedding · position P · read E', 'K encoder layer regions · final weight / bias', 'Canonical packed manifest'],GOLD)
-    c.box(740,1335,1010,145,'scratch_mem  ·  17 logical banks', ['FEATURE · MASK · X · U · Q · KEY · VALUE · Z · ATTN_OUT', 'TOKEN · FFN_HIDDEN · VECTOR · SCORE · EXP · PROB · LOGIT · OUTPUT', 'Bank names denote logical storage; physical SRAM mapping remains open'],GOLD)
+    c.box(740,1335,1010,145,'scratch_mem  ·  17 logical banks', ['FEATURE · MASK · X · U · Q · KEY · VALUE · Z · ATTN_OUT', 'TOKEN · FFN_HIDDEN (F22) · VECTOR · SCORE · EXP · PROB · LOGIT · OUTPUT', 'Bank names denote logical storage; physical SRAM mapping remains open'],GOLD)
     c.text(50,1520,'READING THE WIRES',15,MUTED,True)
     legend=[(50,GREEN,False,'command / completion'),(480,PURPLE,False,'arithmetic request / result'),(975,GOLD,False,'memory request / response'),(1450,CYAN,True,'logical tensor order')]
     for x,col,dash,label in legend:
@@ -196,13 +196,13 @@ def encoder():
     c.text(880,863,'H × T row iterations; scratch rows are reused after each weighted-value result',16,GREEN,anchor='middle')
     c.rect(50,930,800,280)
     c.text(75,968,'FFN_CTRL  /  EXPANDED PHASE 5',17,CYAN,True)
-    ffn=[(75,225,'Linear D→4D',['U → FFN_HIDDEN']),(340,225,'Taylor GELU',['in-place hidden vector']),(605,220,'Linear 4D→D',['→ VECTOR'])]
+    ffn=[(75,225,'Linear D→4D',['U → FFN_HIDDEN']),(340,225,'Taylor GELU',['hidden: signed32/F22']),(605,220,'Linear 4D→D',['→ VECTOR'])]
     for x,w,title,lines in ffn:
         c.box(x,1008,w,105,title,lines)
     c.wire([(300,1060),(340,1060)],CYAN,dashed=True)
     c.wire([(565,1060),(605,1060)],CYAN,dashed=True)
-    c.lines(75,1150,['GELU function returns signed32/F22; hidden storage converts to signed16/F10.'],16,MUTED)
-    c.text(75,1178,'The 10⁻⁵ function error bound does not include this later storage conversion.',16,MUTED)
+    c.lines(75,1150,['GELU → hidden: signed32/F22, preserving the function error bound.'],16,MUTED)
+    c.text(75,1178,'Next linear accumulates signed64/F32; its output converts to F10.',16,MUTED)
     c.rect(880,930,870,280)
     c.text(905,968,'OPERATIONS → SHARED PHYSICAL ENGINES',17,CYAN,True)
     c.lines(905,1005,[

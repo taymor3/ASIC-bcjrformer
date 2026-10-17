@@ -6,7 +6,7 @@ All public modules have real implementations. Internal helpers centralize projec
 
 Configure F/M/N/D/H/K explicitly. The complete wrapper derives a canonical packed manifest and native-element memory capacities; it rejects static masks. Numeric widths and methods are provisional. Memory arrays are behavioral backing stores awaiting target-specific mapping. Arithmetic uses synthesizable integer logic; combinational division/root search and wide products require later area/timing assessment.
 
-16 October update: EXP and GELU use sequential Taylor arithmetic, not function-value ROMs. See [Taylor error derivation](../docs/rtl/RTL-TAYLOR-CHECKPOINT.md). No table filename parameters or `$readmemh` calls remain in the production nonlinear units. GELU's result is signed32/F22 (`gelu_t`); `ffn_ctrl` explicitly converts it for the existing signed16/F10 activation bank.
+16 October update: EXP and GELU use sequential Taylor arithmetic, not function-value ROMs. See [Taylor error derivation](../docs/rtl/RTL-TAYLOR-CHECKPOINT.md). No table filename parameters or `$readmemh` calls remain in the production nonlinear units. GELU's result is signed32/F22 (`gelu_t`); the hidden bank now preserves it as signed32/F22, and the second linear consumes it with signed64/F32 accumulation. LayerNorm statistics now use exact nearest-even divisions. See the [17 October corrective checkpoint](../docs/rtl/RTL-REVIEW-FIXES-2026-10-17.md).
 
 Generate a manifest using actual supplied dimensions, for example this **test fixture**:
 

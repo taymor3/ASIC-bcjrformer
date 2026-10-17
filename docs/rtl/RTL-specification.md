@@ -1,3 +1,5 @@
+> 17 October corrective revision: [RTL review fixes](RTL-REVIEW-FIXES-2026-10-17.md) supersede the earlier FFN F10 storage and reciprocal-based LayerNorm descriptions. Native FFN hidden storage is signed32/F22; its consuming MAC uses signed64/F32.
+
 # BCJRFormer inference core: RTL specification draft
 
 > Current implementation/numerical-method update, 16 October 2026: all public RTL blocks are implemented. EXP and GELU now use Taylor arithmetic with Lagrange-derived absolute error budgets below 10^-5 at the function outputs; no function-value ROMs are used. GELU returns signed32/F22 `gelu_t`, then FFN explicitly converts to signed16/F10 activation storage. The former signed16 GELU response, +/-8 tail method, and older primitive accuracy proposals below are superseded by `RTL-TAYLOR-CHECKPOINT.md`. See also `RTL-COMPLETE-CHECKPOINT.md`; numerical/decoding calibration and physical sign-off remain open.

@@ -1,6 +1,6 @@
 # Verification and reproduction
 
-The recorded baseline is [implementation-2026-10-16.json](evidence/implementation-2026-10-16.json). Its source hashes identify the production RTL and its numbers are historical implementation evidence, not results newly obtained by cloning this repository.
+The archived baseline is [implementation-2026-10-16.json](evidence/implementation-2026-10-16.json). Its hashes and numbers identify that historical implementation. The [post-review evidence](evidence/review-fixes-2026-10-17.json) and [current source index](evidence/rtl-source-current.json) describe the corrected implementation. See the [correction checkpoint](rtl/RTL-REVIEW-FIXES-2026-10-17.md) for results and remaining limits.
 
 ## Environment
 
@@ -15,14 +15,15 @@ Run from the repository root:
 ```sh
 python scripts/check.py smoke
 python scripts/check.py numerics
+python scripts/check.py regressions
 python scripts/check.py full
 ```
 
-`smoke` checks package integrity, both elaboration fixtures, connection inventory, and manifest round trips. `numerics` checks Taylor budgets and integer-reference sweeps. `full` additionally generates arithmetic vectors, lowers actual RTL into vector-cell netlists, executes the cycle interpreter, checks all three core shapes and fault recovery, proves the selected conversion, and runs bounded router/memory regressions. It captures the explicit proof/build/cycle success markers required by the final summarizer.
+`smoke` checks the current source index, both elaboration fixtures, connection inventory and manifest round trips. `numerics` checks Taylor budgets and reference sweeps. `regressions` freshly lowers actual arithmetic and LayerNorm RTL, tests controller faults, proves both conversion paths, checks synthesis configuration and runs the required bounded router/memory cases. `full` adds four complete-core configurations (including directed GELU precision), integration fault recovery and the evidence summary. CI runs smoke, numerics, regressions and the complete-core precision fixture.
 
 Logs and generated fixtures appear under `rtl/tests` and are ignored by Git. The archived summary under `docs/evidence` is retained unchanged. The fresh full run writes `rtl/tests/complete-evidence.json`; inspect that file and the logs to evaluate your run.
 
-## Recorded coverage
+## Historical 16 October coverage
 
 | Check | Scope |
 |---|---|

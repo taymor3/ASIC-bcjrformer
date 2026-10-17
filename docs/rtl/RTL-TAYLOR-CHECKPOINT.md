@@ -1,3 +1,5 @@
+> 17 October update: the [review fixes](RTL-REVIEW-FIXES-2026-10-17.md) preserve the full F22 GELU result in FFN hidden storage and in its consuming dot. The16October storage-boundary discussion below is retained as history and no longer describes current RTL.
+
 # Taylor EXP and GELU
 
 16 October 2026. Taimor requested Taylor expansion with Lagrange remainder bounds and absolute function error below 10^-5. EXP and GELU now use arithmetic recurrences; there are no function-value ROM reads or table-file path parameters in the production RTL. This supersedes the ROM methods recorded on 13 October.

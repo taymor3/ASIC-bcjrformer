@@ -14,5 +14,6 @@
 | Latest nonlinear implementation | [Taylor checkpoint](rtl/RTL-TAYLOR-CHECKPOINT.md) |
 | Outstanding implementation review | [Review ledger](rtl/RTL-COMPLETE-REVIEW.md) |
 | Latest critical review and unresolved findings | [17 October review](reviews/RTL-CRITICAL-REVIEW-2026-10-17.md) |
+| Corrective RTL revision and current checks | [17 October corrections](rtl/RTL-REVIEW-FIXES-2026-10-17.md) |
 
 Files under `rtl/` and `architecture/` in this documentation directory preserve dated design decisions. Their earlier unfinished-module and ROM statements are historical and are superseded by the latest Taylor checkpoint and actual production RTL. The concise guides above describe the current publication baseline.

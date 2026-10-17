@@ -26,7 +26,7 @@ The 13 actual memory clients are `core_ctrl`, `embedding_ctrl`, `position_ctrl`,
 
 Sources checked: `rtl/bcjrformer_core.sv`, `rtl/RTL-CONNECTIONS.md`, `rtl/interfaces/bcjrformer_contract_pkg.sv`, and the layer, attention, embedding, FFN, position and aggregation controller implementations. The main view lists all 18 logical banks, comprising PARAM plus 17 scratch banks. Stage order, phase barriers, `H × T` attention-row loops and per-token FFN/residual loops follow the controllers.
 
-The nonlinear labels follow the current Taylor checkpoint. GELU's function output uses signed32/F22; its later FFN memory conversion uses signed16/F10 and has a separate precision contract. The diagrams do not imply that this storage conversion preserves the function's 10^-5 absolute error target. Physical SRAM mapping, area and timing remain to be established; “ASIC microarchitecture” identifies the project scope, not a completed technology implementation.
+GELU's function output and FFN hidden storage retain signed32/F22, preserving the function's 10^-5 absolute error target for represented inputs. The consuming linear operation uses signed64/F32 accumulation, then converts its output to signed16/F10 under a separate output-conversion contract. Initial signed16/F10 preactivations are promoted exactly to hidden-bank F22 storage before GELU. Physical SRAM mapping, area and timing remain to be established; “ASIC microarchitecture” identifies the project scope, not a completed technology implementation.
 
 ## Editing and regeneration
 

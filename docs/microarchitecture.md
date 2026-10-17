@@ -31,7 +31,7 @@ The hierarchy sketch shows command relationships; shared services are single phy
 | Reciprocal | Softmax, aggregation | Normalize by denominator/count |
 | EXP | Softmax | Taylor exponential of shifted scores |
 | RSQRT | LayerNorm | Inverse standard deviation |
-| GELU | FFN | Taylor activation before explicit storage conversion |
+| GELU | FFN | Taylor activation stored unchanged as signed32/F22 |
 
 Command switches have 2 LayerNorm callers, 5 linear callers, and 3 dot callers. The reciprocal arithmetic switch has 2 callers. Owners are retained through a response, so another caller cannot consume a previous caller's result.
 
@@ -50,3 +50,5 @@ One parameter bank and 17 scratch-bank kinds store features, mask, X/U, Q/K/V/Z/
 Each memory operation completes only when its response confirms the operation. A controller reports success after its destination writes commit. It never reserves the memory interface while waiting for a child that needs it. Memories are behavioral arrays awaiting technology-specific mapping.
 
 The host commits a parameter image after acknowledged writes, submits frame/features/mask, accepts indexed logits, and consumes a held completion report. Fatal protocol/numerical errors require reset; an empty-position frame is recoverable with retained parameters. See [core_ctrl.sv](../rtl/control/core_ctrl.sv) and the [complete connection inventory](../rtl/RTL-CONNECTIONS.md).
+
+The FFN hidden bank is native signed32/F22. First-linear F10 outputs are promoted exactly; GELU results are stored unchanged and consumed by a signed32 x signed16 MAC with signed64/F32 accumulation. Other activation banks and linear outputs remain F10. See the [correction checkpoint](rtl/RTL-REVIEW-FIXES-2026-10-17.md).
