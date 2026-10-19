@@ -2,6 +2,8 @@
 
 Formats and methods are provisional pending selected-model calibration. Width/scale notation below gives total bits and fractional bits, avoiding ambiguity in Q-format naming.
 
+The [rounding and precision map](rtl/RTL-ROUNDING-MAP.md) records every current runtime rounding context, rounded constant, saturation boundary and exact format adapter, with stable validation IDs and source links. Existing status bits summarize events; they are not a per-operation trace.
+
 | Quantity | Representation |
 |---|---|
 | Stored activations, weights, logits | Signed 16 bits / 10 fractional bits |
