@@ -553,6 +553,7 @@ is a separate lab-managed step.
 
 ## Related specifications
 
+- [Unit and integration test matrix](unit-test-plan.md): per-component inputs, outputs, scenarios and proposed benches.
 - [Architecture and source semantics](architecture.md)
 - [Microarchitecture and memory barriers](microarchitecture.md)
 - [Numerical formats](numerics.md) and [rounding map](rtl/RTL-ROUNDING-MAP.md)

@@ -5,6 +5,10 @@ input/output contract, loading sequence and internal-stage sketches, see the
 [testbench design guide](testbench-design.md). That proposal is separate from
 the existing executed checks described below.
 
+The [unit and integration test plan](unit-test-plan.md) maps each production
+component to its inputs, expected outputs, directed scenarios and proposed
+ordinary SystemVerilog bench. These lab benches are planned, not executed evidence.
+
 The archived baseline is [implementation-2026-10-16.json](evidence/implementation-2026-10-16.json). Its hashes and numbers identify that historical implementation. The [post-review evidence](evidence/review-fixes-2026-10-17.json) and [current source index](evidence/rtl-source-current.json) describe the corrected implementation. See the [correction checkpoint](rtl/RTL-REVIEW-FIXES-2026-10-17.md) for results and remaining limits.
 
 The [independent review of the corrected RTL](reviews/RTL-POST-FIX-CRITICAL-REVIEW-2026-10-17.md) covers all 39 production sources. It records fresh adversarial checks, the aggregation rounding caveat and the remaining validation gates; it does not grant numerical or physical sign-off.
