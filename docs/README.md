@@ -6,6 +6,7 @@
 | Controllers, wires, shared services, and memory | [Microarchitecture](microarchitecture.md) |
 | Fixed-point formats and Taylor bounds | [Numerics](numerics.md) |
 | What has been checked and how to repeat it | [Verification](verification.md) |
+| The simulation black box, input/output files, host loading and stage sketches | [Testbench design](testbench-design.md) |
 | Top-level hardware | [bcjrformer_core.sv](../rtl/bcjrformer_core.sv) |
 | Every service connection | [Connection inventory](../rtl/RTL-CONNECTIONS.md) |
 | Host/command/arithmetic/memory wire bundles | [Channels](../rtl/interfaces/bcjrformer_channels.sv) |
