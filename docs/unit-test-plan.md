@@ -216,8 +216,11 @@ flowchart LR
 | S03 Complete-core recovery | Controlled malformed host transfers/reset and valid subsequent frames | Documented fatal/reset or recoverable completion, stable held responses and valid recovery | Adapt current fault-cycle scenarios; verify parameters must reload after reset and survive recoverable empty-position completion. |
 | S04 Complete-core selected model | Haiel's quantized parameters/features/masks, dimensions `(27,1,144,96,8,6)` | Integer-reference outputs exactly; separate float/bit error report | Implement exporter and scalable integer expectations first; run one frame and measure runtime before all ten. |
 
-S01 is the first runnable lab milestone. Unit benches can be added incrementally
-without postponing that simulator bring-up. The testbench host loading sequence
+The revised first lab milestone is the [position-add unit bench](../rtl/tests/sim/README.md),
+chosen on 1 November to test the lab environment with the simplest arithmetic
+block. A03 now has a concrete bench and VCS script; execution status must still
+be recorded from the lab. S01 follows after this small unit works. Other unit benches can be added incrementally
+without postponing complete-core bring-up. The testbench host loading sequence
 and local vector contract are specified in [testbench-design.md](testbench-design.md).
 
 Apply these scenarios wherever the corresponding interface/behavior exists:
@@ -243,7 +246,7 @@ does not yet predict every status event. Report that limitation explicitly.
 
 | Order | Work | Completion evidence |
 |---|---|---|
-| 1 | Confirm lab simulator, compile ordered production sources, implement common clock/reset/handshake tasks and S01 | Small fixture PASS and deliberate mismatch detected |
+| 1 | Initialize lab VCS environment; run A03 position-add bench, then implement common tasks and S01 | Unit PASS and deliberate mismatch detected, followed by small complete-core fixture PASS |
 | 2 | Arithmetic A01-A08 and memory/routing M01-M07 | Directed/boundary/stall/reset cases pass with active checkers |
 | 3 | Compute C01-C03 and controller C04-C18/H01-H03 isolation | Expected commands/data and fault handling checked |
 | 4 | Connected I01-I08 plus S02/S03 | Real service/memory interaction, precision and recovery checked |
@@ -251,8 +254,9 @@ does not yet predict every status event. Report that limitation explicitly.
 | 6 | Broader sweeps, seeded scenarios and coverage closure | Documented coverage gaps, reproducible seeds and measured runtimes |
 
 For each ID record: **planned**, **implemented**, **run**, then **passed/failed**,
-with command, simulator, revision, cases and log path. This document starts at
-planned for the new lab benches; historical checks remain separately recorded.
+with command, simulator, revision, cases and log path. A03 has an implemented
+small bench with local syntax/elaboration checks; its lab VCS run is pending.
+The other new lab benches remain planned; historical checks stay separately recorded.
 Coverage is a list of exercised scenarios plus available code/assertion coverage,
 not a claim that every bug has been excluded. Full-size liveness and physical
 timing/area/power remain outside these functional PASS results.
