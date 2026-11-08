@@ -22,6 +22,22 @@ The [integer Python reference](../../rtl/tests/fixed_reference.py) computed the 
 
 YoWASP Yosys with slang elaborated the [production sources](../../rtl/protocol/files.f) and [core simulation wrapper](../../rtl/tests/core_sim_top.sv) at the trained dimensions, with `MEMORY_DELAY=2`. The CXXRTL backend generated a C++ model, which G++ 14.2 compiled. The driver loaded weights through the host interface, waited for write acknowledgments, committed the image, and sent the feature words and padding mask. It checked the output index, final-output marker, completion status, and signed logit word at every position. A separate CSV comparison confirmed all 144 exact matches.
 
+## Independent Xcelium run on 8 November 2026
+
+The lab run used Cadence Xcelium `xrun(64) 24.03-s004` and the SystemVerilog driver `testbench/trained_frame_tb.sv`. The driver reported **144 of 144 exact integer matches** against the fixed-point Python reference. Its final cycle, **1,533,280,239**, also matched the earlier Windows CXXRTL run. Status `0001` records rounding, with no saturation or fatal status bits.
+
+The following excerpt was supplied from the lab terminal. Xcelium reported **14 minutes 40 seconds** of total tool time. The full lab log remains local.
+
+```text
+PASS: 144/144 exact matches, status=0001, cycle=1533280239
+Simulation complete via $finish(1) at time 15332802395 NS + 0
+./testbench/trained_frame_tb.sv:133         $finish;
+xcelium> exit
+TOOL:   xrun(64)        24.03-s004: Exiting on Nov 08, 2026 at 16:05:19 IST  (total: 00:14:40)
+```
+
+This corroborates the original one-frame result using a separate simulator and a SystemVerilog testbench. The Windows and lab timings were measured on different machines.
+
 ## Repeating the test in another simulator
 
 1. Compile the production source list and core wrapper in SystemVerilog mode. Set `F=27`, `M=1`, `N=144`, `D=96`, `H=8`, and `K=6` on the wrapper.
