@@ -2,6 +2,8 @@
 
 [Open the HTML presentation](../BCJRFormer-FE.html)
 
+[Install the skills used for the presentation](SKILLS.md)
+
 Each entry includes a speaking guide and links to the exact SystemVerilog blocks at the presentation’s source revision.
 
 1. [From read windows to decoded logits](01-overview.md)
