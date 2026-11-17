@@ -50,6 +50,13 @@ svg { display: block; width: 100%; min-width: 1120px; height: auto; }
 .rule { stroke: var(--rule); }
 .label { font-size: 18px; font-weight: 650; fill: var(--ink); }
 .detail { font-size: 12px; fill: var(--muted); }
+.hw { fill: white; stroke: var(--muted); stroke-width: 1.3; }
+.hw.mux, .hw.op { fill: var(--tint); stroke: var(--accent); }
+.hw.mem { fill: #edf2f9; }
+.hw-name { fill: var(--ink); font-weight: 650; font-size: 15px; }
+.hw-wire, .hw-clock { fill: none; stroke: var(--muted); stroke-width: 1.6; }
+.hw-wire.control { stroke-dasharray: 5 4; }
+.hw-crossing { fill: none; stroke: var(--paper); stroke-width: 5; }
 .points { padding-left: 22px; max-width: 100ch; font-size: clamp(1rem, 1.4vw, 1.18rem); line-height: 1.42; }
 .points li + li { margin-top: .45em; }
 .sources { font-size: .82rem; line-height: 1.7; color: var(--muted); }
@@ -183,37 +190,62 @@ footer { border: 0; border-top: 1px solid var(--rule); position: sticky; bottom:
   <p class="sources"><a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/docs/architecture.md">Architecture</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/embedding_ctrl.sv">embedding_ctrl</a></p>
 </section>
 <section class="slide" id="s1-rtl" tabindex="-1">
-  <p class="eyebrow">Stage 1 / RTL</p>
-  <h1>Copy and reuse token workspaces</h1>
-  <p class="lead">embedding_ctrl sequences copies and service commands. Each operation finishes before its consumer starts.</p>
-<div class="figure" tabindex="0" role="region" aria-label="Copy and reuse token workspaces diagram"><svg viewBox="0 28 1120 200" role="img" aria-labelledby="s1-rtl-title s1-rtl-desc">
-<title id="s1-rtl-title">Copy and reuse token workspaces</title>
-<desc id="s1-rtl-desc">Copy in, FEATURE → TOKEN. Normalize F, NORM_F_ISSUE/WAIT. Project, LINEAR_ISSUE/WAIT. Normalize D, NORM_D_ISSUE/WAIT. Copy out, VECTOR → X. Solid arrows show phase order on success. Dashed arrow repeats the token loop. X write acknowledged · more tokens</desc>
-<defs><marker id="s1-rtl-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#506483"/></marker></defs>
-<path class="wire" d="M 198 92 H 236" marker-end="url(#s1-rtl-arrow)"/>
-<path class="wire" d="M 426 92 H 464" marker-end="url(#s1-rtl-arrow)"/>
-<path class="wire" d="M 654 92 H 692" marker-end="url(#s1-rtl-arrow)"/>
-<path class="wire" d="M 882 92 H 920" marker-end="url(#s1-rtl-arrow)"/>
-<path class="wire loop" d="M 1016 132 V 156 Q 1016 164 1008 164 H 112 Q 104 164 104 156 V 134" marker-end="url(#s1-rtl-arrow)"/>
-<text x="560" y="152" text-anchor="middle" class="detail">X write acknowledged · more tokens</text>
-<rect class="node" x="10" y="52" width="188" height="80" rx="4"/>
-<text class="label" x="104" y="86" text-anchor="middle">Copy in</text>
-<text class="detail" x="104" y="110" text-anchor="middle">FEATURE → TOKEN</text>
-<rect class="node" x="238" y="52" width="188" height="80" rx="4"/>
-<text class="label" x="332" y="86" text-anchor="middle">Normalize F</text>
-<text class="detail" x="332" y="110" text-anchor="middle">NORM_F_ISSUE/WAIT</text>
-<rect class="node focus" x="466" y="52" width="188" height="80" rx="4"/>
-<text class="label" x="560" y="86" text-anchor="middle">Project</text>
-<text class="detail" x="560" y="110" text-anchor="middle">LINEAR_ISSUE/WAIT</text>
-<rect class="node" x="694" y="52" width="188" height="80" rx="4"/>
-<text class="label" x="788" y="86" text-anchor="middle">Normalize D</text>
-<text class="detail" x="788" y="110" text-anchor="middle">NORM_D_ISSUE/WAIT</text>
-<rect class="node" x="922" y="52" width="188" height="80" rx="4"/>
-<text class="label" x="1016" y="86" text-anchor="middle">Copy out</text>
-<text class="detail" x="1016" y="110" text-anchor="middle">VECTOR → X</text>
-<path class="rule" d="M 8 184 H 1112"/>
-<text class="detail" x="8" y="211">Solid arrows show phase order on success. Dashed arrow repeats the token loop.</text>
-</svg></div>
+  <p class="eyebrow">Stage 1 / RTL datapath</p>
+  <h1>Embedding copy and address muxes</h1>
+  <p class="lead">Trapezoids are muxes. Clock notches mark registers. The copy logic reuses one memory port.</p>
+<div class="figure schematic" tabindex="0" role="region" aria-label="Embedding copy datapath and shared engines">
+<svg viewBox="0 0 1120 248" role="img" aria-labelledby="s1-rtl-title s1-rtl-desc">
+<title id="s1-rtl-title">Embedding copy datapath and shared engines</title>
+<desc id="s1-rtl-desc">The copy_output bit selects source and destination banks and addresses. The FSM chooses read or write request. A memory read loads word_q, which drives write data. LayerNorm and Linear operate separately through memory.</desc>
+<defs><marker id="s1-rtl-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#506483"/></marker></defs>
+<path class="hw-wire" d="M 146 34 L 188 34" marker-end="url(#s1-rtl-tip)"/>
+<path class="hw-wire" d="M 146 57 L 188 57" marker-end="url(#s1-rtl-tip)"/>
+<path class="hw-wire" d="M 146 100 L 188 100" marker-end="url(#s1-rtl-tip)"/>
+<path class="hw-wire" d="M 146 123 L 188 123" marker-end="url(#s1-rtl-tip)"/>
+<path class="hw-wire" d="M 326 52 L 351 52 L 351 68 L 378 68" marker-end="url(#s1-rtl-tip)"/>
+<path class="hw-wire" d="M 326 118 L 360 118 L 360 98 L 378 98" marker-end="url(#s1-rtl-tip)"/>
+<path class="hw-wire" d="M 524 84 L 576 84" marker-end="url(#s1-rtl-tip)"/>
+<path class="hw-wire" d="M 748 84 L 790 84" marker-end="url(#s1-rtl-tip)"/>
+<path class="hw-wire" d="M 926 84 L 966 84 L 966 146 L 660 146 L 660 114" marker-end="url(#s1-rtl-tip)"/>
+<path class="hw-wire" d="M 186 212 L 228 212" marker-end="url(#s1-rtl-tip)"/>
+<path class="hw-wire" d="M 396 212 L 438 212" marker-end="url(#s1-rtl-tip)"/>
+<text class="detail" x="12" y="16" text-anchor="start">MEMORY REQUEST SELECTION</text>
+<text class="detail" x="12" y="37" text-anchor="start">0  FEATURE[t×F+j]</text>
+<text class="detail" x="12" y="60" text-anchor="start">1  VECTOR[j]</text>
+<text class="detail" x="12" y="103" text-anchor="start">0  TOKEN[j]</text>
+<text class="detail" x="12" y="126" text-anchor="start">1  X[t×D+j]</text>
+<polygon class="hw mux" points="190,24 326,34 326,70 190,80"/>
+<text class="hw-name" x="258.0" y="47" text-anchor="middle">Read addr MUX</text>
+<text class="detail" x="258.0" y="66" text-anchor="middle">copy_output</text>
+<polygon class="hw mux" points="190,90 326,100 326,136 190,146"/>
+<text class="hw-name" x="258.0" y="113" text-anchor="middle">Write addr MUX</text>
+<text class="detail" x="258.0" y="132" text-anchor="middle">copy_output</text>
+<polygon class="hw mux" points="380,56 524,66 524,102 380,112"/>
+<text class="hw-name" x="452.0" y="79" text-anchor="middle">Request MUX</text>
+<text class="detail" x="452.0" y="98" text-anchor="middle">state=WRITE_ISSUE</text>
+<rect class="hw mem" x="578" y="56" width="170" height="56"/>
+<text class="hw-name" x="663.0" y="79" text-anchor="middle">Memory fabric</text>
+<text class="detail" x="663.0" y="98" text-anchor="middle">req.bank / req.addr</text>
+<rect class="hw reg" x="792" y="56" width="134" height="56"/>
+<path class="hw-clock" d="M 802 112 l 6 -7 l 6 7"/>
+<text class="hw-name" x="859.0" y="79" text-anchor="middle">word_q</text>
+<text class="detail" x="859.0" y="98" text-anchor="middle">signed 16-bit</text>
+<text class="detail" x="775" y="46" text-anchor="middle">rdata[15:0]</text>
+<text class="detail" x="822" y="138" text-anchor="middle">req.wdata = {80&#x27;b0, word_q}</text>
+<text class="detail" x="12" y="174" text-anchor="start">SHARED COMPUTE THROUGH THE BANKS</text>
+<rect class="hw mem" x="12" y="184" width="174" height="56"/>
+<text class="hw-name" x="99.0" y="207" text-anchor="middle">TOKEN</text>
+<text class="detail" x="99.0" y="226" text-anchor="middle">in-place LN(F)</text>
+<rect class="hw op" x="230" y="184" width="166" height="56"/>
+<text class="hw-name" x="313.0" y="207" text-anchor="middle">linear_ctrl</text>
+<text class="detail" x="313.0" y="226" text-anchor="middle">F → D</text>
+<rect class="hw mem" x="440" y="184" width="182" height="56"/>
+<text class="hw-name" x="531.0" y="207" text-anchor="middle">VECTOR</text>
+<text class="detail" x="531.0" y="226" text-anchor="middle">in-place LN(D)</text>
+<text class="detail" x="680" y="206" text-anchor="start">norm descriptor MUX selects</text>
+<text class="detail" x="680" y="225" text-anchor="start">TOKEN/F or VECTOR/D + γ/β bases</text>
+</svg>
+</div>
   <ul class="points"><li>Shared layernorm_ctrl normalizes TOKEN and VECTOR in place. Shared linear_ctrl writes VECTOR using dot_engine.</li><li>Copy phases use READ and WRITE issue/wait states. The final X write acknowledgment gates RESPONSE.</li></ul>
   <p class="sources"><a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/embedding_ctrl.sv">embedding_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/layernorm_ctrl.sv">layernorm_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/linear_ctrl.sv">linear_ctrl</a></p>
 </section>
@@ -247,33 +279,63 @@ footer { border: 0; border-top: 1px solid var(--rule); position: sticky; bottom:
   <p class="sources"><a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/docs/architecture.md">Architecture</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/position_sequencer.sv">position_sequencer</a></p>
 </section>
 <section class="slide" id="s2-rtl" tabindex="-1">
-  <p class="eyebrow">Stage 2 / RTL</p>
-  <h1>Use one local adder twice</h1>
-  <p class="lead">position_ctrl instantiates position_sequencer and position_add_unit. The sequencer holds the running value and parameter operand.</p>
-<div class="figure" tabindex="0" role="region" aria-label="Use one local adder twice diagram"><svg viewBox="0 28 1120 200" role="img" aria-labelledby="s2-rtl-title s2-rtl-desc">
-<title id="s2-rtl-title">Use one local adder twice</title>
-<desc id="s2-rtl-desc">Read X, X_ISSUE / X_WAIT. Read P + add, P_* · ADD_P_*. Read E + add, E_* · ADD_E_*. Commit X, WRITE_ISSUE / WAIT. Solid arrows follow request/response phase order. Each wildcard groups an ISSUE/WAIT pair. write acknowledged · more elements</desc>
-<defs><marker id="s2-rtl-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#506483"/></marker></defs>
-<path class="wire" d="M 256 92 H 294" marker-end="url(#s2-rtl-arrow)"/>
-<path class="wire" d="M 540 92 H 578" marker-end="url(#s2-rtl-arrow)"/>
-<path class="wire" d="M 824 92 H 862" marker-end="url(#s2-rtl-arrow)"/>
-<path class="wire loop" d="M 986 132 V 156 Q 986 164 978 164 H 142 Q 134 164 134 156 V 134" marker-end="url(#s2-rtl-arrow)"/>
-<text x="560" y="152" text-anchor="middle" class="detail">write acknowledged · more elements</text>
-<rect class="node" x="12" y="52" width="244" height="80" rx="4"/>
-<text class="label" x="134" y="86" text-anchor="middle">Read X</text>
-<text class="detail" x="134" y="110" text-anchor="middle">X_ISSUE / X_WAIT</text>
-<rect class="node" x="296" y="52" width="244" height="80" rx="4"/>
-<text class="label" x="418" y="86" text-anchor="middle">Read P + add</text>
-<text class="detail" x="418" y="110" text-anchor="middle">P_* · ADD_P_*</text>
-<rect class="node focus" x="580" y="52" width="244" height="80" rx="4"/>
-<text class="label" x="702" y="86" text-anchor="middle">Read E + add</text>
-<text class="detail" x="702" y="110" text-anchor="middle">E_* · ADD_E_*</text>
-<rect class="node" x="864" y="52" width="244" height="80" rx="4"/>
-<text class="label" x="986" y="86" text-anchor="middle">Commit X</text>
-<text class="detail" x="986" y="110" text-anchor="middle">WRITE_ISSUE / WAIT</text>
-<path class="rule" d="M 8 184 H 1112"/>
-<text class="detail" x="8" y="211">Solid arrows follow request/response phase order. Each wildcard groups an ISSUE/WAIT pair.</text>
-</svg></div>
+  <p class="eyebrow">Stage 2 / RTL datapath</p>
+  <h1>One adder with operand feedback</h1>
+  <p class="lead">position_sequencer feeds the same position_add_unit for both additions.</p>
+<div class="figure schematic" tabindex="0" role="region" aria-label="Position embedding operand and writeback datapath">
+<svg viewBox="0 0 1120 248" role="img" aria-labelledby="s2-rtl-title s2-rtl-desc">
+<title id="s2-rtl-title">Position embedding operand and writeback datapath</title>
+<desc id="s2-rtl-desc">A state-selected request accesses X, P or E. X reads and arithmetic responses feed value_q. P and E reads feed parameter_q. One signed saturating adder is reused twice, and the result is written back to X.</desc>
+<defs><marker id="s2-rtl-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#506483"/></marker></defs>
+<path class="hw-wire" d="M 316 56 L 346 56" marker-end="url(#s2-rtl-tip)"/>
+<path class="hw-wire" d="M 508 56 L 538 56" marker-end="url(#s2-rtl-tip)"/>
+<path class="hw-wire" d="M 184 150 L 232 150" marker-end="url(#s2-rtl-tip)"/>
+<path class="hw-wire" d="M 386 154 L 428 154" marker-end="url(#s2-rtl-tip)"/>
+<path class="hw-wire" d="M 184 171 L 206 171 L 206 218 L 428 218" marker-end="url(#s2-rtl-tip)"/>
+<path class="hw-wire" d="M 560 154 L 583 154 L 583 163 L 610 163" marker-end="url(#s2-rtl-tip)"/>
+<path class="hw-wire" d="M 560 218 L 584 218 L 584 188 L 610 188" marker-end="url(#s2-rtl-tip)"/>
+<path class="hw-wire" d="M 748 176 L 784 176" marker-end="url(#s2-rtl-tip)"/>
+<path class="hw-wire" d="M 930 176 L 966 176" marker-end="url(#s2-rtl-tip)"/>
+<path class="hw-wire" d="M 1038 148 L 1038 103 L 314 103 L 314 124" marker-end="url(#s2-rtl-tip)"/>
+<text class="detail" x="12" y="16" text-anchor="start">ADDRESS PATH   m_index, n_index, d_index</text>
+<rect class="hw " x="12" y="28" width="304" height="56"/>
+<text class="hw-name" x="164.0" y="51" text-anchor="middle">Address generation</text>
+<text class="detail" x="164.0" y="70" text-anchor="middle">X=tD+j · P=Pbase+nD+j · E=Ebase+mD+j</text>
+<polygon class="hw mux" points="348,28 508,38 508,74 348,84"/>
+<text class="hw-name" x="428.0" y="51" text-anchor="middle">Address MUX</text>
+<text class="detail" x="428.0" y="70" text-anchor="middle">X / P / E by state</text>
+<rect class="hw mem" x="540" y="28" width="174" height="56"/>
+<text class="hw-name" x="627.0" y="51" text-anchor="middle">Memory fabric</text>
+<text class="detail" x="627.0" y="70" text-anchor="middle">BANK_X or PARAM</text>
+<text class="detail" x="770" y="51" text-anchor="start">WRITE_ISSUE → BANK_X</text>
+<text class="detail" x="770" y="70" text-anchor="start">req.wdata ← value_q[15:0]</text>
+<text class="detail" x="12" y="111" text-anchor="start">OPERAND AND FEEDBACK PATH</text>
+<rect class="hw mem" x="12" y="132" width="172" height="56"/>
+<text class="hw-name" x="98.0" y="155" text-anchor="middle">mem.rsp_rdata</text>
+<text class="detail" x="98.0" y="174" text-anchor="middle">bits [15:0]</text>
+<polygon class="hw mux" points="234,126 386,136 386,172 234,182"/>
+<text class="hw-name" x="310.0" y="149" text-anchor="middle">Value input MUX</text>
+<text class="detail" x="310.0" y="168" text-anchor="middle">X_WAIT / ADD_*_WAIT</text>
+<rect class="hw reg" x="430" y="126" width="130" height="56"/>
+<path class="hw-clock" d="M 440 182 l 6 -7 l 6 7"/>
+<text class="hw-name" x="495.0" y="149" text-anchor="middle">value_q</text>
+<text class="detail" x="495.0" y="168" text-anchor="middle">signed 16-bit</text>
+<rect class="hw reg" x="430" y="190" width="130" height="56"/>
+<path class="hw-clock" d="M 440 246 l 6 -7 l 6 7"/>
+<text class="hw-name" x="495.0" y="213" text-anchor="middle">parameter_q</text>
+<text class="detail" x="495.0" y="232" text-anchor="middle">P_WAIT / E_WAIT</text>
+<rect class="hw op" x="612" y="148" width="136" height="56"/>
+<text class="hw-name" x="680.0" y="171" text-anchor="middle">Signed adder</text>
+<text class="detail" x="680.0" y="190" text-anchor="middle">+</text>
+<rect class="hw op" x="786" y="148" width="144" height="56"/>
+<text class="hw-name" x="858.0" y="171" text-anchor="middle">Saturate</text>
+<text class="detail" x="858.0" y="190" text-anchor="middle">→ S16/F10</text>
+<rect class="hw reg" x="968" y="148" width="140" height="56"/>
+<path class="hw-clock" d="M 978 204 l 6 -7 l 6 7"/>
+<text class="hw-name" x="1038.0" y="171" text-anchor="middle">Response reg</text>
+<text class="detail" x="1038.0" y="190" text-anchor="middle">arithmetic_register</text>
+</svg>
+</div>
   <ul class="points"><li>Each addition widens the signed operands, then saturates back to signed 16-bit with 10 fractional bits.</li><li>The loop advances j, then n, then m after write acknowledgment. The last acknowledgment gates RESPONSE.</li></ul>
   <p class="sources"><a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/position_ctrl.sv">position_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/position_sequencer.sv">position_sequencer</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/arithmetic/position_add_unit.sv">Local adder</a></p>
 </section>
@@ -313,70 +375,141 @@ footer { border: 0; border-top: 1px solid var(--rule); position: sticky; bottom:
   <p class="sources"><a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/docs/architecture/Stages3-5-design.md">Stage design</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/layer_ctrl.sv">layer_ctrl</a></p>
 </section>
 <section class="slide" id="s3-rtl" tabindex="-1">
-  <p class="eyebrow">Stage 3 / RTL</p>
-  <h1>Reuse one layer controller K times</h1>
-  <p class="lead">encoder_ctrl sends a layer-specific parameter descriptor and waits for layer_ctrl to complete before incrementing k.</p>
-<div class="figure" tabindex="0" role="region" aria-label="Reuse one layer controller K times diagram"><svg viewBox="0 28 1120 200" role="img" aria-labelledby="s3-rtl-title s3-rtl-desc">
-<title id="s3-rtl-title">Reuse one layer controller K times</title>
-<desc id="s3-rtl-desc">LN1 sweep, layernorm_ctrl. Attention sweep, attention_ctrl. Residual 1, residual_ctrl. LN2 sweep, layernorm_ctrl. Per-token pair, ffn_ctrl + residual_ctrl. Arrows show layer_ctrl phases. Every service handoff waits for its successful response. </desc>
-<defs><marker id="s3-rtl-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#506483"/></marker></defs>
-<path class="wire" d="M 198 92 H 236" marker-end="url(#s3-rtl-arrow)"/>
-<path class="wire" d="M 426 92 H 464" marker-end="url(#s3-rtl-arrow)"/>
-<path class="wire" d="M 654 92 H 692" marker-end="url(#s3-rtl-arrow)"/>
-<path class="wire" d="M 882 92 H 920" marker-end="url(#s3-rtl-arrow)"/>
-<rect class="node" x="10" y="52" width="188" height="80" rx="4"/>
-<text class="label" x="104" y="86" text-anchor="middle">LN1 sweep</text>
-<text class="detail" x="104" y="110" text-anchor="middle">layernorm_ctrl</text>
-<rect class="node focus" x="238" y="52" width="188" height="80" rx="4"/>
-<text class="label" x="332" y="86" text-anchor="middle">Attention sweep</text>
-<text class="detail" x="332" y="110" text-anchor="middle">attention_ctrl</text>
-<rect class="node" x="466" y="52" width="188" height="80" rx="4"/>
-<text class="label" x="560" y="86" text-anchor="middle">Residual 1</text>
-<text class="detail" x="560" y="110" text-anchor="middle">residual_ctrl</text>
-<rect class="node" x="694" y="52" width="188" height="80" rx="4"/>
-<text class="label" x="788" y="86" text-anchor="middle">LN2 sweep</text>
-<text class="detail" x="788" y="110" text-anchor="middle">layernorm_ctrl</text>
-<rect class="node" x="922" y="52" width="188" height="80" rx="4"/>
-<text class="label" x="1016" y="86" text-anchor="middle">Per-token pair</text>
-<text class="detail" x="1016" y="110" text-anchor="middle">ffn_ctrl + residual_ctrl</text>
-<path class="rule" d="M 8 184 H 1112"/>
-<text class="detail" x="8" y="211">Arrows show layer_ctrl phases. Every service handoff waits for its successful response.</text>
-</svg></div>
-  <ul class="points"><li>U is reused for LN2 after attention and residual 1. R remains in X until its token’s second residual is written.</li><li>For each token, FFN writes FFN_HIDDEN, replaces it with GELU activations, then writes VECTOR for residual 2.</li></ul>
+  <p class="eyebrow">Stage 3 / RTL datapath</p>
+  <h1>Shared residual adder and writeback</h1>
+  <p class="lead">layer_ctrl picks the right operand bank. residual_ctrl reuses the same adder and X write port for both residual passes.</p>
+<div class="figure schematic" tabindex="0" role="region" aria-label="Encoder residual datapath and phase-selected operand address">
+<svg viewBox="0 0 1120 248" role="img" aria-labelledby="s3-rtl-title s3-rtl-desc">
+<title id="s3-rtl-title">Encoder residual datapath and phase-selected operand address</title>
+<desc id="s3-rtl-desc">One residual controller serves both residual passes. The phase selects the right bank and its base. The residual FSM selects the left, right or destination address. The left read is registered, then added to the right read; the saturated result is registered and written into X.</desc>
+<defs><marker id="s3-rtl-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#506483"/></marker></defs>
+<path class="hw-wire" d="M 181 42 L 206 42" marker-end="url(#s3-rtl-tip)"/>
+<path class="hw-wire" d="M 181 64 L 206 64" marker-end="url(#s3-rtl-tip)"/>
+<path class="hw-wire" d="M 362 56 L 426 56" marker-end="url(#s3-rtl-tip)"/>
+<path class="hw-wire" d="M 501 20 L 501 26" marker-end="url(#s3-rtl-tip)"/>
+<path class="hw-wire" d="M 588 56 L 632 56" marker-end="url(#s3-rtl-tip)"/>
+<path class="hw-wire" d="M 752 56 L 796 56" marker-end="url(#s3-rtl-tip)"/>
+<path class="hw-wire" d="M 178 154 L 234 154" marker-end="url(#s3-rtl-tip)"/>
+<path class="hw-wire" d="M 368 156 L 397 156 L 397 164 L 436 164" marker-end="url(#s3-rtl-tip)"/>
+<path class="hw-wire" d="M 178 184 L 204 184 L 204 219 L 402 219 L 402 193 L 436 193" marker-end="url(#s3-rtl-tip)"/>
+<path class="hw-wire" d="M 532 180 L 572 180" marker-end="url(#s3-rtl-tip)"/>
+<path class="hw-wire" d="M 701 180 L 741 180" marker-end="url(#s3-rtl-tip)"/>
+<path class="hw-wire" d="M 871 180 L 911 180" marker-end="url(#s3-rtl-tip)"/>
+<text class="detail" x="12" y="16" text-anchor="start">DESCRIPTOR AND ADDRESS PATH</text>
+<text class="detail" x="12" y="46" text-anchor="start">ATTN_OUT[t×D] · phase 2</text>
+<text class="detail" x="12" y="67" text-anchor="start">VECTOR[0] · phase 5</text>
+<polygon class="hw mux" points="208,28 362,38 362,74 208,84"/>
+<text class="hw-name" x="285.0" y="51" text-anchor="middle">Right ptr MUX</text>
+<text class="detail" x="285.0" y="70" text-anchor="middle">layer_ctrl.phase</text>
+<polygon class="hw mux" points="428,28 588,38 588,74 428,84"/>
+<text class="hw-name" x="508.0" y="51" text-anchor="middle">Pointer MUX</text>
+<text class="detail" x="508.0" y="70" text-anchor="middle">left / right / dst</text>
+<text class="detail" x="383" y="16" text-anchor="start">left/dst = X[t×D]</text>
+<rect class="hw op" x="634" y="28" width="118" height="56"/>
+<text class="hw-name" x="693.0" y="51" text-anchor="middle">Address +</text>
+<text class="detail" x="693.0" y="70" text-anchor="middle">+ index_q</text>
+<rect class="hw mem" x="798" y="28" width="178" height="56"/>
+<text class="hw-name" x="887.0" y="51" text-anchor="middle">Memory fabric</text>
+<text class="detail" x="887.0" y="70" text-anchor="middle">req.bank / req.addr</text>
+<text class="detail" x="12" y="111" text-anchor="start">READ, ADD AND WRITEBACK   residual_ctrl</text>
+<rect class="hw mem" x="12" y="142" width="166" height="56"/>
+<text class="hw-name" x="95.0" y="165" text-anchor="middle">Read data</text>
+<text class="detail" x="95.0" y="184" text-anchor="middle">rdata[15:0]</text>
+<rect class="hw reg" x="236" y="130" width="132" height="56"/>
+<path class="hw-clock" d="M 246 186 l 6 -7 l 6 7"/>
+<text class="hw-name" x="302.0" y="153" text-anchor="middle">left_q</text>
+<text class="detail" x="302.0" y="172" text-anchor="middle">LEFT_WAIT</text>
+<rect class="hw op" x="438" y="152" width="94" height="56"/>
+<text class="hw-name" x="485.0" y="175" text-anchor="middle">Add</text>
+<text class="detail" x="485.0" y="194" text-anchor="middle">+</text>
+<text class="detail" x="254" y="210" text-anchor="start">RIGHT_WAIT</text>
+<rect class="hw op" x="574" y="152" width="127" height="56"/>
+<text class="hw-name" x="637.5" y="175" text-anchor="middle">Saturate</text>
+<text class="detail" x="637.5" y="194" text-anchor="middle">→ S16/F10</text>
+<rect class="hw reg" x="743" y="152" width="128" height="56"/>
+<path class="hw-clock" d="M 753 208 l 6 -7 l 6 7"/>
+<text class="hw-name" x="807.0" y="175" text-anchor="middle">value_q</text>
+<text class="detail" x="807.0" y="194" text-anchor="middle">RIGHT_WAIT</text>
+<rect class="hw mem" x="913" y="152" width="178" height="56"/>
+<text class="hw-name" x="1002.0" y="175" text-anchor="middle">X writeback</text>
+<text class="detail" x="1002.0" y="194" text-anchor="middle">req.wdata[15:0]</text>
+</svg>
+</div>
+  <ul class="points"><li>The controller latches the left X operand and uses the right memory response directly in the add.</li><li>ATTN_OUT supplies residual 1. FFN writes VECTOR for residual 2. Both passes overwrite X and wait for the write acknowledgment.</li></ul>
   <p class="sources"><a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/encoder_ctrl.sv">encoder_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/layer_ctrl.sv">layer_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/ffn_ctrl.sv">ffn_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/residual_ctrl.sv">residual_ctrl</a></p>
 </section>
 <section class="slide" id="attention" tabindex="-1">
-  <p class="eyebrow">Stage 3 / RTL detail</p>
-  <h1>Attention works one head and query at a time</h1>
-  <p class="lead">attention_ctrl waits for the Q, KEY, and VALUE banks to finish, then visits each (head, query) pair.</p>
-<div class="figure" tabindex="0" role="region" aria-label="Attention works one head and query at a time diagram"><svg viewBox="0 28 1120 200" role="img" aria-labelledby="attention-title attention-desc">
-<title id="attention-title">Attention works one head and query at a time</title>
-<desc id="attention-desc">Build QKV, qkv_ctrl. Score row, score_row_ctrl. Softmax, softmax_ctrl. Weighted value, weighted_value_ctrl. Project Z, output_projection_ctrl. Arrows show phase order. Repeat the middle three blocks per head/query before projecting Z. </desc>
-<defs><marker id="attention-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#506483"/></marker></defs>
-<path class="wire" d="M 198 92 H 236" marker-end="url(#attention-arrow)"/>
-<path class="wire" d="M 426 92 H 464" marker-end="url(#attention-arrow)"/>
-<path class="wire" d="M 654 92 H 692" marker-end="url(#attention-arrow)"/>
-<path class="wire" d="M 882 92 H 920" marker-end="url(#attention-arrow)"/>
-<rect class="node" x="10" y="52" width="188" height="80" rx="4"/>
-<text class="label" x="104" y="86" text-anchor="middle">Build QKV</text>
-<text class="detail" x="104" y="110" text-anchor="middle">qkv_ctrl</text>
-<rect class="node" x="238" y="52" width="188" height="80" rx="4"/>
-<text class="label" x="332" y="86" text-anchor="middle">Score row</text>
-<text class="detail" x="332" y="110" text-anchor="middle">score_row_ctrl</text>
-<rect class="node focus" x="466" y="52" width="188" height="80" rx="4"/>
-<text class="label" x="560" y="86" text-anchor="middle">Softmax</text>
-<text class="detail" x="560" y="110" text-anchor="middle">softmax_ctrl</text>
-<rect class="node" x="694" y="52" width="188" height="80" rx="4"/>
-<text class="label" x="788" y="86" text-anchor="middle">Weighted value</text>
-<text class="detail" x="788" y="110" text-anchor="middle">weighted_value_ctrl</text>
-<rect class="node" x="922" y="52" width="188" height="80" rx="4"/>
-<text class="label" x="1016" y="86" text-anchor="middle">Project Z</text>
-<text class="detail" x="1016" y="110" text-anchor="middle">output_projection_ctrl</text>
-<path class="rule" d="M 8 184 H 1112"/>
-<text class="detail" x="8" y="211">Arrows show phase order. Repeat the middle three blocks per head/query before projecting Z.</text>
-</svg></div>
-  <ul class="points"><li>SCORE, EXP and PROB are row workspaces. The weighted-value controller writes the head slice of Z.</li><li>MASK applies to the query here. Padded queries use uniform probabilities. Ordinary queries normalize across all L keys.</li><li>Output projection starts after every Z slice commits and finishes after all ATTN_OUT writes.</li></ul>
-  <p class="sources"><a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/attention_ctrl.sv">attention_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/softmax_ctrl.sv">softmax_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/weighted_value_ctrl.sv">weighted_value_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/output_projection_ctrl.sv">output_projection_ctrl</a></p>
+  <p class="eyebrow">Stage 3 / RTL datapath</p>
+  <h1>Softmax normalization and bypass mux</h1>
+  <p class="lead">For each head and query, softmax_ctrl normalizes a SCORE row or writes the uniform probability for a padded query.</p>
+<div class="figure schematic" tabindex="0" role="region" aria-label="Attention softmax and padded-query bypass">
+<svg viewBox="0 0 1120 248" role="img" aria-labelledby="attention-title attention-desc">
+<title id="attention-title">Attention softmax and padded-query bypass</title>
+<desc id="attention-desc">The SCORE bank is read twice. A comparator captures the maximum, then subtraction and EXP generate row values. The sum drives an inverse register. EXP readback multiplies that inverse. A state-selected value register serves ordinary normalization and the constant padded-query write, as well as EXP writes.</desc>
+<defs><marker id="attention-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#506483"/></marker></defs>
+<path class="hw-wire" d="M 142 48 L 182 48" marker-end="url(#attention-tip)"/>
+<path class="hw-wire" d="M 142 68 L 160 68 L 160 103 L 378 103" marker-end="url(#attention-tip)"/>
+<path class="hw-wire" d="M 322 48 L 353 48 L 353 84 L 378 84" marker-end="url(#attention-tip)"/>
+<path class="hw-wire" d="M 512 98 L 556 98" marker-end="url(#attention-tip)"/>
+<path class="hw-wire" d="M 682 87 L 706 87 L 706 48 L 728 48" marker-end="url(#attention-tip)"/>
+<path class="hw-wire" d="M 870 48 L 914 48" marker-end="url(#attention-tip)"/>
+<path class="hw-wire" d="M 142 200 L 182 200" marker-end="url(#attention-tip)"/>
+<path class="hw-wire" d="M 1010 76 L 1010 133 L 253 133 L 253 170" marker-end="url(#attention-tip)"/>
+<path class="hw-wire" d="M 322 200 L 368 200" marker-end="url(#attention-tip)"/>
+<path class="hw-wire" d="M 508 200 L 696 200" marker-end="url(#attention-tip)"/>
+<path class="hw-wire" d="M 650 178 L 696 178" marker-end="url(#attention-tip)"/>
+<path class="hw-wire" d="M 682 110 L 719 110" marker-end="url(#attention-tip)"/>
+<path class="hw-crossing" d="M 719 127 V 139"/>
+<path class="hw-wire" d="M 719 110 V 127 C 727 127 727 139 719 139 V 157"/>
+<path class="hw-wire" d="M 719 157 L 719 172" marker-end="url(#attention-tip)"/>
+<path class="hw-wire" d="M 844 200 L 872 200" marker-end="url(#attention-tip)"/>
+<path class="hw-wire" d="M 978 200 L 1004 200" marker-end="url(#attention-tip)"/>
+<text class="detail" x="12" y="16" text-anchor="start">MAXIMUM, EXPONENTIAL AND DENOMINATOR   softmax_ctrl</text>
+<rect class="hw mem" x="12" y="31" width="130" height="56"/>
+<text class="hw-name" x="77.0" y="54" text-anchor="middle">SCORE read</text>
+<text class="detail" x="77.0" y="73" text-anchor="middle">rdata[47:0]</text>
+<rect class="hw op" x="184" y="20" width="138" height="56"/>
+<text class="hw-name" x="253.0" y="43" text-anchor="middle">Max compare</text>
+<text class="detail" x="253.0" y="62" text-anchor="middle">→ maximum_q</text>
+<rect class="hw op" x="380" y="70" width="132" height="56"/>
+<text class="hw-name" x="446.0" y="93" text-anchor="middle">Subtract</text>
+<text class="detail" x="446.0" y="112" text-anchor="middle">score − maximum</text>
+<rect class="hw op" x="558" y="70" width="124" height="56"/>
+<text class="hw-name" x="620.0" y="93" text-anchor="middle">exp_unit</text>
+<text class="detail" x="620.0" y="112" text-anchor="middle">difference_q</text>
+<rect class="hw reg" x="730" y="20" width="140" height="56"/>
+<path class="hw-clock" d="M 740 76 l 6 -7 l 6 7"/>
+<text class="hw-name" x="800.0" y="43" text-anchor="middle">Sum + register</text>
+<text class="detail" x="800.0" y="62" text-anchor="middle">exp_sum → sum_q</text>
+<rect class="hw reg" x="916" y="20" width="186" height="56"/>
+<path class="hw-clock" d="M 926 76 l 6 -7 l 6 7"/>
+<text class="hw-name" x="1009.0" y="43" text-anchor="middle">Reciprocal</text>
+<text class="detail" x="1009.0" y="62" text-anchor="middle">→ inverse_q · U40/F32</text>
+<text class="detail" x="12" y="153" text-anchor="start">NORMALIZE AND WRITE</text>
+<rect class="hw mem" x="12" y="172" width="130" height="56"/>
+<text class="hw-name" x="77.0" y="195" text-anchor="middle">EXP read</text>
+<text class="detail" x="77.0" y="214" text-anchor="middle">rdata[23:0]</text>
+<rect class="hw op" x="184" y="172" width="138" height="56"/>
+<text class="hw-name" x="253.0" y="195" text-anchor="middle">Multiply</text>
+<text class="detail" x="253.0" y="214" text-anchor="middle">EXP × inverse_q</text>
+<rect class="hw op" x="370" y="172" width="138" height="56"/>
+<text class="hw-name" x="439.0" y="195" text-anchor="middle">Convert</text>
+<text class="detail" x="439.0" y="214" text-anchor="middle">RNE · U24/F22</text>
+<polygon class="hw mux" points="698,172 844,182 844,218 698,228"/>
+<text class="hw-name" x="771.0" y="195" text-anchor="middle">Value input MUX</text>
+<text class="detail" x="771.0" y="214" text-anchor="middle">state / padded_query</text>
+<text class="detail" x="518" y="182" text-anchor="start">UNIFORM_PROB or 0</text>
+<rect class="hw reg" x="874" y="172" width="104" height="56"/>
+<path class="hw-clock" d="M 884 228 l 6 -7 l 6 7"/>
+<text class="hw-name" x="926.0" y="195" text-anchor="middle">value_q</text>
+<text class="detail" x="926.0" y="214" text-anchor="middle">24-bit</text>
+<rect class="hw mem" x="1006" y="172" width="102" height="56"/>
+<text class="hw-name" x="1057.0" y="195" text-anchor="middle">Write</text>
+<text class="detail" x="1057.0" y="214" text-anchor="middle">EXP / PROB</text>
+</svg>
+</div>
+  <ul class="points"><li>Ordinary queries normalize across all L keys. A score difference below −16 writes zero into EXP.</li><li>After PROB commits, weighted_value_ctrl reads PROB and VALUE to write the head slice of Z.</li></ul>
+  <p class="sources"><a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/attention_ctrl.sv">attention_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/softmax_ctrl.sv">softmax_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/weighted_value_ctrl.sv">weighted_value_ctrl</a></p>
 </section>
 <section class="slide" id="s4-arch" tabindex="-1">
   <p class="eyebrow">Stage 4 / Architecture</p>
@@ -404,33 +537,84 @@ footer { border: 0; border-top: 1px solid var(--rule); position: sticky; bottom:
   <p class="sources"><a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/docs/architecture/Stages3-5-design.md">Stage design</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/final_ctrl.sv">final_ctrl</a></p>
 </section>
 <section class="slide" id="s4-rtl" tabindex="-1">
-  <p class="eyebrow">Stage 4 / RTL</p>
-  <h1>Reuse the shared linear and dot engines</h1>
-  <p class="lead">final_ctrl dispatches one linear descriptor per token. Its source is X at t × D and its destination is LOGIT at t.</p>
-<div class="figure" tabindex="0" role="region" aria-label="Reuse the shared linear and dot engines diagram"><svg viewBox="0 28 1120 200" role="img" aria-labelledby="s4-rtl-title s4-rtl-desc">
-<title id="s4-rtl-title">Reuse the shared linear and dot engines</title>
-<desc id="s4-rtl-desc">Issue descriptor, final_ctrl · out_count=1. Accumulate, linear_ctrl + dot_engine. Write LOGIT, convert + memory ack. Return status, linear response. Solid arrows show work inside one command. The dashed arrow returns to final_ctrl for the next token. linear response accepted · more tokens</desc>
-<defs><marker id="s4-rtl-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#506483"/></marker></defs>
-<path class="wire" d="M 256 92 H 294" marker-end="url(#s4-rtl-arrow)"/>
-<path class="wire" d="M 540 92 H 578" marker-end="url(#s4-rtl-arrow)"/>
-<path class="wire" d="M 824 92 H 862" marker-end="url(#s4-rtl-arrow)"/>
-<path class="wire loop" d="M 986 132 V 156 Q 986 164 978 164 H 142 Q 134 164 134 156 V 134" marker-end="url(#s4-rtl-arrow)"/>
-<text x="560" y="152" text-anchor="middle" class="detail">linear response accepted · more tokens</text>
-<rect class="node" x="12" y="52" width="244" height="80" rx="4"/>
-<text class="label" x="134" y="86" text-anchor="middle">Issue descriptor</text>
-<text class="detail" x="134" y="110" text-anchor="middle">final_ctrl · out_count=1</text>
-<rect class="node focus" x="296" y="52" width="244" height="80" rx="4"/>
-<text class="label" x="418" y="86" text-anchor="middle">Accumulate</text>
-<text class="detail" x="418" y="110" text-anchor="middle">linear_ctrl + dot_engine</text>
-<rect class="node" x="580" y="52" width="244" height="80" rx="4"/>
-<text class="label" x="702" y="86" text-anchor="middle">Write LOGIT</text>
-<text class="detail" x="702" y="110" text-anchor="middle">convert + memory ack</text>
-<rect class="node" x="864" y="52" width="244" height="80" rx="4"/>
-<text class="label" x="986" y="86" text-anchor="middle">Return status</text>
-<text class="detail" x="986" y="110" text-anchor="middle">linear response</text>
-<path class="rule" d="M 8 184 H 1112"/>
-<text class="detail" x="8" y="211">Solid arrows show work inside one command. The dashed arrow returns to final_ctrl for the next token.</text>
-</svg></div>
+  <p class="eyebrow">Stage 4 / RTL datapath</p>
+  <h1>Bias-seeded MAC and logit writeback</h1>
+  <p class="lead">final_ctrl issues a D-to-1 descriptor. The shared dot engine reads one activation and weight per term.</p>
+<div class="figure schematic" tabindex="0" role="region" aria-label="Final projection shared dot-product datapath">
+<svg viewBox="0 0 1120 248" role="img" aria-labelledby="s4-rtl-title s4-rtl-desc">
+<title id="s4-rtl-title">Final projection shared dot-product datapath</title>
+<desc id="s4-rtl-desc">The final descriptor gives linear_ctrl the token and weight pointers. A memory request mux alternates input and weight reads into operand registers. The accumulator initializes from the aligned bias and feeds back the MAC result. After D terms, linear_ctrl rounds and saturates the accumulator and writes LOGIT.</desc>
+<defs><marker id="s4-rtl-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#506483"/></marker></defs>
+<path class="hw-wire" d="M 111 40 L 134 40" marker-end="url(#s4-rtl-tip)"/>
+<path class="hw-wire" d="M 111 62 L 134 62" marker-end="url(#s4-rtl-tip)"/>
+<path class="hw-wire" d="M 276 56 L 310 56" marker-end="url(#s4-rtl-tip)"/>
+<path class="hw-wire" d="M 446 46 L 492 46" marker-end="url(#s4-rtl-tip)"/>
+<path class="hw-wire" d="M 446 68 L 466 68 L 466 114 L 492 114" marker-end="url(#s4-rtl-tip)"/>
+<path class="hw-wire" d="M 618 45 L 639 45 L 639 56 L 664 56" marker-end="url(#s4-rtl-tip)"/>
+<path class="hw-wire" d="M 618 114 L 644 114 L 644 85 L 664 85" marker-end="url(#s4-rtl-tip)"/>
+<path class="hw-wire" d="M 766 71 L 806 71" marker-end="url(#s4-rtl-tip)"/>
+<path class="hw-wire" d="M 908 71 L 946 71" marker-end="url(#s4-rtl-tip)"/>
+<path class="hw-wire" d="M 128 206 L 166 206" marker-end="url(#s4-rtl-tip)"/>
+<path class="hw-wire" d="M 286 206 L 324 206" marker-end="url(#s4-rtl-tip)"/>
+<path class="hw-wire" d="M 450 206 L 488 206" marker-end="url(#s4-rtl-tip)"/>
+<path class="hw-wire" d="M 637 206 L 675 206" marker-end="url(#s4-rtl-tip)"/>
+<path class="hw-wire" d="M 812 206 L 850 206" marker-end="url(#s4-rtl-tip)"/>
+<path class="hw-wire" d="M 1026 99 L 1026 147 L 347 147 L 347 174" marker-end="url(#s4-rtl-tip)"/>
+<path class="hw-wire" d="M 526 178 L 526 162 L 858 162" marker-end="url(#s4-rtl-tip)"/>
+<path class="hw-crossing" d="M 858 141 V 153"/>
+<path class="hw-wire" d="M 858 118 V 141 C 866 141 866 153 858 153 V 162"/>
+<path class="hw-wire" d="M 858 118 L 858 101" marker-end="url(#s4-rtl-tip)"/>
+<text class="detail" x="12" y="16" text-anchor="start">OPERAND READS   dot_engine</text>
+<text class="detail" x="12" y="44" text-anchor="start">A: X[t×D+j]</text>
+<text class="detail" x="12" y="64" text-anchor="start">B: PARAM[W+j]</text>
+<polygon class="hw mux" points="136,28 276,38 276,74 136,84"/>
+<text class="hw-name" x="206.0" y="51" text-anchor="middle">Read ptr MUX</text>
+<text class="detail" x="206.0" y="70" text-anchor="middle">state=B_ISSUE</text>
+<rect class="hw mem" x="312" y="28" width="134" height="56"/>
+<text class="hw-name" x="379.0" y="51" text-anchor="middle">Memory read</text>
+<text class="detail" x="379.0" y="70" text-anchor="middle">rdata[15:0]</text>
+<rect class="hw reg" x="494" y="16" width="124" height="56"/>
+<path class="hw-clock" d="M 504 72 l 6 -7 l 6 7"/>
+<text class="hw-name" x="556.0" y="39" text-anchor="middle">a_q</text>
+<text class="detail" x="556.0" y="58" text-anchor="middle">A_WAIT</text>
+<rect class="hw reg" x="494" y="86" width="124" height="56"/>
+<path class="hw-clock" d="M 504 142 l 6 -7 l 6 7"/>
+<text class="hw-name" x="556.0" y="109" text-anchor="middle">b_q</text>
+<text class="detail" x="556.0" y="128" text-anchor="middle">B_WAIT</text>
+<rect class="hw op" x="666" y="43" width="100" height="56"/>
+<text class="hw-name" x="716.0" y="66" text-anchor="middle">Multiply</text>
+<text class="detail" x="716.0" y="85" text-anchor="middle">S16 × S16</text>
+<rect class="hw op" x="808" y="43" width="100" height="56"/>
+<text class="hw-name" x="858.0" y="66" text-anchor="middle">Add + sat</text>
+<text class="detail" x="858.0" y="85" text-anchor="middle">+ · S48/F20</text>
+<rect class="hw reg" x="948" y="43" width="160" height="56"/>
+<path class="hw-clock" d="M 958 99 l 6 -7 l 6 7"/>
+<text class="hw-name" x="1028.0" y="66" text-anchor="middle">MAC response</text>
+<text class="detail" x="1028.0" y="85" text-anchor="middle">arithmetic_register</text>
+<text class="detail" x="12" y="164" text-anchor="start">ACCUMULATOR AND WRITEBACK</text>
+<rect class="hw reg" x="12" y="178" width="116" height="56"/>
+<path class="hw-clock" d="M 22 234 l 6 -7 l 6 7"/>
+<text class="hw-name" x="70.0" y="201" text-anchor="middle">bias_q</text>
+<text class="detail" x="70.0" y="220" text-anchor="middle">PARAM bias</text>
+<rect class="hw op" x="168" y="178" width="118" height="56"/>
+<text class="hw-name" x="227.0" y="201" text-anchor="middle">Align bias</text>
+<text class="detail" x="227.0" y="220" text-anchor="middle">&lt;&lt; 10</text>
+<polygon class="hw mux" points="326,178 450,188 450,224 326,234"/>
+<text class="hw-name" x="388.0" y="201" text-anchor="middle">Acc input MUX</text>
+<text class="detail" x="388.0" y="220" text-anchor="middle">init / MAC rsp</text>
+<rect class="hw reg" x="490" y="178" width="147" height="56"/>
+<path class="hw-clock" d="M 500 234 l 6 -7 l 6 7"/>
+<text class="hw-name" x="563.5" y="201" text-anchor="middle">accumulator_q</text>
+<text class="detail" x="563.5" y="220" text-anchor="middle">S64 reg · F20</text>
+<rect class="hw op" x="677" y="178" width="135" height="56"/>
+<text class="hw-name" x="744.5" y="201" text-anchor="middle">RNE + sat</text>
+<text class="detail" x="744.5" y="220" text-anchor="middle">&gt;&gt;10 · S16/F10</text>
+<rect class="hw reg" x="852" y="178" width="157" height="56"/>
+<path class="hw-clock" d="M 862 234 l 6 -7 l 6 7"/>
+<text class="hw-name" x="930.5" y="201" text-anchor="middle">value_q</text>
+<text class="detail" x="930.5" y="220" text-anchor="middle">write LOGIT[t]</text>
+</svg>
+</div>
   <ul class="points"><li>linear_ctrl supplies the parameter bias and weight pointers. dot_engine sends term products through mac_unit.</li><li>The shared linear response follows the committed logit write. final_ctrl waits for all L responses.</li></ul>
   <p class="sources"><a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/final_ctrl.sv">final_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/linear_ctrl.sv">linear_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/dot_engine.sv">dot_engine</a></p>
 </section>
@@ -468,34 +652,79 @@ footer { border: 0; border-top: 1px solid var(--rule); position: sticky; bottom:
   <p class="sources"><a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/docs/architecture/Stages3-5-design.md">Stage design</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/aggregation_ctrl.sv">aggregation_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/core_ctrl.sv">core_ctrl</a></p>
 </section>
 <section class="slide" id="s5-rtl" tabindex="-1">
-  <p class="eyebrow">Stage 5 / RTL</p>
-  <h1>Release outputs after the final write</h1>
-  <p class="lead">aggregation_ctrl scans MASK and LOGIT for each n, then uses the shared reciprocal service for scaling.</p>
-<div class="figure" tabindex="0" role="region" aria-label="Release outputs after the final write diagram"><svg viewBox="0 28 1120 200" role="img" aria-labelledby="s5-rtl-title s5-rtl-desc">
-<title id="s5-rtl-title">Release outputs after the final write</title>
-<desc id="s5-rtl-desc">Scan M reads, MASK_* · LOGIT_*. Check count, CHECK_COUNT. Scale, RECIP_ISSUE / WAIT. Commit output, WRITE_ISSUE / WAIT. Solid arrows show the Cₙ &gt; 0 path. Cₙ = 0 goes directly to the held EMPTY_POSITION response. write acknowledged · more positions</desc>
-<defs><marker id="s5-rtl-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#506483"/></marker></defs>
-<path class="wire" d="M 256 92 H 294" marker-end="url(#s5-rtl-arrow)"/>
-<path class="wire" d="M 540 92 H 578" marker-end="url(#s5-rtl-arrow)"/>
-<path class="wire" d="M 824 92 H 862" marker-end="url(#s5-rtl-arrow)"/>
-<path class="wire loop" d="M 986 132 V 156 Q 986 164 978 164 H 142 Q 134 164 134 156 V 134" marker-end="url(#s5-rtl-arrow)"/>
-<text x="560" y="152" text-anchor="middle" class="detail">write acknowledged · more positions</text>
-<rect class="node" x="12" y="52" width="244" height="80" rx="4"/>
-<text class="label" x="134" y="86" text-anchor="middle">Scan M reads</text>
-<text class="detail" x="134" y="110" text-anchor="middle">MASK_* · LOGIT_*</text>
-<rect class="node focus" x="296" y="52" width="244" height="80" rx="4"/>
-<text class="label" x="418" y="86" text-anchor="middle">Check count</text>
-<text class="detail" x="418" y="110" text-anchor="middle">CHECK_COUNT</text>
-<rect class="node" x="580" y="52" width="244" height="80" rx="4"/>
-<text class="label" x="702" y="86" text-anchor="middle">Scale</text>
-<text class="detail" x="702" y="110" text-anchor="middle">RECIP_ISSUE / WAIT</text>
-<rect class="node" x="864" y="52" width="244" height="80" rx="4"/>
-<text class="label" x="986" y="86" text-anchor="middle">Commit output</text>
-<text class="detail" x="986" y="110" text-anchor="middle">WRITE_ISSUE / WAIT</text>
-<path class="rule" d="M 8 184 H 1112"/>
-<text class="detail" x="8" y="211">Solid arrows show the Cₙ &gt; 0 path. Cₙ = 0 goes directly to the held EMPTY_POSITION response.</text>
-</svg></div>
-  <ul class="points"><li>A padded mask skips the LOGIT read. Valid logits update sum_q and count_q together.</li><li>For Cₙ &gt; 0, multiply by the fixed-point reciprocal and round/saturate to the output word. Clear sum and count for the next position.</li><li>The core reads OUTPUT and holds each logit, index and last flag through host backpressure after successful aggregation.</li></ul>
+  <p class="eyebrow">Stage 5 / RTL datapath</p>
+  <h1>Mask gate, accumulator and reciprocal</h1>
+  <p class="lead">A valid mask enables the logit read. A successful logit response updates both the sum and the count.</p>
+<div class="figure schematic" tabindex="0" role="region" aria-label="Masked aggregation sum, count and reciprocal datapath">
+<svg viewBox="0 0 1120 272" role="img" aria-labelledby="s5-rtl-title s5-rtl-desc">
+<title id="s5-rtl-title">Masked aggregation sum, count and reciprocal datapath</title>
+<desc id="s5-rtl-desc">The address mux selects mask, logit or output requests. A valid mask schedules a logit read. Each successful logit read updates the sum and count. A zero count reports EMPTY_POSITION. Otherwise the count drives the reciprocal service; the product of the sum and inverse is rounded, saturated, and written to OUTPUT.</desc>
+<defs><marker id="s5-rtl-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#506483"/></marker></defs>
+<path class="hw-wire" d="M 166 56 L 200 56" marker-end="url(#s5-rtl-tip)"/>
+<path class="hw-wire" d="M 355 56 L 389 56" marker-end="url(#s5-rtl-tip)"/>
+<path class="hw-wire" d="M 538 56 L 581 56" marker-end="url(#s5-rtl-tip)"/>
+<path class="hw-wire control" d="M 731 56 L 806 56" marker-end="url(#s5-rtl-tip)"/>
+<path class="hw-wire" d="M 144 153 L 175 153" marker-end="url(#s5-rtl-tip)"/>
+<path class="hw-wire" d="M 303 153 L 336 153" marker-end="url(#s5-rtl-tip)"/>
+<path class="hw-wire" d="M 397 125 L 397 116 L 244 116 L 244 123" marker-end="url(#s5-rtl-tip)"/>
+<path class="hw-wire" d="M 456 219 L 630 219" marker-end="url(#s5-rtl-tip)"/>
+<path class="hw-wire" d="M 513 219 L 513 259 L 861 259 L 861 249" marker-end="url(#s5-rtl-tip)"/>
+<path class="hw-wire" d="M 456 153 L 632 153" marker-end="url(#s5-rtl-tip)"/>
+<path class="hw-wire" d="M 699 191 L 699 183" marker-end="url(#s5-rtl-tip)"/>
+<path class="hw-wire" d="M 764 153 L 798 153" marker-end="url(#s5-rtl-tip)"/>
+<path class="hw-wire" d="M 922 153 L 956 153" marker-end="url(#s5-rtl-tip)"/>
+<path class="hw-wire control" d="M 922 219 L 951 219" marker-end="url(#s5-rtl-tip)"/>
+<text class="detail" x="12" y="16" text-anchor="start">MEMORY REQUEST AND MASK GATE</text>
+<rect class="hw " x="12" y="28" width="154" height="56"/>
+<text class="hw-name" x="89.0" y="51" text-anchor="middle">Address generation</text>
+<text class="detail" x="89.0" y="70" text-anchor="middle">m_q×N+n_q / n_q</text>
+<polygon class="hw mux" points="202,28 355,38 355,74 202,84"/>
+<text class="hw-name" x="278.5" y="51" text-anchor="middle">Bank/addr MUX</text>
+<text class="detail" x="278.5" y="70" text-anchor="middle">MASK / LOGIT / OUT</text>
+<rect class="hw mem" x="391" y="28" width="147" height="56"/>
+<text class="hw-name" x="464.5" y="51" text-anchor="middle">Memory fabric</text>
+<text class="detail" x="464.5" y="70" text-anchor="middle">rdata / wdata</text>
+<rect class="hw op" x="583" y="28" width="148" height="56"/>
+<text class="hw-name" x="657.0" y="51" text-anchor="middle">Mask test</text>
+<text class="detail" x="657.0" y="70" text-anchor="middle">rdata[0] == 0</text>
+<text class="detail" x="819" y="50" text-anchor="start">1 → issue LOGIT read</text>
+<text class="detail" x="819" y="70" text-anchor="start">0 → skip this read</text>
+<text class="detail" x="12" y="109" text-anchor="start">SUCCESSFUL LOGIT_WAIT UPDATES BOTH REGISTERS</text>
+<rect class="hw mem" x="12" y="125" width="132" height="56"/>
+<text class="hw-name" x="78.0" y="148" text-anchor="middle">Logit word</text>
+<text class="detail" x="78.0" y="167" text-anchor="middle">rdata[15:0]</text>
+<rect class="hw op" x="177" y="125" width="126" height="56"/>
+<text class="hw-name" x="240.0" y="148" text-anchor="middle">Add + check</text>
+<text class="detail" x="240.0" y="167" text-anchor="middle">+ · signed 48</text>
+<rect class="hw reg" x="338" y="125" width="118" height="56"/>
+<path class="hw-clock" d="M 348 181 l 6 -7 l 6 7"/>
+<text class="hw-name" x="397.0" y="148" text-anchor="middle">sum_q</text>
+<text class="detail" x="397.0" y="167" text-anchor="middle">S48 · F10 scale</text>
+<rect class="hw reg" x="338" y="191" width="118" height="56"/>
+<path class="hw-clock" d="M 348 247 l 6 -7 l 6 7"/>
+<text class="hw-name" x="397.0" y="214" text-anchor="middle">count_q</text>
+<text class="detail" x="397.0" y="233" text-anchor="middle">16-bit · +1</text>
+<rect class="hw op" x="800" y="191" width="122" height="56"/>
+<text class="hw-name" x="861.0" y="214" text-anchor="middle">Zero?</text>
+<text class="detail" x="861.0" y="233" text-anchor="middle">Cₙ == 0</text>
+<rect class="hw op" x="632" y="191" width="134" height="56"/>
+<text class="hw-name" x="699.0" y="214" text-anchor="middle">Reciprocal</text>
+<text class="detail" x="699.0" y="233" text-anchor="middle">count_q &lt;&lt; 22</text>
+<circle cx="513" cy="219" r="3" fill="#506483"/>
+<rect class="hw op" x="634" y="125" width="130" height="56"/>
+<text class="hw-name" x="699.0" y="148" text-anchor="middle">Multiply</text>
+<text class="detail" x="699.0" y="167" text-anchor="middle">sum × inverse</text>
+<rect class="hw op" x="800" y="125" width="122" height="56"/>
+<text class="hw-name" x="861.0" y="148" text-anchor="middle">RNE + sat</text>
+<text class="detail" x="861.0" y="167" text-anchor="middle">&gt;&gt;32 · S16/F10</text>
+<rect class="hw reg" x="958" y="125" width="150" height="56"/>
+<path class="hw-clock" d="M 968 181 l 6 -7 l 6 7"/>
+<text class="hw-name" x="1033.0" y="148" text-anchor="middle">value_q</text>
+<text class="detail" x="1033.0" y="167" text-anchor="middle">write OUTPUT[n]</text>
+<text class="detail" x="961" y="223" text-anchor="start">EMPTY_POSITION</text>
+</svg>
+</div>
+  <ul class="points"><li>Dashed paths show control decisions. After each committed OUTPUT write, clear both registers for the next position.</li><li>Only successful aggregation enables host readout. The core holds each logit, index and last flag through backpressure.</li></ul>
   <p class="sources"><a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/aggregation_ctrl.sv">aggregation_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/arithmetic/reciprocal_unit.sv">Reciprocal unit</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/core_ctrl.sv">core_ctrl</a></p>
 </section>
 <section class="slide" id="verification" tabindex="-1">
