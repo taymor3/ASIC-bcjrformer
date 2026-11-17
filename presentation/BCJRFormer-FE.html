@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BCJRFormer ASIC | Front-end design</title>
+<style>
+:root {
+  --paper: #f6f8fc;
+  --ink: #101826;
+  --muted: #506483;
+  --rule: #c0ccdd;
+  --accent: #4058a6;
+  --tint: #e8edfb;
+  color-scheme: light;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; }
+header, footer { padding: 12px clamp(16px, 4vw, 56px); border-bottom: 1px solid var(--rule); }
+header strong { letter-spacing: .04em; }
+nav, footer { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+nav { margin-top: 10px; }
+a { color: #304992; text-underline-offset: .2em; }
+nav a { font-size: .875rem; }
+nav a[aria-current] { font-weight: 700; }
+button {
+  font: inherit; color: var(--ink); background: white; border: 1px solid var(--muted);
+  border-radius: 4px; padding: 6px 12px; cursor: pointer;
+}
+button:disabled { opacity: .5; cursor: default; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+main { width: 100%; max-width: 1420px; margin: 0 auto; flex: 1; }
+.slide { padding: clamp(24px, 4vw, 56px) clamp(16px, 4vw, 56px) 22px; }
+.slide:focus { outline: none; }
+.eyebrow, .detail, .sources, #counter {
+  font-family: "Cascadia Mono", Consolas, monospace;
+}
+.eyebrow { color: var(--accent); font-size: .87rem; letter-spacing: .1em; text-transform: uppercase; margin: 0 0 12px; }
+h1 { font: 500 clamp(2.1rem, 5.25vw, 4.6rem)/1.03 Georgia, serif; letter-spacing: -.04em; margin: 0; }
+.lead { font-size: clamp(1.1rem, 1.8vw, 1.45rem); line-height: 1.4; max-width: 75ch; margin: 16px 0 10px; }
+.figure { overflow-x: auto; }
+svg { display: block; width: 100%; min-width: 1120px; height: auto; }
+.node { fill: white; stroke: var(--muted); }
+.focus { fill: var(--tint); stroke: var(--accent); stroke-width: 2; }
+.wire { fill: none; stroke: var(--muted); stroke-width: 1.7; }
+.loop { stroke-dasharray: 6 4; }
+.rule { stroke: var(--rule); }
+.label { font-size: 18px; font-weight: 650; fill: var(--ink); }
+.detail { font-size: 12px; fill: var(--muted); }
+.points { padding-left: 22px; max-width: 100ch; font-size: clamp(1rem, 1.4vw, 1.18rem); line-height: 1.42; }
+.points li + li { margin-top: .45em; }
+.sources { font-size: .82rem; line-height: 1.7; color: var(--muted); }
+footer { border: 0; border-top: 1px solid var(--rule); position: sticky; bottom: 0; background: var(--paper); }
+#counter { min-width: 6ch; text-align: center; }
+.revision { margin-left: auto; color: var(--muted); font: .8rem Consolas, monospace; }
+@media (min-width: 900px) and (max-width: 1270px) { svg { min-width: 0; } }
+@media (max-height: 800px) and (min-width: 900px) {
+  .slide { padding-top: 20px; padding-bottom: 6px; }
+  h1 { font-size: clamp(2.1rem, 3.6vw, 3.35rem); }
+  .lead { font-size: 1.2rem; margin-top: 12px; }
+  .points { margin: 10px 0; font-size: 1.06rem; }
+  .sources { margin: 8px 0; }
+}
+@media print {
+  header, footer { display: none !important; }
+  .slide, .slide[hidden] { display: block !important; break-after: page; }
+  .slide:last-child { break-after: auto; }
+  svg { min-width: 0; }
+  .figure { overflow: visible; }
+}
+</style>
+</head>
+<body>
+<header>
+  <strong>BCJRFormer ASIC</strong>
+  <nav aria-label="Jump to section">
+    <a href="#overview">Overview</a><a href="#frame">Frame control</a><a href="#s1-arch">1 Embedding</a>
+    <a href="#s2-arch">2 Position</a><a href="#s3-arch">3 Encoder</a><a href="#s4-arch">4 Projection</a>
+    <a href="#s5-arch">5 Aggregation</a><a href="#verification">Verification</a>
+  </nav>
+</header>
+<main>
+<section class="slide" id="overview" tabindex="-1">
+  <p class="eyebrow">BCJRFormer ASIC / Front-end design</p>
+  <h1>From read windows to decoded logits</h1>
+  <p class="lead">The ASIC inner decoder turns pre-windowed noisy reads into one signed logit per encoded position.</p>
+<div class="figure" tabindex="0" role="region" aria-label="From read windows to decoded logits diagram"><svg viewBox="0 28 1120 200" role="img" aria-labelledby="overview-title overview-desc">
+<title id="overview-title">From read windows to decoded logits</title>
+<desc id="overview-desc">Embed, S1 · FEATURE → X. Add position, S2 · update X. Encode, S3 · refine X. Project, S4 · X → LOGIT. Aggregate, S5 · LOGIT → OUTPUT. Arrows show frame order. Stage controllers hand off tensor data through logical memory banks. </desc>
+<defs><marker id="overview-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#506483"/></marker></defs>
+<path class="wire" d="M 198 92 H 236" marker-end="url(#overview-arrow)"/>
+<path class="wire" d="M 426 92 H 464" marker-end="url(#overview-arrow)"/>
+<path class="wire" d="M 654 92 H 692" marker-end="url(#overview-arrow)"/>
+<path class="wire" d="M 882 92 H 920" marker-end="url(#overview-arrow)"/>
+<rect class="node" x="10" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="104" y="86" text-anchor="middle">Embed</text>
+<text class="detail" x="104" y="110" text-anchor="middle">S1 · FEATURE → X</text>
+<rect class="node" x="238" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="332" y="86" text-anchor="middle">Add position</text>
+<text class="detail" x="332" y="110" text-anchor="middle">S2 · update X</text>
+<rect class="node focus" x="466" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="560" y="86" text-anchor="middle">Encode</text>
+<text class="detail" x="560" y="110" text-anchor="middle">S3 · refine X</text>
+<rect class="node" x="694" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="788" y="86" text-anchor="middle">Project</text>
+<text class="detail" x="788" y="110" text-anchor="middle">S4 · X → LOGIT</text>
+<rect class="node" x="922" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="1016" y="86" text-anchor="middle">Aggregate</text>
+<text class="detail" x="1016" y="110" text-anchor="middle">S5 · LOGIT → OUTPUT</text>
+<path class="rule" d="M 8 184 H 1112"/>
+<text class="detail" x="8" y="211">Arrows show frame order. Stage controllers hand off tensor data through logical memory banks.</text>
+</svg></div>
+  <ul class="points"><li>M = reads, N = positions, L = M × N tokens, F = input features, D = model width.</li><li>H = attention heads, K = encoder layers. Token index t = m × N + n.</li></ul>
+  <p class="sources"><a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/docs/architecture.md">Architecture</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/bcjrformer_core.sv">Core RTL</a></p>
+</section>
+<section class="slide" id="frame" tabindex="-1">
+  <p class="eyebrow">System / Transaction flow</p>
+  <h1>One controller sequences the frame</h1>
+  <p class="lead">A committed parameter image can serve successive frames. The host sends the features first, then the padding mask.</p>
+<div class="figure" tabindex="0" role="region" aria-label="One controller sequences the frame diagram"><svg viewBox="0 28 1120 200" role="img" aria-labelledby="frame-title frame-desc">
+<title id="frame-title">One controller sequences the frame</title>
+<desc id="frame-desc">Parameter image, ordered writes + commit. Frame load, L×F words + L bits. Run stages, five cmd/rsp pairs. Stream logits, N ready/valid beats. Complete, held result code. Forward arrows show the successful sequence. A fatal completion requires reset. </desc>
+<defs><marker id="frame-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#506483"/></marker></defs>
+<path class="wire" d="M 198 92 H 236" marker-end="url(#frame-arrow)"/>
+<path class="wire" d="M 426 92 H 464" marker-end="url(#frame-arrow)"/>
+<path class="wire" d="M 654 92 H 692" marker-end="url(#frame-arrow)"/>
+<path class="wire" d="M 882 92 H 920" marker-end="url(#frame-arrow)"/>
+<rect class="node" x="10" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="104" y="86" text-anchor="middle">Parameter image</text>
+<text class="detail" x="104" y="110" text-anchor="middle">ordered writes + commit</text>
+<rect class="node" x="238" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="332" y="86" text-anchor="middle">Frame load</text>
+<text class="detail" x="332" y="110" text-anchor="middle">L×F words + L bits</text>
+<rect class="node focus" x="466" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="560" y="86" text-anchor="middle">Run stages</text>
+<text class="detail" x="560" y="110" text-anchor="middle">five cmd/rsp pairs</text>
+<rect class="node" x="694" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="788" y="86" text-anchor="middle">Stream logits</text>
+<text class="detail" x="788" y="110" text-anchor="middle">N ready/valid beats</text>
+<rect class="node" x="922" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="1016" y="86" text-anchor="middle">Complete</text>
+<text class="detail" x="1016" y="110" text-anchor="middle">held result code</text>
+<path class="rule" d="M 8 184 H 1112"/>
+<text class="detail" x="8" y="211">Forward arrows show the successful sequence. A fatal completion requires reset.</text>
+</svg></div>
+  <ul class="points"><li>Transfers happen when valid and ready are both high. A stalled producer holds its valid and payload.</li><li>The shared memory fabric accepts one transaction at a time, retains its requester, and returns the read value or write acknowledgment.</li></ul>
+  <p class="sources"><a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/core_ctrl.sv">core_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/interfaces/bcjrformer_channels.sv">Channel definitions</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/protocol/memory_fabric.sv">Memory fabric</a></p>
+</section>
+<section class="slide" id="s1-arch" tabindex="-1">
+  <p class="eyebrow">Stage 1 / Architecture</p>
+  <h1>Embed each input token</h1>
+  <p class="lead">Normalize the input features, project them to model width, and normalize the projected vector.</p>
+<div class="figure" tabindex="0" role="region" aria-label="Embed each input token diagram"><svg viewBox="0 28 1120 200" role="img" aria-labelledby="s1-arch-title s1-arch-desc">
+<title id="s1-arch-title">Embed each input token</title>
+<desc id="s1-arch-desc">Input token, FEATURE[t, :] · F. LayerNorm, F features. Affine map, F → D. LayerNorm, D features. Token embedding, X[t, :] · D. Arrows carry a token vector. Learned affine weights and biases come from PARAM. </desc>
+<defs><marker id="s1-arch-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#506483"/></marker></defs>
+<path class="wire" d="M 198 92 H 236" marker-end="url(#s1-arch-arrow)"/>
+<path class="wire" d="M 426 92 H 464" marker-end="url(#s1-arch-arrow)"/>
+<path class="wire" d="M 654 92 H 692" marker-end="url(#s1-arch-arrow)"/>
+<path class="wire" d="M 882 92 H 920" marker-end="url(#s1-arch-arrow)"/>
+<rect class="node" x="10" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="104" y="86" text-anchor="middle">Input token</text>
+<text class="detail" x="104" y="110" text-anchor="middle">FEATURE[t, :] · F</text>
+<rect class="node" x="238" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="332" y="86" text-anchor="middle">LayerNorm</text>
+<text class="detail" x="332" y="110" text-anchor="middle">F features</text>
+<rect class="node focus" x="466" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="560" y="86" text-anchor="middle">Affine map</text>
+<text class="detail" x="560" y="110" text-anchor="middle">F → D</text>
+<rect class="node" x="694" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="788" y="86" text-anchor="middle">LayerNorm</text>
+<text class="detail" x="788" y="110" text-anchor="middle">D features</text>
+<rect class="node" x="922" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="1016" y="86" text-anchor="middle">Token embedding</text>
+<text class="detail" x="1016" y="110" text-anchor="middle">X[t, :] · D</text>
+<path class="rule" d="M 8 184 H 1112"/>
+<text class="detail" x="8" y="211">Arrows carry a token vector. Learned affine weights and biases come from PARAM.</text>
+</svg></div>
+  <ul class="points"><li>The output tensor has L rows and D columns. Stage 1 visits all L tokens.</li><li>The two norms have separate learned parameters and use the same LayerNorm hardware.</li></ul>
+  <p class="sources"><a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/docs/architecture.md">Architecture</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/embedding_ctrl.sv">embedding_ctrl</a></p>
+</section>
+<section class="slide" id="s1-rtl" tabindex="-1">
+  <p class="eyebrow">Stage 1 / RTL</p>
+  <h1>Copy and reuse token workspaces</h1>
+  <p class="lead">embedding_ctrl sequences copies and service commands. Each operation finishes before its consumer starts.</p>
+<div class="figure" tabindex="0" role="region" aria-label="Copy and reuse token workspaces diagram"><svg viewBox="0 28 1120 200" role="img" aria-labelledby="s1-rtl-title s1-rtl-desc">
+<title id="s1-rtl-title">Copy and reuse token workspaces</title>
+<desc id="s1-rtl-desc">Copy in, FEATURE → TOKEN. Normalize F, NORM_F_ISSUE/WAIT. Project, LINEAR_ISSUE/WAIT. Normalize D, NORM_D_ISSUE/WAIT. Copy out, VECTOR → X. Solid arrows show phase order on success. Dashed arrow repeats the token loop. X write acknowledged · more tokens</desc>
+<defs><marker id="s1-rtl-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#506483"/></marker></defs>
+<path class="wire" d="M 198 92 H 236" marker-end="url(#s1-rtl-arrow)"/>
+<path class="wire" d="M 426 92 H 464" marker-end="url(#s1-rtl-arrow)"/>
+<path class="wire" d="M 654 92 H 692" marker-end="url(#s1-rtl-arrow)"/>
+<path class="wire" d="M 882 92 H 920" marker-end="url(#s1-rtl-arrow)"/>
+<path class="wire loop" d="M 1016 132 V 156 Q 1016 164 1008 164 H 112 Q 104 164 104 156 V 134" marker-end="url(#s1-rtl-arrow)"/>
+<text x="560" y="152" text-anchor="middle" class="detail">X write acknowledged · more tokens</text>
+<rect class="node" x="10" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="104" y="86" text-anchor="middle">Copy in</text>
+<text class="detail" x="104" y="110" text-anchor="middle">FEATURE → TOKEN</text>
+<rect class="node" x="238" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="332" y="86" text-anchor="middle">Normalize F</text>
+<text class="detail" x="332" y="110" text-anchor="middle">NORM_F_ISSUE/WAIT</text>
+<rect class="node focus" x="466" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="560" y="86" text-anchor="middle">Project</text>
+<text class="detail" x="560" y="110" text-anchor="middle">LINEAR_ISSUE/WAIT</text>
+<rect class="node" x="694" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="788" y="86" text-anchor="middle">Normalize D</text>
+<text class="detail" x="788" y="110" text-anchor="middle">NORM_D_ISSUE/WAIT</text>
+<rect class="node" x="922" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="1016" y="86" text-anchor="middle">Copy out</text>
+<text class="detail" x="1016" y="110" text-anchor="middle">VECTOR → X</text>
+<path class="rule" d="M 8 184 H 1112"/>
+<text class="detail" x="8" y="211">Solid arrows show phase order on success. Dashed arrow repeats the token loop.</text>
+</svg></div>
+  <ul class="points"><li>Shared layernorm_ctrl normalizes TOKEN and VECTOR in place. Shared linear_ctrl writes VECTOR using dot_engine.</li><li>Copy phases use READ and WRITE issue/wait states. The final X write acknowledgment gates RESPONSE.</li></ul>
+  <p class="sources"><a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/embedding_ctrl.sv">embedding_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/layernorm_ctrl.sv">layernorm_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/linear_ctrl.sv">linear_ctrl</a></p>
+</section>
+<section class="slide" id="s2-arch" tabindex="-1">
+  <p class="eyebrow">Stage 2 / Architecture</p>
+  <h1>Add position and read identity</h1>
+  <p class="lead">Each scalar in X receives one position embedding and one read embedding.</p>
+<div class="figure" tabindex="0" role="region" aria-label="Add position and read identity diagram"><svg viewBox="0 28 1120 200" role="img" aria-labelledby="s2-arch-title s2-arch-desc">
+<title id="s2-arch-title">Add position and read identity</title>
+<desc id="s2-arch-desc">Token scalar, X[t, j]. Add position, P[n, j]. Add read, E[m, j]. Enriched scalar, X[t, j] · in place. Arrows carry the running scalar. P is shared across reads and E is shared across positions. </desc>
+<defs><marker id="s2-arch-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#506483"/></marker></defs>
+<path class="wire" d="M 256 92 H 294" marker-end="url(#s2-arch-arrow)"/>
+<path class="wire" d="M 540 92 H 578" marker-end="url(#s2-arch-arrow)"/>
+<path class="wire" d="M 824 92 H 862" marker-end="url(#s2-arch-arrow)"/>
+<rect class="node" x="12" y="52" width="244" height="80" rx="4"/>
+<text class="label" x="134" y="86" text-anchor="middle">Token scalar</text>
+<text class="detail" x="134" y="110" text-anchor="middle">X[t, j]</text>
+<rect class="node" x="296" y="52" width="244" height="80" rx="4"/>
+<text class="label" x="418" y="86" text-anchor="middle">Add position</text>
+<text class="detail" x="418" y="110" text-anchor="middle">P[n, j]</text>
+<rect class="node focus" x="580" y="52" width="244" height="80" rx="4"/>
+<text class="label" x="702" y="86" text-anchor="middle">Add read</text>
+<text class="detail" x="702" y="110" text-anchor="middle">E[m, j]</text>
+<rect class="node" x="864" y="52" width="244" height="80" rx="4"/>
+<text class="label" x="986" y="86" text-anchor="middle">Enriched scalar</text>
+<text class="detail" x="986" y="110" text-anchor="middle">X[t, j] · in place</text>
+<path class="rule" d="M 8 184 H 1112"/>
+<text class="detail" x="8" y="211">Arrows carry the running scalar. P is shared across reads and E is shared across positions.</text>
+</svg></div>
+  <ul class="points"><li>The logical expression is (X[t,j] + P[n,j]) + E[m,j]. The intermediate result is narrowed before the second add.</li><li>Stage 2 preserves the L × D shape and visits padded tokens too.</li></ul>
+  <p class="sources"><a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/docs/architecture.md">Architecture</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/position_sequencer.sv">position_sequencer</a></p>
+</section>
+<section class="slide" id="s2-rtl" tabindex="-1">
+  <p class="eyebrow">Stage 2 / RTL</p>
+  <h1>Use one local adder twice</h1>
+  <p class="lead">position_ctrl instantiates position_sequencer and position_add_unit. The sequencer holds the running value and parameter operand.</p>
+<div class="figure" tabindex="0" role="region" aria-label="Use one local adder twice diagram"><svg viewBox="0 28 1120 200" role="img" aria-labelledby="s2-rtl-title s2-rtl-desc">
+<title id="s2-rtl-title">Use one local adder twice</title>
+<desc id="s2-rtl-desc">Read X, X_ISSUE / X_WAIT. Read P + add, P_* · ADD_P_*. Read E + add, E_* · ADD_E_*. Commit X, WRITE_ISSUE / WAIT. Solid arrows follow request/response phase order. Each wildcard groups an ISSUE/WAIT pair. write acknowledged · more elements</desc>
+<defs><marker id="s2-rtl-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#506483"/></marker></defs>
+<path class="wire" d="M 256 92 H 294" marker-end="url(#s2-rtl-arrow)"/>
+<path class="wire" d="M 540 92 H 578" marker-end="url(#s2-rtl-arrow)"/>
+<path class="wire" d="M 824 92 H 862" marker-end="url(#s2-rtl-arrow)"/>
+<path class="wire loop" d="M 986 132 V 156 Q 986 164 978 164 H 142 Q 134 164 134 156 V 134" marker-end="url(#s2-rtl-arrow)"/>
+<text x="560" y="152" text-anchor="middle" class="detail">write acknowledged · more elements</text>
+<rect class="node" x="12" y="52" width="244" height="80" rx="4"/>
+<text class="label" x="134" y="86" text-anchor="middle">Read X</text>
+<text class="detail" x="134" y="110" text-anchor="middle">X_ISSUE / X_WAIT</text>
+<rect class="node" x="296" y="52" width="244" height="80" rx="4"/>
+<text class="label" x="418" y="86" text-anchor="middle">Read P + add</text>
+<text class="detail" x="418" y="110" text-anchor="middle">P_* · ADD_P_*</text>
+<rect class="node focus" x="580" y="52" width="244" height="80" rx="4"/>
+<text class="label" x="702" y="86" text-anchor="middle">Read E + add</text>
+<text class="detail" x="702" y="110" text-anchor="middle">E_* · ADD_E_*</text>
+<rect class="node" x="864" y="52" width="244" height="80" rx="4"/>
+<text class="label" x="986" y="86" text-anchor="middle">Commit X</text>
+<text class="detail" x="986" y="110" text-anchor="middle">WRITE_ISSUE / WAIT</text>
+<path class="rule" d="M 8 184 H 1112"/>
+<text class="detail" x="8" y="211">Solid arrows follow request/response phase order. Each wildcard groups an ISSUE/WAIT pair.</text>
+</svg></div>
+  <ul class="points"><li>Each addition widens the signed operands, then saturates back to signed 16-bit with 10 fractional bits.</li><li>The loop advances j, then n, then m after write acknowledgment. The last acknowledgment gates RESPONSE.</li></ul>
+  <p class="sources"><a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/position_ctrl.sv">position_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/position_sequencer.sv">position_sequencer</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/arithmetic/position_add_unit.sv">Local adder</a></p>
+</section>
+<section class="slide" id="s3-arch" tabindex="-1">
+  <p class="eyebrow">Stage 3 / Architecture</p>
+  <h1>Refine X with K encoder layers</h1>
+  <p class="lead">Each pre-norm layer mixes information across tokens, then applies a feed-forward network to each token.</p>
+<div class="figure" tabindex="0" role="region" aria-label="Refine X with K encoder layers diagram"><svg viewBox="0 28 1120 200" role="img" aria-labelledby="s3-arch-title s3-arch-desc">
+<title id="s3-arch-title">Refine X with K encoder layers</title>
+<desc id="s3-arch-desc">Normalize, LN1(X) → U. Attention, QKV · softmax · mix. Residual 1, R = X + ATTN_OUT. Normalize, LN2(R) → U. FFN + residual 2, R + FFN(U) → X. Solid arrows show layer phase order. The dashed arrow repeats the layer. X and R feed the residual adds. layer complete · more layers</desc>
+<defs><marker id="s3-arch-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#506483"/></marker></defs>
+<path class="wire" d="M 198 92 H 236" marker-end="url(#s3-arch-arrow)"/>
+<path class="wire" d="M 426 92 H 464" marker-end="url(#s3-arch-arrow)"/>
+<path class="wire" d="M 654 92 H 692" marker-end="url(#s3-arch-arrow)"/>
+<path class="wire" d="M 882 92 H 920" marker-end="url(#s3-arch-arrow)"/>
+<path class="wire loop" d="M 1016 132 V 156 Q 1016 164 1008 164 H 112 Q 104 164 104 156 V 134" marker-end="url(#s3-arch-arrow)"/>
+<text x="560" y="152" text-anchor="middle" class="detail">layer complete · more layers</text>
+<rect class="node" x="10" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="104" y="86" text-anchor="middle">Normalize</text>
+<text class="detail" x="104" y="110" text-anchor="middle">LN1(X) → U</text>
+<rect class="node focus" x="238" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="332" y="86" text-anchor="middle">Attention</text>
+<text class="detail" x="332" y="110" text-anchor="middle">QKV · softmax · mix</text>
+<rect class="node" x="466" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="560" y="86" text-anchor="middle">Residual 1</text>
+<text class="detail" x="560" y="110" text-anchor="middle">R = X + ATTN_OUT</text>
+<rect class="node" x="694" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="788" y="86" text-anchor="middle">Normalize</text>
+<text class="detail" x="788" y="110" text-anchor="middle">LN2(R) → U</text>
+<rect class="node" x="922" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="1016" y="86" text-anchor="middle">FFN + residual 2</text>
+<text class="detail" x="1016" y="110" text-anchor="middle">R + FFN(U) → X</text>
+<path class="rule" d="M 8 184 H 1112"/>
+<text class="detail" x="8" y="211">Solid arrows show layer phase order. The dashed arrow repeats the layer. X and R feed the residual adds.</text>
+</svg></div>
+  <ul class="points"><li>For each head, attention scales QKᵀ by 1/√(D/H), applies row softmax, and weights V before the output projection.</li><li>The FFN maps D → 4D → D with GELU between linear maps. Each layer returns L × D.</li></ul>
+  <p class="sources"><a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/docs/architecture/Stages3-5-design.md">Stage design</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/layer_ctrl.sv">layer_ctrl</a></p>
+</section>
+<section class="slide" id="s3-rtl" tabindex="-1">
+  <p class="eyebrow">Stage 3 / RTL</p>
+  <h1>Reuse one layer controller K times</h1>
+  <p class="lead">encoder_ctrl sends a layer-specific parameter descriptor and waits for layer_ctrl to complete before incrementing k.</p>
+<div class="figure" tabindex="0" role="region" aria-label="Reuse one layer controller K times diagram"><svg viewBox="0 28 1120 200" role="img" aria-labelledby="s3-rtl-title s3-rtl-desc">
+<title id="s3-rtl-title">Reuse one layer controller K times</title>
+<desc id="s3-rtl-desc">LN1 sweep, layernorm_ctrl. Attention sweep, attention_ctrl. Residual 1, residual_ctrl. LN2 sweep, layernorm_ctrl. Per-token pair, ffn_ctrl + residual_ctrl. Arrows show layer_ctrl phases. Every service handoff waits for its successful response. </desc>
+<defs><marker id="s3-rtl-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#506483"/></marker></defs>
+<path class="wire" d="M 198 92 H 236" marker-end="url(#s3-rtl-arrow)"/>
+<path class="wire" d="M 426 92 H 464" marker-end="url(#s3-rtl-arrow)"/>
+<path class="wire" d="M 654 92 H 692" marker-end="url(#s3-rtl-arrow)"/>
+<path class="wire" d="M 882 92 H 920" marker-end="url(#s3-rtl-arrow)"/>
+<rect class="node" x="10" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="104" y="86" text-anchor="middle">LN1 sweep</text>
+<text class="detail" x="104" y="110" text-anchor="middle">layernorm_ctrl</text>
+<rect class="node focus" x="238" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="332" y="86" text-anchor="middle">Attention sweep</text>
+<text class="detail" x="332" y="110" text-anchor="middle">attention_ctrl</text>
+<rect class="node" x="466" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="560" y="86" text-anchor="middle">Residual 1</text>
+<text class="detail" x="560" y="110" text-anchor="middle">residual_ctrl</text>
+<rect class="node" x="694" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="788" y="86" text-anchor="middle">LN2 sweep</text>
+<text class="detail" x="788" y="110" text-anchor="middle">layernorm_ctrl</text>
+<rect class="node" x="922" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="1016" y="86" text-anchor="middle">Per-token pair</text>
+<text class="detail" x="1016" y="110" text-anchor="middle">ffn_ctrl + residual_ctrl</text>
+<path class="rule" d="M 8 184 H 1112"/>
+<text class="detail" x="8" y="211">Arrows show layer_ctrl phases. Every service handoff waits for its successful response.</text>
+</svg></div>
+  <ul class="points"><li>U is reused for LN2 after attention and residual 1. R remains in X until its token’s second residual is written.</li><li>For each token, FFN writes FFN_HIDDEN, replaces it with GELU activations, then writes VECTOR for residual 2.</li></ul>
+  <p class="sources"><a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/encoder_ctrl.sv">encoder_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/layer_ctrl.sv">layer_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/ffn_ctrl.sv">ffn_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/residual_ctrl.sv">residual_ctrl</a></p>
+</section>
+<section class="slide" id="attention" tabindex="-1">
+  <p class="eyebrow">Stage 3 / RTL detail</p>
+  <h1>Attention works one head and query at a time</h1>
+  <p class="lead">attention_ctrl waits for the Q, KEY, and VALUE banks to finish, then visits each (head, query) pair.</p>
+<div class="figure" tabindex="0" role="region" aria-label="Attention works one head and query at a time diagram"><svg viewBox="0 28 1120 200" role="img" aria-labelledby="attention-title attention-desc">
+<title id="attention-title">Attention works one head and query at a time</title>
+<desc id="attention-desc">Build QKV, qkv_ctrl. Score row, score_row_ctrl. Softmax, softmax_ctrl. Weighted value, weighted_value_ctrl. Project Z, output_projection_ctrl. Arrows show phase order. Repeat the middle three blocks per head/query before projecting Z. </desc>
+<defs><marker id="attention-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#506483"/></marker></defs>
+<path class="wire" d="M 198 92 H 236" marker-end="url(#attention-arrow)"/>
+<path class="wire" d="M 426 92 H 464" marker-end="url(#attention-arrow)"/>
+<path class="wire" d="M 654 92 H 692" marker-end="url(#attention-arrow)"/>
+<path class="wire" d="M 882 92 H 920" marker-end="url(#attention-arrow)"/>
+<rect class="node" x="10" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="104" y="86" text-anchor="middle">Build QKV</text>
+<text class="detail" x="104" y="110" text-anchor="middle">qkv_ctrl</text>
+<rect class="node" x="238" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="332" y="86" text-anchor="middle">Score row</text>
+<text class="detail" x="332" y="110" text-anchor="middle">score_row_ctrl</text>
+<rect class="node focus" x="466" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="560" y="86" text-anchor="middle">Softmax</text>
+<text class="detail" x="560" y="110" text-anchor="middle">softmax_ctrl</text>
+<rect class="node" x="694" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="788" y="86" text-anchor="middle">Weighted value</text>
+<text class="detail" x="788" y="110" text-anchor="middle">weighted_value_ctrl</text>
+<rect class="node" x="922" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="1016" y="86" text-anchor="middle">Project Z</text>
+<text class="detail" x="1016" y="110" text-anchor="middle">output_projection_ctrl</text>
+<path class="rule" d="M 8 184 H 1112"/>
+<text class="detail" x="8" y="211">Arrows show phase order. Repeat the middle three blocks per head/query before projecting Z.</text>
+</svg></div>
+  <ul class="points"><li>SCORE, EXP and PROB are row workspaces. The weighted-value controller writes the head slice of Z.</li><li>MASK applies to the query here. Padded queries use uniform probabilities. Ordinary queries normalize across all L keys.</li><li>Output projection starts after every Z slice commits and finishes after all ATTN_OUT writes.</li></ul>
+  <p class="sources"><a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/attention_ctrl.sv">attention_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/softmax_ctrl.sv">softmax_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/weighted_value_ctrl.sv">weighted_value_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/output_projection_ctrl.sv">output_projection_ctrl</a></p>
+</section>
+<section class="slide" id="s4-arch" tabindex="-1">
+  <p class="eyebrow">Stage 4 / Architecture</p>
+  <h1>Project each token to a scalar logit</h1>
+  <p class="lead">A learned D-to-1 affine map turns each encoded token into a signed score.</p>
+<div class="figure" tabindex="0" role="region" aria-label="Project each token to a scalar logit diagram"><svg viewBox="0 28 1120 200" role="img" aria-labelledby="s4-arch-title s4-arch-desc">
+<title id="s4-arch-title">Project each token to a scalar logit</title>
+<desc id="s4-arch-desc">Encoded token, X[t, :] · D. Affine head, w · X[t, :] + b. Token logit, LOGIT[t] · scalar. Arrows carry one D-wide token vector into the head and one scalar out. </desc>
+<defs><marker id="s4-arch-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#506483"/></marker></defs>
+<path class="wire" d="M 350 92 H 388" marker-end="url(#s4-arch-arrow)"/>
+<path class="wire" d="M 730 92 H 768" marker-end="url(#s4-arch-arrow)"/>
+<rect class="node" x="10" y="52" width="340" height="80" rx="4"/>
+<text class="label" x="180" y="86" text-anchor="middle">Encoded token</text>
+<text class="detail" x="180" y="110" text-anchor="middle">X[t, :] · D</text>
+<rect class="node focus" x="390" y="52" width="340" height="80" rx="4"/>
+<text class="label" x="560" y="86" text-anchor="middle">Affine head</text>
+<text class="detail" x="560" y="110" text-anchor="middle">w · X[t, :] + b</text>
+<rect class="node" x="770" y="52" width="340" height="80" rx="4"/>
+<text class="label" x="940" y="86" text-anchor="middle">Token logit</text>
+<text class="detail" x="940" y="110" text-anchor="middle">LOGIT[t] · scalar</text>
+<path class="rule" d="M 8 184 H 1112"/>
+<text class="detail" x="8" y="211">Arrows carry one D-wide token vector into the head and one scalar out.</text>
+</svg></div>
+  <ul class="points"><li>Weights and bias are shared across tokens. The result contains L logits in flattened read/position order.</li><li>The affine head runs on padded tokens too. Stage 5 uses MASK to decide which scores contribute.</li></ul>
+  <p class="sources"><a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/docs/architecture/Stages3-5-design.md">Stage design</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/final_ctrl.sv">final_ctrl</a></p>
+</section>
+<section class="slide" id="s4-rtl" tabindex="-1">
+  <p class="eyebrow">Stage 4 / RTL</p>
+  <h1>Reuse the shared linear and dot engines</h1>
+  <p class="lead">final_ctrl dispatches one linear descriptor per token. Its source is X at t × D and its destination is LOGIT at t.</p>
+<div class="figure" tabindex="0" role="region" aria-label="Reuse the shared linear and dot engines diagram"><svg viewBox="0 28 1120 200" role="img" aria-labelledby="s4-rtl-title s4-rtl-desc">
+<title id="s4-rtl-title">Reuse the shared linear and dot engines</title>
+<desc id="s4-rtl-desc">Issue descriptor, final_ctrl · out_count=1. Accumulate, linear_ctrl + dot_engine. Write LOGIT, convert + memory ack. Return status, linear response. Solid arrows show work inside one command. The dashed arrow returns to final_ctrl for the next token. linear response accepted · more tokens</desc>
+<defs><marker id="s4-rtl-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#506483"/></marker></defs>
+<path class="wire" d="M 256 92 H 294" marker-end="url(#s4-rtl-arrow)"/>
+<path class="wire" d="M 540 92 H 578" marker-end="url(#s4-rtl-arrow)"/>
+<path class="wire" d="M 824 92 H 862" marker-end="url(#s4-rtl-arrow)"/>
+<path class="wire loop" d="M 986 132 V 156 Q 986 164 978 164 H 142 Q 134 164 134 156 V 134" marker-end="url(#s4-rtl-arrow)"/>
+<text x="560" y="152" text-anchor="middle" class="detail">linear response accepted · more tokens</text>
+<rect class="node" x="12" y="52" width="244" height="80" rx="4"/>
+<text class="label" x="134" y="86" text-anchor="middle">Issue descriptor</text>
+<text class="detail" x="134" y="110" text-anchor="middle">final_ctrl · out_count=1</text>
+<rect class="node focus" x="296" y="52" width="244" height="80" rx="4"/>
+<text class="label" x="418" y="86" text-anchor="middle">Accumulate</text>
+<text class="detail" x="418" y="110" text-anchor="middle">linear_ctrl + dot_engine</text>
+<rect class="node" x="580" y="52" width="244" height="80" rx="4"/>
+<text class="label" x="702" y="86" text-anchor="middle">Write LOGIT</text>
+<text class="detail" x="702" y="110" text-anchor="middle">convert + memory ack</text>
+<rect class="node" x="864" y="52" width="244" height="80" rx="4"/>
+<text class="label" x="986" y="86" text-anchor="middle">Return status</text>
+<text class="detail" x="986" y="110" text-anchor="middle">linear response</text>
+<path class="rule" d="M 8 184 H 1112"/>
+<text class="detail" x="8" y="211">Solid arrows show work inside one command. The dashed arrow returns to final_ctrl for the next token.</text>
+</svg></div>
+  <ul class="points"><li>linear_ctrl supplies the parameter bias and weight pointers. dot_engine sends term products through mac_unit.</li><li>The shared linear response follows the committed logit write. final_ctrl waits for all L responses.</li></ul>
+  <p class="sources"><a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/final_ctrl.sv">final_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/linear_ctrl.sv">linear_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/dot_engine.sv">dot_engine</a></p>
+</section>
+<section class="slide" id="s5-arch" tabindex="-1">
+  <p class="eyebrow">Stage 5 / Architecture</p>
+  <h1>Average only valid reads</h1>
+  <p class="lead">At each encoded position n, aggregate across m using the original padding mask.</p>
+<div class="figure" tabindex="0" role="region" aria-label="Average only valid reads diagram"><svg viewBox="0 28 1120 200" role="img" aria-labelledby="s5-arch-title s5-arch-desc">
+<title id="s5-arch-title">Average only valid reads</title>
+<desc id="s5-arch-desc">Select position, n · across M reads. Filter, MASK[t] = 0. Sum and count, Sₙ and Cₙ. Average, Sₙ / Cₙ. Final logit, OUTPUT[n]. Arrows show the nonempty position path. A mask bit of 1 marks a padded token. </desc>
+<defs><marker id="s5-arch-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#506483"/></marker></defs>
+<path class="wire" d="M 198 92 H 236" marker-end="url(#s5-arch-arrow)"/>
+<path class="wire" d="M 426 92 H 464" marker-end="url(#s5-arch-arrow)"/>
+<path class="wire" d="M 654 92 H 692" marker-end="url(#s5-arch-arrow)"/>
+<path class="wire" d="M 882 92 H 920" marker-end="url(#s5-arch-arrow)"/>
+<rect class="node" x="10" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="104" y="86" text-anchor="middle">Select position</text>
+<text class="detail" x="104" y="110" text-anchor="middle">n · across M reads</text>
+<rect class="node" x="238" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="332" y="86" text-anchor="middle">Filter</text>
+<text class="detail" x="332" y="110" text-anchor="middle">MASK[t] = 0</text>
+<rect class="node" x="466" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="560" y="86" text-anchor="middle">Sum and count</text>
+<text class="detail" x="560" y="110" text-anchor="middle">Sₙ and Cₙ</text>
+<rect class="node focus" x="694" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="788" y="86" text-anchor="middle">Average</text>
+<text class="detail" x="788" y="110" text-anchor="middle">Sₙ / Cₙ</text>
+<rect class="node" x="922" y="52" width="188" height="80" rx="4"/>
+<text class="label" x="1016" y="86" text-anchor="middle">Final logit</text>
+<text class="detail" x="1016" y="110" text-anchor="middle">OUTPUT[n]</text>
+<path class="rule" d="M 8 184 H 1112"/>
+<text class="detail" x="8" y="211">Arrows show the nonempty position path. A mask bit of 1 marks a padded token.</text>
+</svg></div>
+  <ul class="points"><li>The same set of unpadded logits drives both the sum and the count. The output has N entries.</li><li>If Cₙ = 0, aggregation returns EMPTY_POSITION with the first empty n. The core suppresses the whole output frame.</li></ul>
+  <p class="sources"><a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/docs/architecture/Stages3-5-design.md">Stage design</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/aggregation_ctrl.sv">aggregation_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/core_ctrl.sv">core_ctrl</a></p>
+</section>
+<section class="slide" id="s5-rtl" tabindex="-1">
+  <p class="eyebrow">Stage 5 / RTL</p>
+  <h1>Release outputs after the final write</h1>
+  <p class="lead">aggregation_ctrl scans MASK and LOGIT for each n, then uses the shared reciprocal service for scaling.</p>
+<div class="figure" tabindex="0" role="region" aria-label="Release outputs after the final write diagram"><svg viewBox="0 28 1120 200" role="img" aria-labelledby="s5-rtl-title s5-rtl-desc">
+<title id="s5-rtl-title">Release outputs after the final write</title>
+<desc id="s5-rtl-desc">Scan M reads, MASK_* · LOGIT_*. Check count, CHECK_COUNT. Scale, RECIP_ISSUE / WAIT. Commit output, WRITE_ISSUE / WAIT. Solid arrows show the Cₙ &gt; 0 path. Cₙ = 0 goes directly to the held EMPTY_POSITION response. write acknowledged · more positions</desc>
+<defs><marker id="s5-rtl-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#506483"/></marker></defs>
+<path class="wire" d="M 256 92 H 294" marker-end="url(#s5-rtl-arrow)"/>
+<path class="wire" d="M 540 92 H 578" marker-end="url(#s5-rtl-arrow)"/>
+<path class="wire" d="M 824 92 H 862" marker-end="url(#s5-rtl-arrow)"/>
+<path class="wire loop" d="M 986 132 V 156 Q 986 164 978 164 H 142 Q 134 164 134 156 V 134" marker-end="url(#s5-rtl-arrow)"/>
+<text x="560" y="152" text-anchor="middle" class="detail">write acknowledged · more positions</text>
+<rect class="node" x="12" y="52" width="244" height="80" rx="4"/>
+<text class="label" x="134" y="86" text-anchor="middle">Scan M reads</text>
+<text class="detail" x="134" y="110" text-anchor="middle">MASK_* · LOGIT_*</text>
+<rect class="node focus" x="296" y="52" width="244" height="80" rx="4"/>
+<text class="label" x="418" y="86" text-anchor="middle">Check count</text>
+<text class="detail" x="418" y="110" text-anchor="middle">CHECK_COUNT</text>
+<rect class="node" x="580" y="52" width="244" height="80" rx="4"/>
+<text class="label" x="702" y="86" text-anchor="middle">Scale</text>
+<text class="detail" x="702" y="110" text-anchor="middle">RECIP_ISSUE / WAIT</text>
+<rect class="node" x="864" y="52" width="244" height="80" rx="4"/>
+<text class="label" x="986" y="86" text-anchor="middle">Commit output</text>
+<text class="detail" x="986" y="110" text-anchor="middle">WRITE_ISSUE / WAIT</text>
+<path class="rule" d="M 8 184 H 1112"/>
+<text class="detail" x="8" y="211">Solid arrows show the Cₙ &gt; 0 path. Cₙ = 0 goes directly to the held EMPTY_POSITION response.</text>
+</svg></div>
+  <ul class="points"><li>A padded mask skips the LOGIT read. Valid logits update sum_q and count_q together.</li><li>For Cₙ &gt; 0, multiply by the fixed-point reciprocal and round/saturate to the output word. Clear sum and count for the next position.</li><li>The core reads OUTPUT and holds each logit, index and last flag through host backpressure after successful aggregation.</li></ul>
+  <p class="sources"><a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/aggregation_ctrl.sv">aggregation_ctrl</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/arithmetic/reciprocal_unit.sv">Reciprocal unit</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/rtl/control/core_ctrl.sv">core_ctrl</a></p>
+</section>
+<section class="slide" id="verification" tabindex="-1">
+  <p class="eyebrow">Evidence / Front-end status</p>
+  <h1>Ten trained frames matched the integer reference</h1>
+  <p class="lead">The lab reported 1,440 of 1,440 exact RTL logit matches against fixed-point Python.</p>
+
+  <ul class="points"><li>Frame 00 matched in Windows CXXRTL and lab Xcelium. Lab VCS matched frames 01–09. Reported completion was cycle 1,533,280,239 with rounding status and no saturation.</li><li>The trained fixture used (F, M, N, D, H, K) = (27, 1, 144, 96, 8, 6) and 687,991 parameter words. The ten frames were unpadded and single-read.</li><li>Fixed-point Python and saved PyTorch bit decisions matched at 1,431 of 1,440 positions. Trained multi-read and padded coverage remain open.</li><li>The lab mapped the small (2, 2, 2, 2, 1, 2) practice design and saved an initial floorplan. Trained-design synthesis, SRAM selection and physical sign-off remain open.</li></ul>
+  <p class="sources"><a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/docs/evidence/trained-frame-validation-2026-11-06.md">Trained-frame evidence</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/RTL_SIM_TO_NOW.md">Lab progress through 14 Nov</a> · <a href="https://github.com/taymor3/ASIC-bcjrformer/blob/376ec2af8d1232fbff8adbad2ba909691f0ee148/docs/verification.md">Verification guide</a></p>
+</section></main>
+<footer hidden>
+  <button id="prev" type="button">Previous</button>
+  <span id="counter" aria-live="polite"></span>
+  <button id="next" type="button">Next</button>
+  <span class="revision">Source revision 376ec2a</span>
+</footer>
+<script>
+const slides = [...document.querySelectorAll(".slide")];
+const links = [...document.querySelectorAll("nav a")];
+const previous = document.querySelector("#prev");
+const next = document.querySelector("#next");
+const counter = document.querySelector("#counter");
+let current = 0;
+
+function render(focus) {
+  const index = slides.findIndex(slide => "#" + slide.id === location.hash);
+  current = index < 0 ? 0 : index;
+  slides.forEach((slide, position) => { slide.hidden = position !== current; });
+  const active = links.filter(link => slides.findIndex(slide => "#" + slide.id === link.hash) <= current).at(-1);
+  links.forEach(link => {
+    if (link === active) link.setAttribute("aria-current", "location");
+    else link.removeAttribute("aria-current");
+  });
+  previous.disabled = current === 0;
+  next.disabled = current === slides.length - 1;
+  counter.textContent = (current + 1) + " / " + slides.length;
+  if (focus) {
+    window.scrollTo(0, 0);
+    slides[current].focus({preventScroll: true});
+  }
+}
+
+function advance(index) {
+  if (index >= 0 && index < slides.length) location.hash = slides[index].id;
+}
+
+previous.addEventListener("click", () => advance(current - 1));
+next.addEventListener("click", () => advance(current + 1));
+window.addEventListener("hashchange", () => render(true));
+document.addEventListener("keydown", event => {
+  if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+  if (event.target.classList?.contains("figure") && event.target.scrollWidth > event.target.clientWidth) return;
+  const targets = {ArrowLeft: current - 1, ArrowRight: current + 1, Home: 0, End: slides.length - 1};
+  if (!Object.hasOwn(targets, event.key)) return;
+  event.preventDefault();
+  advance(targets[event.key]);
+});
+document.querySelector("footer").hidden = false;
+render(false);
+</script>
+</body>
+</html>
