@@ -1,0 +1,53 @@
+\section{From a noisy read to an inference token}
+Let \(r\) denote a read slot, \(n\) an encoded position, and \(j\) a candidate drift offset. A deletion or insertion means the observation near index \(n+j\) can provide more evidence about original position \(n\) than the observation at index \(n\). A small window around the nominal position makes these alternatives explicit. The paper combines a prior on the transmitted symbol, including known markers, with a compatibility term for the observation \cite{streit}. The resulting features can be described schematically as
+\[
+ f_{r,n}[j,a] \propto
+ \Pr(x_n=a)\, \ell\!\left(a,\mathrm{read}_r[n+j]\right),
+\]
+where \(a\) is a candidate symbol and \(\ell\) denotes the observation compatibility function. Boundary handling and flattening of the feature axes are defined by the upstream software and the selected configuration \cite{upstream}. The ASIC receives the prepared and quantized result of that computation.
+
+\begin{diagram}{6mm}
+\node[port,text width=28mm] (a) {Noisy read\\near position \(n\)};
+\node[box,text width=27mm,right=of a] (b) {Candidate offsets\\\(j=-1,0,+1\)};
+\node[box,text width=31mm,right=of b] (c) {Likelihood and\\marker features};
+\node[core,text width=30mm,right=of c] (d) {Token vector\\\(f_{r,n}\in\mathbb R^F\)};
+\draw[edge] (a)--(b);\draw[edge] (b)--(c);\draw[edge] (c)--(d);
+\end{diagram}
+\capof{fig:window}{A conceptual feature window at one encoded position. The three offsets illustrate the representation. The lab configuration supplies 27 features per token.}
+
+\subsection{Shape and output meaning}
+For \(M\) read slots and \(N\) encoded positions, the core handles \(L=MN\) tokens per frame. The flattened token address is \(t=rN+n\) for zero-based indices. Each input vector has width \(F\) and the learned representation width is \(D\). The \(H\) attention heads each have width \(d=D/H\), and \(K\) is the number of encoder layer iterations. The supported contract requires \(D\bmod H=0\) and valid nonzero dimensions \cite{rtlrepo}.
+
+A token belongs to both a read slot and an encoded position. Read-slot scores are combined at the same encoded position. The returned logit is an unscaled score in the sense that no sigmoid is applied by the core. In the binary verification export, a nonnegative logit maps to decision \(1\), and a negative logit to \(0\). A score is attached to an encoded position, so the 144 output logits in the trained example are not 144 user-message bits.
+
+\aside{Example boundary}{A human can describe the input as an imperfect read. The host interface sees a stream of fixed-point feature words and one padding flag per token. The original read lengths do not set the hardware transfer count.}
+\clearpage
+
+\section{Software reference and checkpoint handoff}
+The team worked from the released BCJRFormer PyTorch implementation and configured a repository fork \cite{upstream,tracker}. Training produces a checkpoint. During evaluation the weights are held fixed, while the software runs prepared examples through the model. The local handoff records the exported checkpoint at epoch 94, an effective configuration, data and mask tensors, and reference outputs. The effective run settings capture overrides to the template configuration. The exported bundle contains ten separate examples. The trained-frame RTL result in this book uses sample zero \cite{labbundle}.
+
+{\smalltbl
+\begin{tabularx}{\linewidth}{@{}P{42mm}P{38mm}Y@{}}
+\toprule
+Item & Trained-frame value & Interpretation\\ \midrule
+Model shape \shapeDims & \trained & One read slot, 144 encoded positions, eight heads, six layers\\
+Features & \(144\times27=3{,}888\) words & Flattened prepared tokens for one frame\\
+Padding flags & 144 bits & One per token, all clear in the reported frame\\
+Parameter image & \(687{,}991\) words & Quantized, ordered trained parameters\\
+Logits & 144 words & One raw score per encoded position\\
+\bottomrule
+\end{tabularx}}
+\source{Local bundle manifest and trained-case artifacts \cite{labbundle}. The 144 encoded positions include 96 codeword positions and 48 marker positions. The underlying binary example uses 48 original message bits.}
+
+\subsection{Why there are two software references}
+PyTorch floating-point inference describes the trained model at ordinary software precision. A separate integer reference evaluates the hardware computation, including intermediate representation changes, approximations, rounding, and saturation. Its output at a position is the expected signed word that the RTL test compares exactly. Rounding only the final PyTorch score would leave out earlier quantization and approximation, so it would be an unsuitable exact RTL oracle.
+
+\begin{diagram}{7mm}
+\node[port,text width=30mm] (in) {Checkpoint and\\prepared frame};
+\node[box,text width=35mm,right=13mm of in,yshift=8mm] (f) {Floating-point\\PyTorch reference};
+\node[core,text width=35mm,right=13mm of in,yshift=-8mm] (q) {Independent\\integer reference};
+\node[port,text width=31mm,right=12mm of q] (w) {Expected signed\\RTL output words};
+\draw[edge] (in.east)--(f.west);\draw[edge] (in.east)--(q.west);\draw[edge] (q)--(w);
+\end{diagram}
+\capof{fig:software}{Reference paths from a common software export. Exact RTL matching uses the integer branch.}
+\clearpage

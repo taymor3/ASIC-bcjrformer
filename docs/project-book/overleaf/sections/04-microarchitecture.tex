@@ -1,0 +1,157 @@
+\section{Microarchitecture and shared execution}
+The frame controller owns the host transaction and the ordered stage commands. Child controllers own localized schedules such as a layer sweep, a query row, or a dot product. Arithmetic services hold their own state while computing results. Memory clients request storage operations through one fabric. This division lets the model grow by changing configuration and iteration bounds while preserving the same physical service structure \cite{rtlrepo}.
+
+{\smalltbl
+\begin{tabularx}{\linewidth}{@{}P{31mm}YY@{}}
+\toprule
+Service & Representative callers & Operation\\ \midrule
+LayerNorm & Embedding and encoder layer & Row statistics, reciprocal square root, affine transform\\
+Linear & Embedding, QKV, attention output, FFN, final readout & Weight and bias reads, dot calls, result writes\\
+Dot engine & Linear, attention scores, weighted values & Read operands and drive MAC accumulation\\
+Reciprocal & Softmax and aggregation & Invert the row sum or the valid count\\
+EXP and GELU & Softmax and FFN & Sequential fixed-point nonlinear evaluation\\
+\bottomrule
+\end{tabularx}}
+
+\subsection{Sharing and response ownership}
+The LayerNorm, linear, and dot command switches serve two, five, and three clients respectively. The reciprocal switch serves softmax and aggregation. Each switch retains the request owner until the result is accepted. An independent child request can therefore stall behind a busy service without receiving another client's response. The descriptor carries an operation's bank and address information rather than a full vector on the command interface.
+
+\subsection{Layer scheduling}
+A layer first creates normalized input \(U\), then computes attention using \(Q/K/V\), score, probability, and head-result workspace. The stage combines that result with the input to form the first residual. The next normalization and feed-forward operations use a separate token workspace and a high-precision hidden bank. The residual update produces the \(X\) for the next iteration. The scheduler retains values until their consumers finish. It can release or reuse row and token workspaces as subsequent jobs complete.
+
+\aside{Implementation trade-off}{One physical service can process many logical operations. This avoids fabricating a distinct engine for each stage, layer, or head. It also serializes work and increases traffic through the shared memory path. The available lab reports do not quantify the area or cycle-time benefit of an alternative architecture.}
+
+\subsection{Overlap and barriers}
+The five stages run sequentially for one frame. A controller can only publish completion after its own required destination writes have been acknowledged. A parent waits for commands and results without holding a storage transaction that a child needs. This prevents a structural deadlock in which the requester waiting for completion also blocks the child's memory access.
+\clearpage
+
+\section{Parameter loading from the host to memory}
+The host sends one address and one signed word using \code{param_valid} and \code{param_ready}. On the accepted transfer, \code{core_ctrl} checks the next expected address and builds a write request for \code{BANK_PARAM}. It presents the request as fabric client 0. The router captures the request and owner. The fabric checks range, format, payload bits, and permission, and selects \code{parameter_service}. The parameter-only adapter in \code{parameter_mem} commits the word and returns a response through the same ownership path \cite{rtlrepo}.
+
+\begin{diagram}{5mm}
+\node[port,text width=29mm] (a) {Host\\address and word};
+\node[box,text width=30mm,right=of a] (b) {\code{bcjr_host_if}\\ready and valid};
+\node[core,text width=31mm,right=of b] (c) {\code{core_ctrl}\\write descriptor};
+\node[box,text width=32mm,right=of c] (d) {Client 0\\fabric input};
+\node[box,text width=29mm,below=16mm of a] (e) {Router\\retains owner};
+\node[box,text width=30mm,right=of e] (f) {Bank selection\\range and format};
+\node[core,text width=31mm,right=of f] (g) {Parameter adapter\\commits write};
+\node[port,text width=32mm,right=of g] (h) {\code{BANK_PARAM}\\native word};
+\draw[signal] (a)--(b);\draw[signal] (b)--(c);\draw[signal] (c)--(d);
+\draw[signal] (d.south)--++(0,-7mm) -| (e.north);
+\draw[signal] (e)--(f);\draw[signal] (f)--(g);\draw[signal] (g)--(h);
+\end{diagram}
+\capof{fig:param}{Forward write path for a parameter word. The response travels back through the fabric to the originating controller, which then acknowledges the host.}
+
+An illustrative write at address \(0\) with raw word \(1024\) represents \(1.0\) in signed F10. The RTL packs the low 16 data bits into a broader request field. The adapter stores a native 16-bit word. A response signifies that the adapter has processed the write or returned an error. The host accepts this acknowledgment before sending the next address.
+
+\subsection{Per-word control states}
+{\smalltbl
+\begin{tabularx}{\linewidth}{@{}P{30mm}Y@{}}
+\toprule
+State & Progress condition\\ \midrule
+\code{IDLE} & Accept the next sequential address on a ready/valid transfer.\\
+\code{PARAM_ISSUE} & Hold the memory request until the fabric accepts it.\\
+\code{PARAM_WAIT} & Consume the response. Increment the accepted-word count on success.\\
+\code{PARAM_ACK} & Hold the host acknowledgment until the host accepts it. Return to idle on success.\\
+\bottomrule
+\end{tabularx}}
+
+\aside{Word completion and image commit}{A word acknowledgment means the individual transaction finished. A separate \code{parameter_commit} strobe validates the whole image after the expected number of words has been acknowledged. The host issues that strobe in idle with no write request active.}
+\clearpage
+
+\section{Memory layout and data lifetime}
+Parameter offsets identify words in a single logical bank. Let \(A_E\) be the end of the initial embedding region, expressed as the offset of the next free word. The top-level derives the following bases from the same configuration used to elaborate the RTL:
+\begin{align}
+A_E &= 2F+DF+3D, & A_P&=A_E,\\
+A_R &= A_P+ND, & A_L&=A_R+MD,\\
+S_L &= 12D^2+13D, & A_W&=A_L+KS_L,\\
+A_b &= A_W+D, & Q_{\mathrm{param}}&=A_b+1.
+\end{align}
+The initial region holds gains and biases for normalization, the projection weights, and its bias. Region \(P\) holds position embeddings and region \(R\) holds read embeddings. Each encoder layer occupies \(S_L\) words. The final weight vector and bias follow the last layer.
+
+{\smalltbl
+\begin{tabularx}{\linewidth}{@{}P{38mm}P{36mm}Y@{}}
+\toprule
+Parameter region & Words for the trained shape & Examples of consumers\\ \midrule
+Embedding & \(2{,}934\) & Embedding LayerNorm and linear services\\
+Position vectors & \(13{,}824\) & Position stage indexed by \(n\)\\
+Read vectors & \(96\) & Position stage indexed by \(r\)\\
+Six layer regions & \(671{,}040\) & LayerNorm, attention and feed-forward projections\\
+Final weight and bias & \(97\) & Stage 4 linear scoring\\ \midrule
+Total & \(687{,}991\) & Canonical word image\\
+\bottomrule
+\end{tabularx}}
+\source{Derived base formulas from the top-level RTL \cite{rtlrepo}, evaluated for \trained and cross-checked against the local manifest \cite{labbundle}.}
+
+\subsection{Scratch storage}
+Seventeen scratch-bank kinds hold features, mask bits, token matrices, attention workspaces, feed-forward state, logits, and final outputs. Some banks hold one scalar per token or per row, others hold \(L\times D\) tensor data, and the feed-forward hidden bank holds \(4D\) wide words. Each bank uses its native word width. A memory request identifies the bank, address, direction, and format. The fabric connects thirteen clients to parameter and scratch adapters. Only the loader can write parameters or mask storage.
+
+\subsection{Reset and validity}
+A reset invalidates the loaded image and cancels outstanding control work. The behavioral memory array can retain committed values across reset. The host still reloads and commits before use because image validity and stored contents are separate concerns. Physical SRAM mapping would require preserving the visible handshakes, native widths or adapters, and response behavior.
+\clearpage
+
+\section{Control protocol and completion barriers}
+Host, command, arithmetic, and storage links use a shared ready/valid rule. A transaction transfers on a rising edge only when both signals are asserted. The sender holds its payload and valid high while the receiver is stalled. For a response channel this rule applies again, separately from request acceptance. In a storage transaction, request acceptance and the later write response are distinct events.
+
+\begin{diagram}{6mm}
+\foreach \x/\title in {0/Current stage,3.7/Scratch bank,7.4/Controller,11.1/Next stage}{
+  \node[box,minimum width=27mm] at (\x,0) {\title};
+  \draw[Rule] (\x,-0.54)--(\x,-3.86);
+}
+\draw[data] (0,-1.0)--node[above,font=\footnotesize]{Last required write} (3.7,-1.0);
+\draw[data] (3.7,-1.64)--node[above,font=\footnotesize]{Write response} (0,-1.64);
+\draw[edge] (0,-2.28)--node[above,font=\footnotesize]{Stage complete} (7.4,-2.28);
+\draw[edge] (7.4,-2.92)--node[above,font=\footnotesize]{Start} (11.1,-2.92);
+\draw[data] (11.1,-3.56)--node[above,font=\footnotesize]{Read committed tensor} (3.7,-3.56);
+\end{diagram}
+\capof{fig:barrier}{Progression after the last required scratch write. The upstream stage consumes the memory response and then sends its own completion to the controller.}
+
+\subsection{Frame progression}
+A valid image allows a frame request when the top level is idle and no parameter write or commit is pending. The core accepts the prepared feature words first, then the padding flags. The host must finish the feature stream before waiting for mask acceptance. The controller dispatches, in order, embedding, position, encoder, projection, and aggregation. Stage completion requires all required writes for that stage, rather than the acceptance of a single request. The core only publishes output words after successful aggregation and then holds the completion record until accepted.
+
+{\smalltbl
+\begin{tabularx}{\linewidth}{@{}P{40mm}YY@{}}
+\toprule
+Event & Hardware effect & Host-visible consequence\\ \midrule
+Successful write acknowledgment & One parameter is accounted for & May send the next address\\
+Valid image commit & Image becomes available for inference & Frame request can be accepted in idle\\
+Last required stage write & Stage can complete after the response & Next stage sees committed data\\
+Empty aggregation position & Recoverable completion & No logits for that frame\\
+Fatal protocol or numerical error & Lock or terminate the frame as specified & Reset and reload before reuse\\
+\bottomrule
+\end{tabularx}}
+\source{Current top-level controller, memory adapter, and testbench contract \cite{rtlrepo}.}
+
+\subsection{Why the distinction matters}
+Parameter acceptance, image validity, and output publication describe different invariants. Keeping them separate avoids accepting a partially loaded model, reading a stale intermediate tensor, and delivering some logits from an unsuccessful frame. The verification campaign checks these boundaries with both directed control cases and numerical comparison of computational writes.
+\clearpage
+
+\section{Fixed-point representation and arithmetic}
+For signed \(B\)-bit raw integer \(q\) with \(f\) fractional bits, the represented value is \(q2^{-f}\). A reference conversion into signed format with \(g\) fractional bits has the form
+\[
+ q'=\operatorname{sat}_{B'}\!
+ \left(\operatorname{RNE}\bigl(q\,2^{g-f}\bigr)\right),
+\quad
+\operatorname{sat}_{B'}(z)=\min(2^{B'-1}-1,\max(-2^{B'-1},z)).
+\]
+\(\operatorname{RNE}\) rounds to the nearest integer and breaks ties toward an even integer. The data path applies its defined conversions at specific stage boundaries. Guard widths and numeric checks avoid silently retaining a wrapped intermediate result.
+
+{\smalltbl
+\begin{tabularx}{\linewidth}{@{}P{48mm}P{34mm}Y@{}}
+\toprule
+Quantity & Represented format & Reason for the representation\\ \midrule
+Features, weights, stored activations, logits & Signed 16/F10 & Common native storage and host word scale\\
+Scaled attention score & Signed 48/F20 & Range for dot results and score differences\\
+EXP and probability storage & Unsigned 24/F22 & Nonnegative values and fractional precision\\
+GELU result and FFN hidden bank & Signed 32/F22 & Retains activation precision into the second linear operation\\
+Dot accumulation & Signed 48/F20 or 64/F32 & Depends on the operand formats and dot operation\\
+\bottomrule
+\end{tabularx}}
+\source{Numerical baseline and 17 October correction \cite{rtlrepo}. The formats remain provisional.}
+
+The reviewed LayerNorm implementation uses nearest-even division with extended precision for the mean and variance. Reciprocal square root follows the shared lower bound on its argument. The feed-forward path promotes the first linear F10 output exactly to F22 before activation. It stores the GELU result unchanged and consumes it in an F32-aligned accumulation before the second linear output is converted.
+
+\subsection{Nonlinear implementation limits}
+EXP and GELU use sequential Taylor arithmetic rather than function-value lookup tables. The documented absolute error bounds are about \(3.22\times10^{-6}\) for EXP and \(4.54\times10^{-7}\) for GELU at the function output and for the represented inputs in their documented domains. Those bounds exclude upstream quantization, cumulative layer effects, and final decoding behavior. Rounded or saturated stored values can report nonfatal status. Intermediate overflow and numerical-domain errors are fatal under the contract \cite{rtlrepo}.
+\clearpage

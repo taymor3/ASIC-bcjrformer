@@ -1,0 +1,77 @@
+\thispagestyle{fancy}
+\vspace*{13mm}
+{\color{DeepTeal}\large\textsc{Computer Engineering Design Project} \hfill \textsc{First draft for review}}\par
+\vspace{4mm}
+{\color{Ink}\fontsize{31}{35}\selectfont\bfseries BCJRFormer ASIC\par}
+\vspace{2mm}
+{\color{Fog}\Large Design, Verification, and Synthesis of a\\[2pt]
+Transformer-Based Inner Decoder\par}
+\vspace{6mm}
+{\large\bfseries Taimor Sabek and Haiel Bader}\par
+{\color{Fog}Project supervisor: Amit Berman}\par
+\vspace{4mm}
+{\color{Rule}\hrule height 0.7pt}
+\vspace{5mm}
+
+\section*{Abstract}
+Insertion and deletion errors shift the apparent position of a symbol in a received sequence. Joint BCJR decoding over several independent observations offers a statistical reference, but its complexity grows exponentially with the number of received copies in the problem studied by Streit, Weindel, and Heckel. Their BCJRFormer model combines drift-window features through self-attention and produces a prediction for each encoded position \cite{streit}. This project maps the inner scoring operation to a parameterized SystemVerilog inference core.
+
+The hardware loads a committed parameter image, accepts prepared feature words and padding flags, and returns raw indexed logits. Five stages share a memory fabric and arithmetic services. Their controllers wait for acknowledged writes at every stage boundary. A software checkpoint and independently computed fixed-point reference anchor the comparison to RTL. In one trained-model frame with one read slot and 144 encoded positions, all 144 RTL output words agreed exactly with the integer reference.
+
+A separate, smaller configuration was synthesized in Synopsys Design Compiler using a Tower 180\,nm typical library. The reports describe mapped cell area and synthesis timing, including a 200\,ns run with \(+0.05\)\,ns setup slack and \(+0.32\)\,ns hold slack recorded in the tool session log. The trained-frame result and the synthesis results characterize different configurations. Physical timing and power remain open for verification.
+
+\aside{Project objective}{Translate a published decoding model into an inference core with a precise host interface, explain the hardware and numerical choices, and evaluate the implementation at the level supported by the available evidence.}
+
+{\small\textbf{Keywords.} BCJRFormer, synchronization errors, Transformer, fixed-point arithmetic, SystemVerilog, ASIC synthesis.}
+
+\clearpage
+\section{Problem, scope, and contributions}
+\lead{The design starts with one question: how can several shifted observations be turned into one reliable score per encoded position?}
+
+Consider an encoded prefix \(0\,1\,1\,0\,1\). If a read loses the second \(1\), later symbols appear one position early. If another read gains a \(0\) before that position, later symbols appear one position late. Comparing the two reads by observed index can therefore compare different original positions. A substitution changes the symbol without shifting the remaining read. This book studies this digital synchronization problem and follows the score for an encoded position. Raw reads in the experiment are generated in software.
+
+The paper's system includes an inner decoder for synchronization and an outer code decoder. We implement the neural inference and raw-score part of the inner decoder. Software prepares windowed features, loads weights, and can apply sigmoid, bit decisions, marker removal, and outer decoding after the hardware returns scores. This boundary determines what a passed RTL check can establish.
+
+\subsection*{Engineering contributions}
+\begin{enumerate}
+\setlength{\itemsep}{3pt}
+\item Map the selected BCJRFormer computation into five sequential stages linked through an explicit memory schedule.
+\item Implement a host loader, stage controllers, arbitration, and shared arithmetic with ready/valid and completion rules.
+\item Establish a fixed-point contract and compare one trained-model frame against an independent integer reference. Characterize a separate small implementation through synthesis.
+\end{enumerate}
+
+\smallskip
+{\smalltbl
+\begin{tabularx}{\linewidth}{@{}P{31mm}YY@{}}
+\toprule
+Evidence & What it establishes & Scope\\ \midrule
+Paper \cite{streit} & Reported algorithmic behavior and scaling & Published decoding setting\\
+Trained frame \cite{labbundle} & 144 exact integer matches & One frame, one read slot, trained shape \trained\\
+Dated fixtures \cite{rtlrepo} & Internal writes, arithmetic and controller checks & Small configurations and targeted properties\\
+Mapped runs \cite{labbundle} & Cell area and synthesis slack & Separate shape \smallcore, typical library\\
+Physical evaluation & To be verified & Power, PrimeTime, and post-route timing\\
+\bottomrule
+\end{tabularx}}
+
+\clearpage
+\section{Related work and paper selection}
+The project began by asking where hardware could contribute to a DNA data-storage retrieval chain. Early discussions covered signal processing, error-correcting codes, and machine learning. These areas address different steps. A faster search or correction mechanism can accelerate read processing. A coding method can combine retrieval steps and introduce useful structure. A learned decoder offers a concrete network whose inference can be translated into a datapath. The team used the availability of an executable model and a testable hardware boundary to narrow the project \cite{tracker}.
+
+{\smalltbl
+\begin{tabularx}{\linewidth}{@{}P{35mm}YY@{}}
+\toprule
+Candidate & Research contribution & Relevance to this design\\ \midrule
+FADE \cite{fade} & FPGA acceleration of the BLESS read error-correction algorithm using Bloom filters. & Demonstrates a hardware route for sequencing reads. It addresses a different correction task and uses a different compute structure.\\
+DNA-Correcting Codes \cite{codes} & A coding construction that integrates clustering, reconstruction, and error correction in data retrieval. & Establishes a coding-first approach to the storage problem.\\
+BCJRFormer \cite{streit,upstream} & A learned inner decoder for several noisy observations, with released training and evaluation code. & Gives a runnable reference, a checkpoint format, and a clear inference block for hardware mapping.\\
+\bottomrule
+\end{tabularx}}
+
+\subsection{What the paper contributes}
+The paper constructs an input representation that accounts for possible drift and known marker information. Each received copy provides features at each encoded position. Learned vectors distinguish both position and read slot. A self-attention stack combines evidence across tokens, and a linear readout followed by per-position averaging produces the inner prediction. The paper also studies an outer Transformer decoder and a convolutional-code extension. The RTL in this book implements the marker-code inner scoring path.
+
+Joint BCJR can use all copies under an explicit channel model. In the setting considered by the authors, its complexity grows exponentially in the number of copies, whereas their Transformer-based approach scales quadratically in that variable. This is a reported algorithmic comparison. In the RTL, memory traffic, sharing, scheduling, and arithmetic latency also affect execution time. The synthesis measurements later in the book cannot serve as a benchmark for the paper's complexity claim.
+
+\subsection{Selection criteria}
+The decisive connection was between a published algorithm and a reproducible engineering interface. A software run gives a precise input format and a checkpoint. An integer model makes the hardware outputs checkable. The separate work of configuring, training, exporting, implementing, and validating the core is the team's contribution.
+\clearpage

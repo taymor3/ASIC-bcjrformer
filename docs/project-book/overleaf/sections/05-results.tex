@@ -1,0 +1,129 @@
+\section{Verification method and acceptance criteria}
+An inference result is evaluated against the reference appropriate to the claim. Exact comparison uses an independently implemented integer model. The floating-point result describes the effect of hardware representation and approximation. The transmitted target bits address decoding quality.
+
+\begin{diagram}{7mm}
+\node[port,text width=29mm] (i) {Prepared inputs\\and parameters};
+\node[box,text width=33mm,right=13mm of i,yshift=8mm] (f) {Integer reference\\expected words};
+\node[core,text width=33mm,right=13mm of i,yshift=-8mm] (r) {Lowered RTL\\observed words};
+\node[port,text width=31mm,right=13mm of f,yshift=-8mm] (c) {Compare values\\and positions};
+\draw[edge] (i.east)--(f.west);\draw[edge] (i.east)--(r.west);
+\draw[edge] (f.east)--(c.west);\draw[edge] (r.east)--(c.west);
+\end{diagram}
+\capof{fig:verify}{Exact comparison for the trained frame. Both paths consume the same quantized image and prepared input. They calculate their outputs independently.}
+
+{\smalltbl
+\begin{tabularx}{\linewidth}{@{}P{40mm}YY@{}}
+\toprule
+Reference or test & Acceptance question & Example evidence\\ \midrule
+Integer reference and RTL & Are the observed words equal to independently computed words? & Exact logit equality, index sequence, termination\\
+Intermediate comparison & Did the right address, format and value commit? & Fixture checks of computational scratch writes\\
+PyTorch and integer model & How different are the two representations on a sample? & Absolute score difference and decision agreement\\
+Transmitted target data & Does decoding recover the original data? & Bit-error rate on a representative distribution\\
+Protocol and arithmetic & Do local transactions and operations meet the contract? & Directed cases and scoped proofs\\
+\bottomrule
+\end{tabularx}}
+
+The trained case uses a two-state CXXRTL model exported by Yosys from the SystemVerilog with the Slang frontend. The C++ harness loads parameters and stimulus, then checks output words against the independent reference \cite{labbundle}. This is a simulation of a lowered RTL design. Gate-level simulation and physical measurements would address additional questions. The simulator-independent SystemVerilog plan in the repository documents a proposed driver and monitor structure. Its planned cases are distinct from the executed evidence reported here \cite{rtlrepo}.
+\clearpage
+
+\section{Trained-frame results}
+The reported case uses one trained-model frame, sample zero, with shape \trained. The run loaded \(687{,}991\) parameter words, then accepted prepared features and a padding mask for 144 encoded positions. In \code{comparison.csv}, all 144 position indices are distinct and all expected and observed signed integers match. The session reports successful completion \cite{labbundle}.
+
+{\smalltbl
+\begin{tabularx}{\linewidth}{@{}P{31mm}P{35mm}P{35mm}Y@{}}
+\toprule
+Position & Expected F10 word & Observed RTL word & Result\\ \midrule
+0 & \(-680\) & \(-680\) & Exact match\\
+1 & \(2781\) & \(2781\) & Exact match\\
+2 & \(1929\) & \(1929\) & Exact match\\ \midrule
+All 144 positions & \multicolumn{2}{l}{144 distinct indices, zero mismatches} & Exact agreement\\
+\bottomrule
+\end{tabularx}}
+\source{Trained shape \trained, sample zero, one read slot. See \code{comparison.csv}, \code{frame.json}, and \code{run.log} in the lab bundle \cite{labbundle}.}
+
+\subsection{Example of the two comparisons}
+At position zero the floating-point PyTorch logit is \(-0.66001004\). The fixed-point model returns the signed integer \(-680\), corresponding to
+\[
+ \frac{-680}{2^{10}}=-0.6640625.
+\]
+The difference between the PyTorch value and the interpreted fixed-point value reflects the two numerical models. The exact RTL result is the equality of expected and observed integers at \(-680\). Output-word agreement and floating-point agreement are therefore separate comparisons.
+
+The 144 entries of the exported score comparison have mean absolute PyTorch-to-fixed-point logit difference \(0.01956\) and maximum \(0.06853\). The PyTorch and fixed-point decisions agree at all 144 positions in this sample. Decision agreement between representations differs from comparing decisions to transmitted target bits, and gives no estimate of a population bit-error rate.
+
+\aside{Result scope}{The trained run uses one read slot and clear padding flags. It validates the observed output words for this frame. Multiread aggregation and padded-query behavior require other evidence, such as directed fixtures. The result provides no timing, power, or throughput measurement.}
+\clearpage
+
+\section{Regression evidence and reproduction}
+The corrected RTL regression recorded on 17 October 2026 adds coverage around arithmetic, normalization, protocol errors, and intermediate tensor writes. These tests use small configurations and controlled stimuli. Their purpose is to isolate issues that could remain hidden at the final output \cite{rtlrepo}.
+
+{\smalltbl
+\begin{tabularx}{\linewidth}{@{}P{40mm}P{33mm}Y@{}}
+\toprule
+Check & Recorded coverage & What it checks\\ \midrule
+Complete-core execution & 16 fixture frames in four configurations & Stage progress and \(2{,}705\) intermediate writes\\
+Arithmetic services & 958 vectors & Values, formats, flags, and response behavior\\
+LayerNorm & 53 cases & Edge statistics, ties, and selected precision cases\\
+Controller errors and resets & 22 directed scenarios & Delayed responses, reset, stalls, and recovery\\
+Connected faults & Four cases & Integrated failure and recovery behavior\\
+Conversions and memory & Exhaustive conversion and bounded properties & Defined rounding, saturation, format and routing cases\\
+\bottomrule
+\end{tabularx}}
+\source{Corrected implementation record \code{RTL-REVIEW-FIXES-2026-10-17.md} \cite{rtlrepo}. This campaign is separate from the earlier 16 October baseline and the trained-frame CXXRTL run.}
+
+\subsection{Reproducing the checks}
+\begin{enumerate}
+\setlength{\itemsep}{4pt}
+\item Start at the source revision cited below. Set up the pinned repository requirements and confirm the top-level dimensions and interface revision. Run \code{python scripts/check.py smoke} for elaboration and manifest integration.
+\item Use \code{python scripts/check.py numerics} for the numerical sweeps, \code{regressions} for directed and proof cases, and \code{full} for the complete-core group. The verification guide defines the scope of each and the output logs.
+\item For the trained case, obtain the local checkpoint, effective configuration, features, mask, expected outputs, and parameters from the project handoff. Match their provenance first. Compare order and raw words, then inspect the simulation log and expected-output CSV.
+\end{enumerate}
+
+The repository checks and lab run have different environments. The source tree contains the architecture, RTL, and fixture drivers. The trained weights and raw lab export are separate project materials. The numbers above are recorded results from the cited runs.
+\clearpage
+
+\section{Logic synthesis and mapped cell area}
+The implementation exercise used the \code{bcjrformer_dc_top} wrapper and shape \smallcore. The smaller case allows Design Compiler to exercise elaboration, library mapping and constraints independently of the trained-model run. The comparison uses Synopsys Design Compiler U-2022.12 and the Tower FS120 180\,nm typical standard-cell library named \code{tsl18fs120_typ}. The available evidence covers synthesis. Placement, routing, SRAM macro integration, and physical die area remain open \cite{labbundle}.
+
+{\smalltbl
+\begin{tabularx}{\linewidth}{@{}P{34mm}P{42mm}Y@{}}
+\toprule
+Synthesis constraint & Reported mapped cell area & Available evidence\\ \midrule
+20\,ns period & \(1{,}174{,}109.50\) report units & Direct \code{bcjr-small-area.rpt}\\
+200\,ns period & \(1{,}052{,}431.25\) report units & Area value printed in \code{dc-session.log}\\
+\bottomrule
+\end{tabularx}}
+\source{Shape \smallcore, Tower 180\,nm, typical standard-cell library, Design Compiler synthesis. The 200\,ns primary report is named in the session log. The value here is transcribed from that log \cite{labbundle}.}
+
+\begin{diagram}{1mm}
+\fill[Fog] (0,1.08) rectangle (11.5,1.50);
+\fill[DeepTeal] (0,0.09) rectangle (10.31,0.51);
+\node[anchor=west,font=\small] at (0,1.77) {20 ns target};
+\node[anchor=west,font=\small] at (0,0.80) {200 ns target};
+\end{diagram}
+\capof{fig:area}{Relative mapped cell area across the two documented runs. Both bars share a common scale.}
+
+The 200\,ns run reports about \(10.4\%\) less mapped cell area than the 20\,ns baseline. The comparison reflects two runs and does not isolate the effect of the clock target from other mapping choices. The 20\,ns report lists the normalization engine at \(30.2\%\) and the activation service at \(27.4\%\) of mapped cell area. These baseline shares identify two places to examine when investigating arithmetic cost.
+
+The baseline report flags a capacitance-unit conflict and a high-fanout estimate. Mapped-cell area remains in report units. The reported net-interconnect area is a separate modeled quantity. A floorplan and implementation reports would establish physical area.
+\clearpage
+
+\section{Timing results and limits of physical evidence}
+Synthesis static timing compares a path's arrival time with its required time. For setup, slack is required time minus arrival time. A negative value means the path misses the constraint. Separate hold analysis checks the minimum delay. The timing values depend on the library, constraint, design state, and analysis stage.
+
+{\smalltbl
+\begin{tabularx}{\linewidth}{@{}P{34mm}P{28mm}P{27mm}Y@{}}
+\toprule
+Clock constraint & Setup slack & Hold slack & Available evidence\\ \midrule
+20\,ns / 50\,MHz target & \(-145.64\)\,ns & Unavailable & Direct timing report and SDC\\
+200\,ns / 5\,MHz target & \(+0.05\)\,ns & \(+0.32\)\,ns & Setup and hold excerpts printed in the session log\\
+\bottomrule
+\end{tabularx}}
+\source{Small-core shape \smallcore, Tower 180\,nm typical standard-cell library, Design Compiler synthesis. The 20\,ns report uses a wire-load model. The 200\,ns values come from \code{dc-session.log} \cite{labbundle}.}
+
+The worst reported setup path at 20\,ns lies in the LayerNorm logic. Its arrival time is \(165.52\)\,ns and its required time is \(19.88\)\,ns, giving the reported \(-145.64\)\,ns slack. The separate 200\,ns run reports positive setup and hold slack, with \(50\)\,ps of setup margin. The frequency equivalent of the 200\,ns constraint is 5\,MHz. A measured frequency requires physical evidence. Combining the trained-frame cycle count with this constraint would conflate separate configurations.
+
+\subsection{What a subsequent lab report needs to establish}
+A PrimeTime or post-route evaluation should identify the netlist revision, constraints, corner, parasitic source, and explicit setup and hold coverage. A power result should name the implementation stage, voltage, clock, corner, and the source of switching activity, then report total, dynamic, and leakage power. A later comparison should associate the metrics with the same implementation.
+
+\aside{Available archive evidence}{The accessible artifacts establish mapped area and synthesis timing for the small core. A verified PrimeTime report, post-route analysis, and power report were unavailable for this book.}
+\clearpage

@@ -1,0 +1,68 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[a4paper,left=22mm,right=22mm,top=22mm,bottom=21mm,headheight=15pt]{geometry}
+\usepackage{microtype,amsmath,amssymb,booktabs,tabularx,array,xcolor,graphicx,fancyhdr,tikz}
+\usetikzlibrary{arrows.meta,positioning}
+\usepackage[colorlinks=true,linkcolor=DeepTeal,citecolor=DeepTeal,urlcolor=DeepTeal]{hyperref}
+\urlstyle{same}
+\definecolor{Ink}{HTML}{183044}
+\definecolor{Fog}{HTML}{526575}
+\definecolor{DeepTeal}{HTML}{096259}
+\definecolor{LightTeal}{HTML}{EAF4F0}
+\definecolor{LightBlue}{HTML}{E8F0F8}
+\definecolor{Wine}{HTML}{982D3E}
+\definecolor{LightRed}{HTML}{F9EDF0}
+\definecolor{Rule}{HTML}{C9D5D9}
+\hypersetup{pdftitle={BCJRFormer ASIC: Design, Verification, and Synthesis},pdfauthor={Taimor Sabek and Haiel Bader}}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 1pt minus 1pt}
+\setlength{\abovedisplayskip}{7pt plus 2pt minus 1pt}
+\setlength{\belowdisplayskip}{7pt plus 2pt minus 1pt}
+\setlength{\textfloatsep}{11pt plus 2pt minus 2pt}
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}
+\renewcommand{\arraystretch}{1.15}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{DeepTeal}\textsc{BCJRFormer ASIC}}
+\fancyhead[R]{\small\color{Fog}Project book}
+\fancyfoot[L]{\small\color{Fog}Taimor Sabek and Haiel Bader}
+\fancyfoot[R]{\small\color{Ink}\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+\renewcommand{\footrulewidth}{0.3pt}
+\newcommand{\code}[1]{\texttt{\detokenize{#1}}}
+\newcommand{\shapeDims}{\ensuremath{(F,M,N,D,H,K)}}
+\newcommand{\trained}{\ensuremath{(27,1,144,96,8,6)}}
+\newcommand{\smallcore}{\ensuremath{(2,2,2,2,1,2)}}
+\newcommand{\clip}{\operatorname{C}}
+\newcommand{\LN}{\operatorname{LN}}
+\newcommand{\FFN}{\operatorname{FFN}}
+\newcommand{\softmax}{\operatorname{softmax}}
+\newcommand{\RTL}{\textsc{rtl}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\smalltbl}{\small\setlength{\tabcolsep}{5pt}}
+\newcommand{\lead}[1]{{\large\color{Ink}#1}\par}
+\newcommand{\aside}[2]{\par\smallskip\noindent\begingroup
+  \setlength{\fboxsep}{8pt}\colorbox{LightTeal}{\parbox{\dimexpr\linewidth-16pt\relax}{%
+  \textbf{\color{DeepTeal}#1}\par\small #2}}\endgroup\par\smallskip}
+\newcommand{\source}[1]{\par{\small\raggedright\color{Fog}\textit{Source and scope.} #1\par}}
+\tikzset{
+  box/.style={draw=Rule, rounded corners=2pt, fill=LightBlue, text=Ink, align=center, font=\small, minimum height=9mm, inner xsep=4pt},
+  core/.style={box, fill=LightTeal, draw=DeepTeal},
+  port/.style={box, fill=LightRed, draw=Wine},
+  edge/.style={-{Stealth[length=2.1mm]}, semithick, draw=DeepTeal},
+  signal/.style={-{Stealth[length=2.1mm]}, semithick, draw=Wine},
+  data/.style={-{Stealth[length=2.1mm]}, semithick, draw=Fog}
+}
+\newenvironment{diagram}[1]{\par\smallskip\begin{center}\begin{tikzpicture}[node distance=#1]}{\end{tikzpicture}\end{center}\vspace{-5pt}}
+\newcommand{\capof}[2]{\refstepcounter{figure}\label{#1}\par
+  \smallskip{\small\textbf{Figure \thefigure.} #2}\par}
+\begin{document}
+\input{sections/01-framing}
+\input{sections/02-model}
+\input{sections/03-architecture}
+\input{sections/04-microarchitecture}
+\input{sections/05-results}
+\input{sections/06-conclusion}
+\end{document}

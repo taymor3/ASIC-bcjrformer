@@ -18,6 +18,8 @@ The project combines current hardware with earlier architecture-development arti
 
 ## Authored reports
 
+- [BCJRFormer ASIC project book](project-book/README.md), first draft for review, with the PDF, editable LaTeX, and Overleaf ZIP.
+
 - [Design-review PDF](../output/pdf/BCJRFormer_design_review_Amit.pdf) and [editable LaTeX](latex/BCJRFormer_design_review_Amit.tex).
 - [Architecture report v5](latex/bcjrformer_asic_architecture_v5.tex); [earlier report sources](latex) preserve the design's development history.
 - [Architecture checkpoint](architecture/ARCHITECTURE-CHECKPOINT-1.md), [review decisions](reviews/Amit-review-decisions.md), and [review audit](reviews/ARCHITECTURE-REVIEW-AUDIT.md).

@@ -1,0 +1,131 @@
+\section{Hardware boundary and five-stage architecture}
+The \code{bcjrformer_core} top level admits one inference frame at a time. The host writes the parameter image and commits it before sending frame features and padding flags. After processing, the core streams \(N\) indexed logits and reports completion. Parameter storage can be reused between successful frames. Software retains responsibility for feature construction and decisions made from the logit.
+
+\begin{diagram}{4mm}
+\node[port,text width=26mm] (h) {Host\\frame request};
+\node[core,text width=45mm,right=of h] (c) {Frame controller\\\code{core_ctrl}};
+\node[port,text width=38mm,right=of c] (o) {Host\\logits and status};
+\draw[signal] (h)--(c);\draw[signal] (c)--(o);
+\node[box,text width=22mm,below=13mm of h,xshift=-1mm] (s1) {1 Embedding};
+\node[box,text width=20mm,right=of s1] (s2) {2 Position};
+\node[core,text width=21mm,right=of s2] (s3) {3 Encoder};
+\node[box,text width=21mm,right=of s3] (s4) {4 Projection};
+\node[box,text width=25mm,right=of s4] (s5) {5 Aggregation};
+\draw[edge] (s1)--(s2);\draw[edge] (s2)--(s3);\draw[edge] (s3)--(s4);\draw[edge] (s4)--(s5);
+\draw[semithick,color=DeepTeal] (c.south)--++(0,-6mm) -| (s1.north);
+\draw[semithick,color=DeepTeal] (c.south)--++(0,-6mm) -| (s5.north);
+\foreach \name in {s2,s3,s4}{\draw[semithick,color=DeepTeal] (\name.north)--++(0,7mm);}
+\node[core,text width=48mm,below=12mm of s2,xshift=-8mm] (m) {Shared memory fabric\\parameter and scratch banks};
+\node[box,text width=48mm,right=12mm of m] (e) {Shared compute\\LayerNorm, linear, dot, MAC};
+\draw[data] (e)--(m);
+\draw[data] (s1.south)--++(0,-6mm) -| (m.north);
+\draw[data] (s5.south)--++(0,-6mm) -| (m.north);
+\end{diagram}
+\capof{fig:architecture}{Functional view of the core. Horizontal stage arrows show scheduling order. The data handoff uses scratch banks, and individual command channels connect the controller to all five stages. See the detailed maintained schematic in \cite{rtlrepo}.}
+
+{\smalltbl
+\begin{tabularx}{\linewidth}{@{}P{29mm}P{46mm}Y@{}}
+\toprule
+Stage & Main transformation & Memory-visible boundary\\ \midrule
+Embedding & \(F\)-feature vector to \(D\)-component token & Reads features, writes \(X\)\\
+Position & Add two learned vectors & Updates \(X\) with position and read identity\\
+Encoder & \(K\) pre-normalized layers & Repeatedly refines \(X\), uses shared workspace\\
+Projection & \(D\)-to-1 linear score & Writes one logit per input token\\
+Aggregation & Mask-aware mean by encoded position & Writes final \(N\) scores before publication\\
+\bottomrule
+\end{tabularx}}
+\source{Architecture and top-level RTL \cite{rtlrepo}. Transfers and memory completions constrain the schedule independently of the mathematical dataflow.}
+\clearpage
+
+\section{Embedding and position stages}
+\subsection{Stage 1: embedding}
+A feature vector is normalized, projected to the token width, and normalized again:
+\begin{align}
+u_t &= \LN_F(f_t),\\
+v_t &= W_e u_t + b_e,\quad W_e\in\mathbb R^{D\times F},\\
+X_t &= \LN_D(v_t).
+\end{align}
+The two normalizations have separate learned gains and biases and operate over different vector widths. In real arithmetic, for a vector \(v\) of length \(q\),
+\[
+\LN(v)_i=\gamma_i\frac{v_i-\mu}{\sqrt{\sigma^2+\epsilon}}+\beta_i,\quad
+\mu=\frac{1}{q}\sum_i v_i,\quad
+\sigma^2=\frac{1}{q}\sum_i(v_i-\mu)^2 .
+\]
+The LayerNorm service computes the statistics, applies reciprocal square root, and applies the learned affine transformation. The embedding controller calls the shared linear service for the \(F\)-to-\(D\) projection. It acknowledges its stage only after the final \(X\) values have reached scratch.
+
+\subsection{Stage 2: position and read identity}
+Self-attention requires a way to distinguish positions and read slots. The stage fetches learned vectors \(P_n\) and \(E_r\) from parameter memory. The fixed-point schedule specifies a conversion at both additions:
+\[
+ u_{r,n}=\clip(X_{r,n}+P_n),\qquad
+ X^+_{r,n}=\clip(u_{r,n}+E_r).
+\]
+Here \(\clip\) represents the appropriate represented-format conversion, including rounding or saturation when required. Two conversions matter. For example, saturation at the first addition can change the result when the second term has the opposite sign. Combining the two additions into one operation would change the numerical contract.
+
+\begin{diagram}{7mm}
+\node[port,text width=24mm] (f) {Features\\\(F\) values};
+\node[core,text width=31mm,right=of f] (e) {Normalize, project,\\normalize};
+\node[box,text width=27mm,right=of e] (x) {Scratch \(X\)\\\(D\) values};
+\node[core,text width=32mm,right=of x] (r) {Add position\\and read vectors};
+\draw[edge] (f)--(e);\draw[edge] (e)--(x);\draw[edge] (x)--(r);
+\end{diagram}
+\capof{fig:embedding}{A token crosses the first two stages through \(X\). Stage~2 updates \(X\) in place and uses the existing parameter image.}
+\clearpage
+
+\section{Transformer encoder and attention}
+The encoder iterates a shared layer controller with a new parameter base at each layer. In mathematical notation, its pre-normalized residual sequence is
+\begin{align}
+U &= \LN_1(X), &
+R &= X+\operatorname{MHA}(U),\\
+V_f &= \LN_2(R), &
+X_{\mathrm{next}} &= R+\FFN(V_f),\\
+\FFN(v) &= W_2\,\operatorname{GELU}(W_1 v+b_1)+b_2. &&
+\end{align}
+The feed-forward network expands \(D\to 4D\), applies GELU, and projects \(4D\to D\). The first skip connection preserves \(X\) until the attention result is ready. The second preserves \(R\) until the feed-forward service finishes. Each displayed residual sum is followed by the appropriate representation conversion in hardware.
+
+\subsection{One row of one attention head}
+Each head projects normalized tokens to queries \(q_i\), keys \(k_j\), and values \(v_j\). For an ordinary query, the stable softmax formulation is
+\begin{align}
+s_{ij} &= \frac{q_i^\mathsf{T}k_j}{\sqrt{d}},\qquad
+m_i=\max_j s_{ij},\\
+p_{ij} &= \frac{\exp(s_{ij}-m_i)}
+                  {\sum_{k=0}^{L-1}\exp(s_{ik}-m_i)},\qquad
+z_i=\sum_{j=0}^{L-1}p_{ij}v_j .
+\end{align}
+Subtracting \(m_i\) keeps each exponential argument nonpositive without changing ideal softmax probabilities. The implementation stores scores, exponentials, and probabilities in row workspaces. It concatenates head results and applies a learned output projection before the attention residual.
+
+\aside{Padding contract}{A padded \emph{query} uses a uniform probability row over all \(L\) keys. Valid queries retain every key, including any padded key. The padding flag is also used later to exclude invalid read slots from the aggregation. A static attention mask is unsupported in this baseline.}
+
+\subsection{Scheduling effects}
+The controller sweeps token normalization, iterates attention heads and query rows, performs the first residual pass, and then schedules the second normalization and feed-forward passes. It shares arithmetic rather than instantiating \(K\) full physical layers. This reduces duplicated hardware at the cost of more scheduling and memory traffic. The trained case uses eight heads and six layers. Those are configuration values, so they do not imply eight independent attention engines or six simultaneously executing layers.
+\clearpage
+
+\section{Projection, aggregation, and publication}
+\subsection{Stage 4: one score per token}
+The final learned linear projection converts a refined token to a scalar:
+\[
+ z_{r,n}=w^\mathsf{T}X_{r,n}+b,\qquad w\in\mathbb R^D .
+\]
+The linear service reads the output-major weights and accumulates a dot product before adding bias under its numerical contract. Its resulting score is stored in the logit bank. The final projection has one output per token. This is a separate operation from the \(D\)-to-\(D\) attention output projection.
+
+\subsection{Stage 5: one score per encoded position}
+Let \(a_{r,n}\in\{0,1\}\) be validity, where \(1\) means that the read slot can contribute at position \(n\). The real-valued target is
+\begin{equation}
+ y_n=\frac{\sum_{r=0}^{M-1} a_{r,n}z_{r,n}}
+           {\sum_{r=0}^{M-1} a_{r,n}},
+ \qquad\text{if }\sum_r a_{r,n}>0.
+\label{eq:mean}
+\end{equation}
+The hardware traverses the read slots, uses a common validity predicate for summation and count, obtains a fixed-point reciprocal, and converts the product to the output format. This realization can differ from correctly rounded exact division. A valid-bit count of zero raises recoverable \code{EMPTY_POSITION}. In that case the core emits no output logits, even if earlier positions already wrote scratch. Publication of a frame is gated by successful completion of aggregation \cite{rtlrepo}.
+
+\subsection{Illustrative readout}
+For one encoded position, choose two refined tokens \(x_A=[3,-1]\) and \(x_B=[-2,1]\), with \(w=[1,1]\) and \(b=0\). The two scores are \(+2\) and \(-1\). With both slots valid, equation~\eqref{eq:mean} gives \(+0.5\). If the second slot were invalid, the mean would instead be \(+2\). The example illustrates the operation and does not describe outputs from the trained checkpoint.
+
+\begin{diagram}{8mm}
+\node[box,text width=34mm] (x) {Refined tokens\\one per read slot};
+\node[core,text width=32mm,right=of x] (p) {Linear scoring\\\(w^\mathsf{T}x+b\)};
+\node[core,text width=32mm,right=of p] (m) {Valid-read mean\\per position};
+\node[port,text width=28mm,right=of m] (o) {Raw logits\\and status};
+\draw[edge] (x)--(p);\draw[edge] (p)--(m);\draw[edge] (m)--(o);
+\end{diagram}
+\capof{fig:readout}{Projection reduces the feature width; aggregation reduces the read-slot axis.}
+\clearpage

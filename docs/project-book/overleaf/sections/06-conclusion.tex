@@ -1,0 +1,19 @@
+\section{Conclusions}
+BCJRFormer was studied as a digital inner-decoding workload, implemented as a five-stage SystemVerilog core, and evaluated through two separate experiments. The architecture makes the boundary explicit: the host loads trained parameters and prepared inputs, while the core returns indexed logits using shared compute and a memory-backed schedule. Ready/valid transactions and committed-write barriers coordinate data and control. The fixed-point description identifies where precision, approximations, and rounding affect the computation.
+
+One trained-model frame matched all 144 fixed-point reference words. The dated fixtures add evidence for arithmetic, internal writes, and selected controller behavior. The small-core synthesis exercise demonstrated library mapping and exposed a LayerNorm setup limitation at the 20\,ns target. The logged 200\,ns result met its synthesis constraint with a narrow setup margin. The two results establish different milestones and provide a basis for further lab work.
+
+\subsection*{Next verification steps}
+Extend trained-model evaluation across additional read counts and padding cases. Connect future RTL and physical runs to source and parameter configurations, and obtain verified timing and power evidence for a named implementation. Physical memory mapping is a separate integration step. A broader decoding evaluation should report target-bit performance and integer-to-RTL agreement separately.
+
+\begin{thebibliography}{7}
+\small\raggedright
+\setlength{\itemsep}{2pt}
+\bibitem{streit} J. Streit, F. Weindel, and R. Heckel, \emph{Transformer-Based Decoding in Concatenated Coding Schemes Under Synchronization Errors}, IEEE ISIT, 2025. Extended version, \href{https://arxiv.org/abs/2511.00999}{arXiv:2511.00999}. DOI: \href{https://doi.org/10.1109/ISIT63088.2025.11195598}{10.1109/ISIT63088.2025.11195598}.
+\bibitem{labbundle} H. Bader, internal project handoff. Trained-frame vector bundle and CXXRTL logs. Design Compiler U-2022.12 reports and session log, November 2026.
+\bibitem{rtlrepo} T. Sabek and H. Bader, \emph{ASIC-bcjrformer}, architecture, numerical, RTL and verification records, checkout \code{70e82e6}. \href{https://github.com/taymor3/ASIC-bcjrformer/tree/70e82e6d9415c6c377c7cad7b49c4de3c7240411}{Source snapshot}.
+\bibitem{tracker} T. Sabek and H. Bader, \emph{Project DNA}, internal research and meeting tracker, April--June 2026.
+\bibitem{fade} A. Ramachandran, Y. Heo, W.-M. Hwu, J. Ma, and D. Chen, \emph{FPGA Accelerated DNA Error Correction}, DATE, 2015. \href{https://past.date-conference.com/proceedings-archive/2015/pdf/0983.pdf}{Proceedings PDF}.
+\bibitem{codes} A. Boruchovsky, D. Bar-Lev, and E. Yaakobi, \emph{DNA-Correcting Codes: End-to-End Correction in DNA Storage Systems}, IEEE ISIT, 2023. \href{https://yaakobi.net.technion.ac.il/files/2024/02/148_DNA_ECC_ISIT23.pdf}{Author-hosted paper}.
+\bibitem{upstream} J. Streit, \emph{BCJRFormer}, upstream research software. \href{https://github.com/streit-julian/BCJRFormer}{Source repository}.
+\end{thebibliography}
