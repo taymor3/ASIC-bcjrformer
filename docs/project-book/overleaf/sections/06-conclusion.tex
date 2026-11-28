@@ -1,16 +1,17 @@
 \section{Conclusions}
 BCJRFormer was studied as a digital inner-decoding workload, implemented as a five-stage SystemVerilog core, and evaluated through two separate experiments. The architecture makes the boundary explicit: the host loads trained parameters and prepared inputs, while the core returns indexed logits using shared compute and a memory-backed schedule. Ready/valid transactions and committed-write barriers coordinate data and control. The fixed-point description identifies where precision, approximations, and rounding affect the computation.
 
-One trained-model frame matched all 144 fixed-point reference words. The dated fixtures add evidence for arithmetic, internal writes, and selected controller behavior. The small-core synthesis exercise demonstrated library mapping and exposed a LayerNorm setup limitation at the 20\,ns target. The logged 200\,ns result met its synthesis constraint with a narrow setup margin. The two results establish different milestones and provide a basis for further lab work.
+Ten trained-model frames matched all \(1{,}440\) fixed-point reference words in SystemVerilog simulation. The dated fixtures add evidence for arithmetic, internal writes, and selected controller behavior. The small-core synthesis exercise demonstrated library mapping and exposed a LayerNorm setup limitation at the 20\,ns target. The logged 200\,ns result met its synthesis constraint with a narrow setup margin. The small core was then placed and routed in Innovus. After revising the clock target to 300\,ns and fixing four slew violations, slow setup and fast hold passed with zero failing paths. Innovus physical checks passed, and the team exported the GDS and matching source netlist \cite{backend}.
 
 \subsection*{Next verification steps}
-Extend trained-model evaluation across additional read counts and padding cases. Connect future RTL and physical runs to source and parameter configurations, and obtain verified timing and power evidence for a named implementation. Physical memory mapping is a separate integration step. A broader decoding evaluation should report target-bit performance and integer-to-RTL agreement separately.
+Extend trained-model evaluation across additional read counts and padding cases. Complete foundry-deck DRC and LVS for the exported core and obtain power measurements. Implement and verify the full trained configuration separately. A broader decoding evaluation should report target-bit performance and integer-to-RTL agreement separately.
 
-\begin{thebibliography}{7}
+\begin{thebibliography}{8}
 \small\raggedright
 \setlength{\itemsep}{2pt}
 \bibitem{streit} J. Streit, F. Weindel, and R. Heckel, \emph{Transformer-Based Decoding in Concatenated Coding Schemes Under Synchronization Errors}, IEEE ISIT, 2025. Extended version, \href{https://arxiv.org/abs/2511.00999}{arXiv:2511.00999}. DOI: \href{https://doi.org/10.1109/ISIT63088.2025.11195598}{10.1109/ISIT63088.2025.11195598}.
 \bibitem{labbundle} H. Bader, internal project handoff. Trained-frame vector bundle and CXXRTL logs. Design Compiler U-2022.12 reports and session log, November 2026.
+\bibitem{backend} H. Bader, BCJRFormer backend handoff, 21 November 2026. Includes the Xcelium/VCS campaign, Innovus implementation, and final timing and physical checks. \href{https://github.com/taymor3/ASIC-bcjrformer/blob/2ed8c31d2eb7fd576a8cf88328f66f4b4b4a591f/docs/BCJRFormer_BE_HANDOFF_2026-11-21.md}{Backend record}.
 \bibitem{rtlrepo} T. Sabek and H. Bader, \emph{ASIC-bcjrformer}, architecture, numerical, RTL and verification records, checkout \code{70e82e6}. \href{https://github.com/taymor3/ASIC-bcjrformer/tree/70e82e6d9415c6c377c7cad7b49c4de3c7240411}{Source snapshot}.
 \bibitem{tracker} T. Sabek and H. Bader, \emph{Project DNA}, internal research and meeting tracker, April--June 2026.
 \bibitem{fade} A. Ramachandran, Y. Heo, W.-M. Hwu, J. Ma, and D. Chen, \emph{FPGA Accelerated DNA Error Correction}, DATE, 2015. \href{https://past.date-conference.com/proceedings-archive/2015/pdf/0983.pdf}{Proceedings PDF}.

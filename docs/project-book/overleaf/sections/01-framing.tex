@@ -1,10 +1,10 @@
 \thispagestyle{fancy}
 \vspace*{13mm}
-{\color{DeepTeal}\large\textsc{Computer Engineering Design Project} \hfill \textsc{First draft for review}}\par
+{\color{DeepTeal}\large\textsc{Computer Engineering Design Project} \hfill \textsc{Draft for review}}\par
 \vspace{4mm}
 {\color{Ink}\fontsize{31}{35}\selectfont\bfseries BCJRFormer ASIC\par}
 \vspace{2mm}
-{\color{Fog}\Large Design, Verification, and Synthesis of a\\[2pt]
+{\color{Fog}\Large Design, Verification, and Implementation of a\\[2pt]
 Transformer-Based Inner Decoder\par}
 \vspace{6mm}
 {\large\bfseries Taimor Sabek and Haiel Bader}\par
@@ -16,9 +16,9 @@ Transformer-Based Inner Decoder\par}
 \section*{Abstract}
 Insertion and deletion errors shift the apparent position of a symbol in a received sequence. Joint BCJR decoding over several independent observations offers a statistical reference, but its complexity grows exponentially with the number of received copies in the problem studied by Streit, Weindel, and Heckel. Their BCJRFormer model combines drift-window features through self-attention and produces a prediction for each encoded position \cite{streit}. This project maps the inner scoring operation to a parameterized SystemVerilog inference core.
 
-The hardware loads a committed parameter image, accepts prepared feature words and padding flags, and returns raw indexed logits. Five stages share a memory fabric and arithmetic services. Their controllers wait for acknowledged writes at every stage boundary. A software checkpoint and independently computed fixed-point reference anchor the comparison to RTL. In one trained-model frame with one read slot and 144 encoded positions, all 144 RTL output words agreed exactly with the integer reference.
+The hardware loads a committed parameter image, accepts prepared feature words and padding flags, and returns raw indexed logits. Five stages share a memory fabric and arithmetic services. Their controllers wait for acknowledged writes at every stage boundary. A software checkpoint and independently computed fixed-point reference anchor the comparison to RTL. Across ten trained-model frames, all \(1{,}440\) RTL output words agreed exactly with the integer reference \cite{backend}.
 
-A separate, smaller configuration was synthesized in Synopsys Design Compiler using a Tower 180\,nm typical library. The reports describe mapped cell area and synthesis timing, including a 200\,ns run with \(+0.05\)\,ns setup slack and \(+0.32\)\,ns hold slack recorded in the tool session log. The trained-frame result and the synthesis results characterize different configurations. Physical timing and power remain open for verification.
+A separate, smaller configuration was synthesized in Synopsys Design Compiler using a Tower 180\,nm typical library. The reports describe mapped cell area and synthesis timing, including a 200\,ns run with \(+0.05\)\,ns setup slack and \(+0.32\)\,ns hold slack recorded in the tool session log. Cadence Innovus placed and routed this smaller core. At 300\,ns, post-route worst slack was \(+27.961\)\,ns for slow-corner setup and \(+0.141\)\,ns for fast-corner hold. Innovus geometry, antenna, and connectivity checks passed. Foundry-deck DRC and LVS remain pending \cite{backend}.
 
 \aside{Project objective}{Translate a published decoding model into an inference core with a precise host interface, explain the hardware and numerical choices, and evaluate the implementation at the level supported by the available evidence.}
 
@@ -37,7 +37,7 @@ The paper's system includes an inner decoder for synchronization and an outer co
 \setlength{\itemsep}{3pt}
 \item Map the selected BCJRFormer computation into five sequential stages linked through an explicit memory schedule.
 \item Implement a host loader, stage controllers, arbitration, and shared arithmetic with ready/valid and completion rules.
-\item Establish a fixed-point contract and compare one trained-model frame against an independent integer reference. Characterize a separate small implementation through synthesis.
+\item Establish a fixed-point contract and compare ten trained-model frames against an independent integer reference. Characterize a separate small core through synthesis, routing, and post-route timing.
 \end{enumerate}
 
 \smallskip
@@ -46,10 +46,10 @@ The paper's system includes an inner decoder for synchronization and an outer co
 \toprule
 Evidence & What it establishes & Scope\\ \midrule
 Paper \cite{streit} & Reported algorithmic behavior and scaling & Published decoding setting\\
-Trained frame \cite{labbundle} & 144 exact integer matches & One frame, one read slot, trained shape \trained\\
+Trained RTL \cite{backend} & \(1{,}440\) exact integer matches & Ten frames, trained shape \trained\\
 Dated fixtures \cite{rtlrepo} & Internal writes, arithmetic and controller checks & Small configurations and targeted properties\\
 Mapped runs \cite{labbundle} & Cell area and synthesis slack & Separate shape \smallcore, typical library\\
-Physical evaluation & To be verified & Power, PrimeTime, and post-route timing\\
+Routed core \cite{backend} & Post-route setup, hold, and physical checks & Small core at 300\,ns\\
 \bottomrule
 \end{tabularx}}
 

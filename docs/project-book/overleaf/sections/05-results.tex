@@ -23,11 +23,11 @@ Protocol and arithmetic & Do local transactions and operations meet the contract
 \bottomrule
 \end{tabularx}}
 
-The trained case uses a two-state CXXRTL model exported by Yosys from the SystemVerilog with the Slang frontend. The C++ harness loads parameters and stimulus, then checks output words against the independent reference \cite{labbundle}. This is a simulation of a lowered RTL design. Gate-level simulation and physical measurements would address additional questions. The simulator-independent SystemVerilog plan in the repository documents a proposed driver and monitor structure. Its planned cases are distinct from the executed evidence reported here \cite{rtlrepo}.
+The sample-zero worked example uses a two-state CXXRTL model exported by Yosys from the SystemVerilog with the Slang frontend. The C++ harness loads parameters and stimulus, then checks output words against the independent reference \cite{labbundle}. This is a simulation of a lowered RTL design. Gate-level simulation and physical measurements would address additional questions. The simulator-independent SystemVerilog plan in the repository documents a proposed driver and monitor structure. Its planned cases are distinct from the executed evidence reported here \cite{rtlrepo}.
 \clearpage
 
 \section{Trained-frame results}
-The reported case uses one trained-model frame, sample zero, with shape \trained. The run loaded \(687{,}991\) parameter words, then accepted prepared features and a padding mask for 144 encoded positions. In \code{comparison.csv}, all 144 position indices are distinct and all expected and observed signed integers match. The session reports successful completion \cite{labbundle}.
+The worked example uses sample zero, with shape \trained. The run loaded \(687{,}991\) parameter words, then accepted prepared features and a padding mask for 144 encoded positions. In \code{comparison.csv}, all 144 position indices are distinct and all expected and observed signed integers match. The session reports successful completion \cite{labbundle}.
 
 {\smalltbl
 \begin{tabularx}{\linewidth}{@{}P{31mm}P{35mm}P{35mm}Y@{}}
@@ -51,6 +51,21 @@ The difference between the PyTorch value and the interpreted fixed-point value r
 The 144 entries of the exported score comparison have mean absolute PyTorch-to-fixed-point logit difference \(0.01956\) and maximum \(0.06853\). The PyTorch and fixed-point decisions agree at all 144 positions in this sample. Decision agreement between representations differs from comparing decisions to transmitted target bits, and gives no estimate of a population bit-error rate.
 
 \aside{Result scope}{The trained run uses one read slot and clear padding flags. It validates the observed output words for this frame. Multiread aggregation and padded-query behavior require other evidence, such as directed fixtures. The result provides no timing, power, or throughput measurement.}
+\clearpage
+\section{Ten-frame SystemVerilog simulation}
+The lab ran the full trained configuration \trained{} using the SystemVerilog testbench \code{trained_frame_tb.sv}. It loaded the exported parameter image, provided the prepared features and mask, and checked the 144 returned indexed logits against the independent fixed-point Python outputs for each frame \cite{backend}.
+
+{\smalltbl
+\begin{tabularx}{\linewidth}{@{}P{32mm}YP{34mm}P{27mm}@{}}
+\toprule
+Frames & Simulator & Words compared & Mismatches\\ \midrule
+00 & Cadence Xcelium & 144 & 0\\
+01--09 & Synopsys VCS & 1,296 & 0\\ \midrule
+All ten & & 1,440 & 0\\
+\bottomrule
+\end{tabularx}}
+
+The logs report \(1{,}533{,}280{,}239\) cycles per frame and status \code{0001}, which records rounding. A separate comparison between fixed-point and floating-point decoded bits found nine differences near zero across the ten-frame set. This comparison measures the effect of numerical representation. The integer RTL check matched every output word. The measured cycle count belongs to the trained configuration \cite{backend}.
 \clearpage
 
 \section{Regression evidence and reproduction}
@@ -82,7 +97,7 @@ The repository checks and lab run have different environments. The source tree c
 \clearpage
 
 \section{Logic synthesis and mapped cell area}
-The implementation exercise used the \code{bcjrformer_dc_top} wrapper and shape \smallcore. The smaller case allows Design Compiler to exercise elaboration, library mapping and constraints independently of the trained-model run. The comparison uses Synopsys Design Compiler U-2022.12 and the Tower FS120 180\,nm typical standard-cell library named \code{tsl18fs120_typ}. The available evidence covers synthesis. Placement, routing, SRAM macro integration, and physical die area remain open \cite{labbundle}.
+The implementation exercise used the \code{bcjrformer_dc_top} wrapper and shape \smallcore. The smaller case allows Design Compiler to exercise elaboration, library mapping and constraints independently of the trained-model run. The comparison uses Synopsys Design Compiler U-2022.12 and the Tower FS120 180\,nm typical standard-cell library named \code{tsl18fs120_typ}. The RTL weight arrays remained reloadable through the host interface. Design Compiler mapped the arrays into standard cells and reported zero SRAM macros \cite{labbundle,backend}.
 
 {\smalltbl
 \begin{tabularx}{\linewidth}{@{}P{34mm}P{42mm}Y@{}}
@@ -104,10 +119,10 @@ Synthesis constraint & Reported mapped cell area & Available evidence\\ \midrule
 
 The 200\,ns run reports about \(10.4\%\) less mapped cell area than the 20\,ns baseline. The comparison reflects two runs and does not isolate the effect of the clock target from other mapping choices. The 20\,ns report lists the normalization engine at \(30.2\%\) and the activation service at \(27.4\%\) of mapped cell area. These baseline shares identify two places to examine when investigating arithmetic cost.
 
-The baseline report flags a capacitance-unit conflict and a high-fanout estimate. Mapped-cell area remains in report units. The reported net-interconnect area is a separate modeled quantity. A floorplan and implementation reports would establish physical area.
+The baseline report flags a capacitance-unit conflict and a high-fanout estimate. Mapped-cell area remains in report units. The reported net-interconnect area is a separate modeled quantity. The physical results below report the core boundary separately.
 \clearpage
 
-\section{Timing results and limits of physical evidence}
+\section{Synthesis timing}
 Synthesis static timing compares a path's arrival time with its required time. For setup, slack is required time minus arrival time. A negative value means the path misses the constraint. Separate hold analysis checks the minimum delay. The timing values depend on the library, constraint, design state, and analysis stage.
 
 {\smalltbl
@@ -120,10 +135,40 @@ Clock constraint & Setup slack & Hold slack & Available evidence\\ \midrule
 \end{tabularx}}
 \source{Small-core shape \smallcore, Tower 180\,nm typical standard-cell library, Design Compiler synthesis. The 20\,ns report uses a wire-load model. The 200\,ns values come from \code{dc-session.log} \cite{labbundle}.}
 
-The worst reported setup path at 20\,ns lies in the LayerNorm logic. Its arrival time is \(165.52\)\,ns and its required time is \(19.88\)\,ns, giving the reported \(-145.64\)\,ns slack. The separate 200\,ns run reports positive setup and hold slack, with \(50\)\,ps of setup margin. The frequency equivalent of the 200\,ns constraint is 5\,MHz. A measured frequency requires physical evidence. Combining the trained-frame cycle count with this constraint would conflate separate configurations.
+The worst reported setup path at 20\,ns lies in the LayerNorm logic. Its arrival time is \(165.52\)\,ns and its required time is \(19.88\)\,ns, giving the reported \(-145.64\)\,ns slack. The separate 200\,ns run reports positive setup and hold slack, with \(50\)\,ps of setup margin. The frequency equivalent of the 200\,ns constraint is 5\,MHz. The post-route analysis below uses the small core. The trained-frame cycle count belongs to a different configuration.
 
-\subsection{What a subsequent lab report needs to establish}
-A PrimeTime or post-route evaluation should identify the netlist revision, constraints, corner, parasitic source, and explicit setup and hold coverage. A power result should name the implementation stage, voltage, clock, corner, and the source of switching activity, then report total, dynamic, and leakage power. A later comparison should associate the metrics with the same implementation.
+\clearpage
 
-\aside{Available archive evidence}{The accessible artifacts establish mapped area and synthesis timing for the small core. A verified PrimeTime report, post-route analysis, and power report were unavailable for this book.}
+\section{Small-core physical implementation}
+Cadence Innovus 23.33 implemented \code{bcjrformer_dc_top} on the Tower 180\,nm six-metal stack. The mapped netlist and adapted constraints were imported at a 200\,ns trial period. The core was approximately \(5.142 \times 5.135\)\,mm with 917 placement rows and about 50\% initial utilization. Initial placement reported 730,967 cells placed and zero unplaced \cite{backend}.
+
+\begin{enumerate}
+\item \textbf{Power and pins.} VDD/VSS rings used horizontal M3 and vertical M4, with special routing connecting the standard-cell rails. The 142 fixed core boundary pins grouped the host weight interface on the west, frame inputs on the south, results on the east, and clock and reset on the north.
+\item \textbf{Placement and clocks.} Pre-CTS optimization improved worst setup slack from \(-19.942\) to \(-0.402\)\,ns in the trial setup. Clock-tree synthesis built a tree for 8,801 sinks. The early timing results preceded corrections to clock propagation and post-route clock RC scaling.
+\item \textbf{Routing and fillers.} Global and detail routing initially produced 94 antenna violations. Router diode insertion reduced the count to three, and three manual diode attachments cleared the remainder. The lab filler flow inserted 1,304,530 cells. The layout reported 46.675\% functional placement density and 100\% occupancy including fillers.
+\end{enumerate}
+
+\section{Post-route timing and slew correction}
+The final analysis used propagated clocks, unity post-route clock RC scale factors, and on-chip variation with common path pessimism removal. The lab extraction setup used the six-metal capacitance table. The recorded extraction settings and warnings still need review for foundry sign-off \cite{backend}.
+
+At 200\,ns, the corrected slow-corner analysis reported \(-67.570\)\,ns setup WNS, approximately \(-29{,}915.4\)\,ns TNS, and 478 violating paths. The worst path started at the LayerNorm variance register and went through the reciprocal square root. The lab adopted a 300\,ns target, approximately 3.33\,MHz.
+
+\clearpage
+\subsection{Final checks at 300\,ns}
+The initial 300\,ns setup run passed with four rising-edge transition violations. An engineering change upsized one NOR and three inverters. The larger cells initially caused eight placement overlaps in the filler-filled core. Removing 340 local fillers cleared the overlaps. Incremental routing, refill, and verification followed \cite{backend}.
+
+{\smalltbl
+\begin{tabularx}{\linewidth}{@{}P{24mm}YP{22mm}P{22mm}P{20mm}@{}}
+\toprule
+Check & Corner & WNS (ns) & TNS (ns) & Failing paths\\ \midrule
+Setup & Slow, 1.65\,V, \(125^{\circ}\mathrm{C}\) & \(+27.961\) & 0.000 & 0\\
+Hold & Fast, 2.017\,V, \(-40^{\circ}\mathrm{C}\) & \(+0.141\) & 0.000 & 0\\
+\bottomrule
+\end{tabularx}}
+\source{Both final reports cover 8,836 paths in the small core. See the slow setup and fast hold reports documented in the backend handoff \cite{backend}.}
+
+The slow setup report showed zero max-transition, max-capacitance, max-fanout, and max-length violations. Innovus geometry and antenna checks found zero violations. Signal and power connectivity checks found no problems or warnings.
+
+\subsection{Exports and verification scope}
+The refilled post-ECO layout was exported as \code{bcjrformer_dc_top.gds}, alongside the matching physical Verilog \code{bcjrformer_dc_top_lvs.v}. The layout is a routed core block with boundary pins. Foundry-deck DRC, extracted LVS, applicable metal-density checks, and gate-level equivalence remain pending. The book also has no verified power measurement. Physical implementation of the full trained configuration remains future work.
 \clearpage

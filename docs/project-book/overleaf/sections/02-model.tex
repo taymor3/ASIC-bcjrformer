@@ -24,7 +24,7 @@ A token belongs to both a read slot and an encoded position. Read-slot scores ar
 \clearpage
 
 \section{Software reference and checkpoint handoff}
-The team worked from the released BCJRFormer PyTorch implementation and configured a repository fork \cite{upstream,tracker}. Training produces a checkpoint. During evaluation the weights are held fixed, while the software runs prepared examples through the model. The local handoff records the exported checkpoint at epoch 94, an effective configuration, data and mask tensors, and reference outputs. The effective run settings capture overrides to the template configuration. The exported bundle contains ten separate examples. The trained-frame RTL result in this book uses sample zero \cite{labbundle}.
+The team worked from the released BCJRFormer PyTorch implementation and configured a repository fork \cite{upstream,tracker}. Training produces a checkpoint. During evaluation the weights are held fixed, while the software runs prepared examples through the model. The local handoff records the exported checkpoint at epoch 94, an effective configuration, data and mask tensors, and reference outputs. The effective run settings capture overrides to the template configuration. The exported bundle contains ten separate examples. The SystemVerilog comparison covers all ten examples \cite{backend}. The CXXRTL run provides a worked example for sample zero \cite{labbundle}.
 
 {\smalltbl
 \begin{tabularx}{\linewidth}{@{}P{42mm}P{38mm}Y@{}}
